@@ -24,7 +24,7 @@ function getPostLoginRedirect(profile) {
     return '/verify';
   }
   if (!profile.profile_completed) {
-    return '/profile/setup';
+    return '/username';
   }
   return '/home';
 }
@@ -93,13 +93,13 @@ describe('Phase 3 - Personal Authentication Rules', () => {
       assert.equal(getPostLoginRedirect(profile), '/verify');
     });
 
-    test('redirects linked identity with incomplete profile to /profile/setup', () => {
+    test('redirects linked identity with incomplete profile to /username', () => {
       const profile = {
         id: 'user-uuid-2',
         college_identity_linked: true,
         profile_completed: false,
       };
-      assert.equal(getPostLoginRedirect(profile), '/profile/setup');
+      assert.equal(getPostLoginRedirect(profile), '/username');
     });
 
     test('redirects fully completed student profile to /home', () => {

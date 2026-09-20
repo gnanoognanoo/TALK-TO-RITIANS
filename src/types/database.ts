@@ -165,7 +165,12 @@ export interface Database {
           p_department: string;
           p_batch: string;
           p_qr_metadata?: Json;
+          p_cooldown_hours?: number;
         };
+        Returns: Json;
+      };
+      unlink_college_identity: {
+        Args: Record<PropertyKey, never>;
         Returns: Json;
       };
     };

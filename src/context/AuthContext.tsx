@@ -11,6 +11,7 @@ import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { ProfileRow } from '../types';
 import { authService, generateTemporaryUsername, getPostLoginRedirect } from '../services/authService';
+import { verificationService } from '../services/verificationService';
 
 export interface AuthContextType {
   user: SupabaseUser | null;
@@ -21,6 +22,7 @@ export interface AuthContextType {
   signInWithGoogle: () => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  unlinkCollegeIdentity: () => Promise<{ success: boolean; error?: string }>;
   getRedirectPath: () => string;
 }
 
@@ -206,6 +208,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   /**
+   * Unlinks the active college identity from the account.
+   */
+  const unlinkCollegeIdentity = async (): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const res = await verificationService.unlinkCollegeIdentity();
+      if (!res.success) {
+        return { success: false, error: res.error?.message || 'Failed to unlink college identity' };
+      }
+      await refreshProfile();
+      return { success: true };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to unlink college identity';
+      return { success: false, error: message };
+    }
+  };
+
+  /**
    * Helper to compute redirection path for current profile
    */
   const getRedirectPath = (): string => {
@@ -221,6 +240,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     signInWithGoogle,
     signOut,
     refreshProfile,
+    unlinkCollegeIdentity,
     getRedirectPath,
   };
 

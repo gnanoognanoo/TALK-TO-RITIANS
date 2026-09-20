@@ -27,7 +27,7 @@ export function getPostLoginRedirect(profile: {
     return '/verify';
   }
   if (!profile.profile_completed) {
-    return '/profile/setup';
+    return '/username';
   }
   return '/home';
 }
