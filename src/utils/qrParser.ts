@@ -1,8 +1,8 @@
-import { IQRParser, ParsedQRIdentity } from '../types/qr';
+import { IQRParser, ParsedCollegeQrResult } from '../types/qr';
+import { parseCollegeQr } from '../services/qrParser';
 
 /**
- * Default fallback parser for raw string/text ID cards.
- * Can parse basic JSON or key-value structures without hardcoded schema constraints.
+ * Default parser that wraps the multi-strategy college QR parser abstraction.
  */
 export class GenericTextQRParser implements IQRParser {
   readonly parserName = 'GenericTextQRParser';
@@ -11,45 +11,14 @@ export class GenericTextQRParser implements IQRParser {
     return typeof rawText === 'string' && rawText.trim().length > 0;
   }
 
-  parse(rawText: string): ParsedQRIdentity {
-    const trimmed = rawText.trim();
-
-    // Check if payload is serialized JSON
-    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
-      try {
-        const json = JSON.parse(trimmed) as Record<string, unknown>;
-        return {
-          rawText: trimmed,
-          isValidFormat: true,
-          extractedFields: {
-            registerNumber: (json.registerNumber || json.regNo || json.reg_no || json.id) as string | undefined,
-            fullName: (json.name || json.fullName || json.student_name) as string | undefined,
-            collegeEmail: (json.email || json.college_email) as string | undefined,
-            department: (json.dept || json.department) as string | undefined,
-            batch: (json.batch || json.year) as string | undefined,
-          },
-          cardIdentifier: (json.registerNumber || json.id || trimmed) as string,
-        };
-      } catch {
-        // Fall through to plain text parsing
-      }
-    }
-
-    // Default plain text capture (to be refined after inspecting sample college card QR)
-    return {
-      rawText: trimmed,
-      isValidFormat: true,
-      extractedFields: {
-        rawAttributes: { content: trimmed },
-      },
-      cardIdentifier: trimmed,
-    };
+  parse(rawText: string): ParsedCollegeQrResult {
+    return parseCollegeQr(rawText);
   }
 }
 
 /**
  * QR Parser Registry.
- * Once the physical RIT ID card QR format is inspected, add the concrete parser here.
+ * Allows custom parsers to be registered once physical RIT ID card specifications are analyzed.
  */
 class QRParserRegistry {
   private parsers: IQRParser[] = [new GenericTextQRParser()];
@@ -58,20 +27,16 @@ class QRParserRegistry {
     this.parsers.unshift(parser); // New parsers take precedence
   }
 
-  parse(rawText: string): ParsedQRIdentity {
+  parse(rawText: string): ParsedCollegeQrResult {
     for (const parser of this.parsers) {
       if (parser.canParse(rawText)) {
         return parser.parse(rawText);
       }
     }
 
-    return {
-      rawText,
-      isValidFormat: false,
-      extractedFields: {},
-      errorMessage: 'Unrecognized QR code format',
-    };
+    return parseCollegeQr(rawText);
   }
 }
 
 export const qrParserRegistry = new QRParserRegistry();
+export default qrParserRegistry;

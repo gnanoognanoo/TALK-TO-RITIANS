@@ -158,6 +158,16 @@ export interface Database {
         Args: Record<PropertyKey, never>;
         Returns: unknown;
       };
+      verify_and_link_college_identity: {
+        Args: {
+          p_student_ref: string;
+          p_name: string;
+          p_department: string;
+          p_batch: string;
+          p_qr_metadata?: Json;
+        };
+        Returns: Json;
+      };
     };
   };
 }

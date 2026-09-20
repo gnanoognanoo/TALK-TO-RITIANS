@@ -1,30 +1,112 @@
+/**
+ * ============================================================================
+ * TALK TO RITIANS - College ID Verification Page
+ * ============================================================================
+ * Handles:
+ * 1. Scanning physical ID QR code via camera (or dev mock simulator)
+ * 2. Multi-format parsing abstraction (no assumed official RIT format)
+ * 3. Verification review screen displaying Detected Name, Dept, Batch
+ * 4. Explicit non-institutional MOCK DATA labeling & security disclaimers
+ * 5. Server-side cryptographic identity linking & uniqueness enforcement
+ * 6. Transition to anonymous profile customization (/profile/setup)
+ */
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { QrCode, ShieldCheck, Camera, CheckCircle2, ArrowRight } from 'lucide-react';
-import { Button, Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, Badge, ErrorMessage } from '../components';
+import {
+  ShieldCheck,
+  CheckCircle2,
+  ArrowRight,
+  RefreshCw,
+  User,
+  GraduationCap,
+  Calendar,
+  AlertCircle,
+  HelpCircle,
+} from 'lucide-react';
+import {
+  Button,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+  Badge,
+  ErrorMessage,
+  QrScanner,
+} from '../components';
+import { parseCollegeQr } from '../services/qrParser';
+import { verificationService, CollegeIdentityVerificationResult } from '../services/verificationService';
+import { ParsedCollegeQrResult } from '../types';
+import { useAuth } from '../context';
 
 export const VerifyCollegePage: React.FC = () => {
   const navigate = useNavigate();
-  const [isScanning, setIsScanning] = useState(false);
-  const [isVerified, setIsVerified] = useState(false);
-  const [scanError, setScanError] = useState<string | null>(null);
+  const { refreshProfile } = useAuth();
 
-  const handleSimulateScan = () => {
+  // Workflow states: 'scanning' | 'review' | 'success'
+  const [viewState, setViewState] = useState<'scanning' | 'review' | 'success'>('scanning');
+  const [parsedResult, setParsedResult] = useState<ParsedCollegeQrResult | null>(null);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const [isLinking, setIsLinking] = useState<boolean>(false);
+  const [linkError, setLinkError] = useState<string | null>(null);
+  const [verifiedData, setVerifiedData] = useState<CollegeIdentityVerificationResult | null>(null);
+
+  /**
+   * Called when QrScanner captures a QR string.
+   */
+  const handleQrCaptured = (decodedText: string) => {
     setScanError(null);
-    setIsScanning(true);
-    setTimeout(() => {
-      setIsScanning(false);
-      setIsVerified(true);
-    }, 1200);
+    setLinkError(null);
+
+    const result = parseCollegeQr(decodedText);
+
+    if (!result.validStructure) {
+      setScanError(
+        result.validationErrors[0] ||
+          'Unable to read valid student information from this QR code. Please ensure you are scanning an ID card QR.'
+      );
+      return;
+    }
+
+    setParsedResult(result);
+    setViewState('review');
   };
 
-  const handleSimulateScanError = () => {
-    setIsVerified(false);
-    setIsScanning(true);
-    setTimeout(() => {
-      setIsScanning(false);
-      setScanError('Unable to detect a valid RIT student ID barcode. Please check your camera alignment and lighting.');
-    }, 800);
+  /**
+   * Resets verification state to re-scan.
+   */
+  const handleScanAgain = () => {
+    setParsedResult(null);
+    setScanError(null);
+    setLinkError(null);
+    setViewState('scanning');
+  };
+
+  /**
+   * Confirms the detected identity and sends it for server-side fingerprinting and linkage.
+   */
+  const handleConfirmVerification = async () => {
+    if (!parsedResult) return;
+
+    setIsLinking(true);
+    setLinkError(null);
+
+    const res = await verificationService.linkCollegeIdentity(parsedResult);
+    setIsLinking(false);
+
+    if (!res.success || !res.data) {
+      setLinkError(
+        res.error?.message ||
+          'Failed to link college identity. Please try scanning your ID card again.'
+      );
+      return;
+    }
+
+    setVerifiedData(res.data);
+    await refreshProfile();
+    setViewState('success');
   };
 
   return (
@@ -32,104 +114,213 @@ export const VerifyCollegePage: React.FC = () => {
       <CardHeader className="text-center">
         <div className="mx-auto mb-2">
           <Badge variant="brand" size="sm" withDot>
-            Step 1 &bull; Verification
+            Step 1 &bull; College Verification
           </Badge>
         </div>
-        <CardTitle>Verify College ID</CardTitle>
+        <CardTitle>
+          {viewState === 'scanning' && 'Scan Student ID Card'}
+          {viewState === 'review' && 'Review Detected Identity'}
+          {viewState === 'success' && 'Student ID Verified!'}
+        </CardTitle>
         <CardDescription>
-          Scan the QR code printed on your physical Rajalakshmi Institute of Technology student ID card.
+          {viewState === 'scanning' &&
+            'Scan the QR code printed on the back of your physical college ID card to link your student status.'}
+          {viewState === 'review' &&
+            'Confirm the student information decoded from your card before generating your anonymous profile.'}
+          {viewState === 'success' &&
+            'Your college identity is securely verified and linked. Your real student information will remain strictly private.'}
         </CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-6">
-        {/* Viewport Simulation Box */}
-        <div className="relative aspect-video sm:aspect-square max-w-[280px] mx-auto rounded-2xl bg-slate-950 border-2 border-slate-800 flex flex-col items-center justify-center p-4 overflow-hidden group shadow-inner">
-          {/* Corner target reticles */}
-          <div className="absolute top-3 left-3 w-5 h-5 border-t-2 border-l-2 border-brand-400 rounded-tl" />
-          <div className="absolute top-3 right-3 w-5 h-5 border-t-2 border-r-2 border-brand-400 rounded-tr" />
-          <div className="absolute bottom-3 left-3 w-5 h-5 border-b-2 border-l-2 border-brand-400 rounded-bl" />
-          <div className="absolute bottom-3 right-3 w-5 h-5 border-b-2 border-r-2 border-brand-400 rounded-br" />
+        {/* =========================================================================
+            STATE 1: SCANNING VIEW
+            ========================================================================= */}
+        {viewState === 'scanning' && (
+          <div className="space-y-5">
+            {/* Live Camera Scanner */}
+            <QrScanner onScan={handleQrCaptured} onError={(err) => setScanError(err)} />
 
-          {/* Scanning Animation */}
-          {isScanning && (
-            <div
-              className="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-brand-400 to-transparent shadow-[0_0_12px_#6366f1] animate-bounce"
-              style={{ top: '40%' }}
-            />
-          )}
+            {/* Scan Error Message */}
+            {scanError && (
+              <ErrorMessage
+                title="Invalid or Unreadable QR"
+                message={scanError}
+                onDismiss={() => setScanError(null)}
+              />
+            )}
 
-          {isVerified ? (
-            <div className="text-center space-y-2 animate-in zoom-in-95">
-              <div className="h-12 w-12 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 mx-auto flex items-center justify-center">
-                <CheckCircle2 className="h-7 w-7" />
+            {/* Privacy Guarantee Banner */}
+            <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 text-xs text-slate-400 space-y-1.5">
+              <div className="flex items-center gap-1.5 font-semibold text-emerald-400">
+                <ShieldCheck className="h-4 w-4 shrink-0" />
+                <span>Zero-Storage Camera Privacy</span>
               </div>
-              <p className="text-xs font-bold text-white">ID Verified Successfully</p>
-              <p className="text-[11px] text-emerald-400 font-mono">HASH: 7a8f...91e3</p>
+              <p className="text-[11px] leading-relaxed text-slate-400">
+                Your camera stream is processed entirely within your browser memory. We never upload,
+                record, or store camera frames, snapshots, or photos of your student ID card.
+              </p>
             </div>
-          ) : (
-            <div className="text-center space-y-2 text-slate-400">
-              <Camera className="h-8 w-8 mx-auto text-slate-500" />
-              <p className="text-xs">Align student QR code within frame</p>
-              <p className="text-[11px] text-slate-500">Camera preview placeholder</p>
-            </div>
-          )}
-        </div>
-
-        {/* Scan Error Message */}
-        {scanError && (
-          <ErrorMessage
-            title="Verification Scan Failed"
-            message={scanError}
-            onRetry={handleSimulateScan}
-            retryText="Retry Scan"
-            onDismiss={() => setScanError(null)}
-          />
+          </div>
         )}
 
-        {/* Action Controls */}
-        <div className="space-y-3">
-          {isVerified ? (
+        {/* =========================================================================
+            STATE 2: QR REVIEW SCREEN
+            ========================================================================= */}
+        {viewState === 'review' && parsedResult && (
+          <div className="space-y-5 animate-in fade-in zoom-in-95">
+            {/* Development Mock Warning Banner */}
+            {parsedResult.isMockData && (
+              <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 space-y-1">
+                <div className="flex items-center gap-1.5 font-bold text-xs">
+                  <AlertCircle className="h-4 w-4 text-amber-400 shrink-0" />
+                  <span>DEVELOPMENT MOCK DATA DETECTED</span>
+                </div>
+                <p className="text-[11px] text-amber-200/90 leading-relaxed">
+                  Real RIT ID card format will be calibrated once physical card samples are scanned.
+                  This verification uses simulated student credentials for local testing and does NOT
+                  represent institutional RIT verification.
+                </p>
+              </div>
+            )}
+
+            {/* Card Showing Decoded Student Information */}
+            <div className="rounded-xl bg-slate-950 border border-slate-800 p-4 space-y-3 shadow-inner">
+              <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                  Decoded Card Fields
+                </span>
+                <Badge variant={parsedResult.isMockData ? 'warning' : 'success'} size="sm">
+                  {parsedResult.isMockData ? 'Dev Mock' : 'Card Scanned'}
+                </Badge>
+              </div>
+
+              <div className="space-y-2.5 pt-1">
+                {/* Detected Name */}
+                <div className="flex items-center justify-between text-xs">
+                  <span className="flex items-center gap-1.5 text-slate-400 font-medium">
+                    <User className="h-3.5 w-3.5 text-slate-500" />
+                    Detected Name:
+                  </span>
+                  <span className="font-semibold text-white">
+                    {parsedResult.fields.name || 'Not Specified'}
+                  </span>
+                </div>
+
+                {/* Detected Department */}
+                <div className="flex items-center justify-between text-xs">
+                  <span className="flex items-center gap-1.5 text-slate-400 font-medium">
+                    <GraduationCap className="h-3.5 w-3.5 text-slate-500" />
+                    Detected Department:
+                  </span>
+                  <span className="font-semibold text-brand-300">
+                    {parsedResult.fields.department || 'Not Specified'}
+                  </span>
+                </div>
+
+                {/* Detected Batch */}
+                <div className="flex items-center justify-between text-xs">
+                  <span className="flex items-center gap-1.5 text-slate-400 font-medium">
+                    <Calendar className="h-3.5 w-3.5 text-slate-500" />
+                    Detected Batch:
+                  </span>
+                  <span className="font-mono font-semibold text-slate-200">
+                    {parsedResult.fields.batch || 'Not Specified'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Link Error Message */}
+            {linkError && (
+              <ErrorMessage
+                title="Verification Failed"
+                message={linkError}
+                onDismiss={() => setLinkError(null)}
+              />
+            )}
+
+            {/* Security Warning Notice */}
+            <div className="p-3 rounded-lg bg-slate-950/40 border border-slate-800/60 text-[11px] text-slate-400 leading-relaxed flex items-start gap-2">
+              <HelpCircle className="h-4 w-4 text-slate-500 shrink-0 mt-0.5" />
+              <span>
+                QR possession verifies card attributes. Server-side salted fingerprinting ensures that
+                each physical card can only be linked to a single personal account.
+              </span>
+            </div>
+
+            {/* Actions: Confirm or Scan Again */}
+            <div className="space-y-2.5 pt-1">
+              <Button
+                type="button"
+                variant="primary"
+                fullWidth
+                isLoading={isLinking}
+                loadingText="Securing identity hash..."
+                onClick={handleConfirmVerification}
+                rightIcon={<ArrowRight className="h-4 w-4" />}
+              >
+                Confirm &amp; Link College Identity
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                fullWidth
+                disabled={isLinking}
+                onClick={handleScanAgain}
+                leftIcon={<RefreshCw className="h-3.5 w-3.5" />}
+              >
+                Scan Again
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* =========================================================================
+            STATE 3: SUCCESS CONFIRMATION
+            ========================================================================= */}
+        {viewState === 'success' && (
+          <div className="text-center space-y-5 animate-in zoom-in-95">
+            <div className="h-16 w-16 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 mx-auto flex items-center justify-center shadow-xl shadow-emerald-500/10">
+              <CheckCircle2 className="h-8 w-8" />
+            </div>
+
+            <div className="space-y-1.5">
+              <h3 className="text-lg font-bold text-white">Student Status Verified!</h3>
+              <p className="text-xs text-slate-300 max-w-xs mx-auto leading-relaxed">
+                Your personal account is now verified as an RIT student (
+                <span className="text-brand-300 font-semibold">{verifiedData?.department || 'RIT'}</span>).
+              </p>
+              {verifiedData?.identityHashPreview && (
+                <p className="text-[11px] text-slate-500 font-mono pt-1">
+                  Fingerprint: {verifiedData.identityHashPreview}
+                </p>
+              )}
+            </div>
+
+            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-left text-xs text-slate-400 space-y-1">
+              <div className="flex items-center gap-1.5 text-emerald-400 font-semibold">
+                <ShieldCheck className="h-4 w-4" />
+                <span>Private Identity Shield Active</span>
+              </div>
+              <p className="text-[11px] text-slate-400">
+                Your real student name, roll number, and department are sealed. Next, configure your
+                anonymous handle and visual avatar for campus chats.
+              </p>
+            </div>
+
             <Button
+              type="button"
               variant="primary"
               fullWidth
               onClick={() => navigate('/profile/setup')}
               rightIcon={<ArrowRight className="h-4 w-4" />}
             >
-              Continue to Anonymous Profile
+              Continue to Anonymous Profile Setup
             </Button>
-          ) : (
-            <div className="space-y-2">
-              <Button
-                variant="primary"
-                fullWidth
-                isLoading={isScanning}
-                loadingText="Scanning ID barcode..."
-                onClick={handleSimulateScan}
-                leftIcon={<QrCode className="h-4 w-4" />}
-              >
-                Simulate ID Card Scan
-              </Button>
-              <button
-                type="button"
-                onClick={handleSimulateScanError}
-                className="w-full text-center text-[11px] text-slate-500 hover:text-rose-400 transition-colors py-1"
-              >
-                Simulate scan error state
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Privacy & Anti-abuse callout */}
-        <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 text-xs text-slate-400 space-y-1.5">
-          <div className="flex items-center gap-1.5 font-semibold text-emerald-400">
-            <ShieldCheck className="h-4 w-4 shrink-0" />
-            <span>Cryptographic Privacy Guarantee</span>
           </div>
-          <p className="text-[11px] leading-relaxed text-slate-400">
-            We store only a one-way cryptographic hash of your student roll number to enforce 1-to-1 account uniqueness. Your name and card data are never stored in plain text or shared with peers.
-          </p>
-        </div>
+        )}
       </CardContent>
 
       <CardFooter className="justify-center border-t border-slate-800/60 pt-4">

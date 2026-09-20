@@ -69,3 +69,5 @@ export interface IChatService {
 }
 
 export * from './authService';
+export * from './qrParser';
+export * from './verificationService';
