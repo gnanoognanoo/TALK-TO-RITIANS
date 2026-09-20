@@ -10,9 +10,23 @@ import {
   Radio,
 } from 'lucide-react';
 import { Button, Card, Badge, Avatar, PageContainer, EmptyState } from '../components';
+import { useAuth } from '../context';
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
+  const { profile } = useAuth();
+
+  const displayUsername = profile?.display_username || 'Unknown Student';
+  const initials = displayUsername
+    .split(' ')
+    .map((w) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+
+  const departmentInfo = profile?.department
+    ? `${profile.department}${profile.batch ? ` • ${profile.batch}` : ''}`
+    : 'Rajalakshmi Institute of Technology';
 
   return (
     <PageContainer maxWidth="xl" className="space-y-8">
@@ -25,18 +39,18 @@ export const HomePage: React.FC = () => {
 
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <Avatar size="xl" initials="SF" presence="online" />
+            <Avatar size="xl" initials={initials} presence="online" />
             <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                  SwiftFalcon_88
+                  {displayUsername}
                 </h1>
-                <Badge variant="success" size="sm" withDot>
-                  Campus Verified
+                <Badge variant={profile?.college_identity_linked ? 'success' : 'warning'} size="sm" withDot>
+                  {profile?.college_identity_linked ? 'Campus Verified' : 'Unlinked ID'}
                 </Badge>
               </div>
               <p className="text-xs sm:text-sm text-slate-400">
-                Department of Computer Science &bull; 3rd Year
+                {departmentInfo}
               </p>
               <div className="flex items-center gap-3 pt-1 text-xs text-slate-400">
                 <span className="flex items-center gap-1 text-emerald-400">

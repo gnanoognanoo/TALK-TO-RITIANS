@@ -63,6 +63,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       college_identities: {
         Row: {
@@ -104,6 +105,7 @@ export interface Database {
           unlinked_at?: string | null;
           active?: boolean;
         };
+        Relationships: [];
       };
       anonymous_identities: {
         Row: {
@@ -130,6 +132,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
     };
     Views: {
@@ -139,6 +142,7 @@ export interface Database {
           anonymous_username: string;
           avatar_config: Json;
         };
+        Relationships: [];
       };
     };
     Functions: {

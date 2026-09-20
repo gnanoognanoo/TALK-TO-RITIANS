@@ -67,3 +67,5 @@ export interface IChatService {
   skipChat(roomId: string): Promise<ApiResponse<void>>;
   leaveChat(roomId: string): Promise<ApiResponse<void>>;
 }
+
+export * from './authService';

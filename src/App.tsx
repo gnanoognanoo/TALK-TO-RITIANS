@@ -1,7 +1,11 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
-// Layouts
+// Context & Providers
+import { AuthProvider } from './context';
+
+// Guards & Layouts
+import { ProtectedRoute } from './components';
 import { AppLayout, AuthLayout, OnboardingLayout } from './layouts';
 
 // Pages
@@ -20,31 +24,44 @@ import {
 
 export const App: React.FC = () => {
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Public & Main App Routes within AppLayout */}
-        <Route element={<AppLayout />}>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/home" element={<HomePage />} />
-          <Route path="/matching" element={<MatchingPage />} />
-          <Route path="/chat/:roomId" element={<ChatPage />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Route>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Public Landing & 404 Route within AppLayout */}
+          <Route element={<AppLayout />}>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Route>
 
-        {/* Authentication & Verification Routes within AuthLayout */}
-        <Route element={<AuthLayout />}>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/verify" element={<VerifyCollegePage />} />
-        </Route>
+          {/* Public Personal Login Route within AuthLayout */}
+          <Route element={<AuthLayout />}>
+            <Route path="/login" element={<LoginPage />} />
+          </Route>
 
-        {/* Onboarding Persona Routes within OnboardingLayout */}
-        <Route element={<OnboardingLayout />}>
-          <Route path="/profile/setup" element={<ProfileSetupPage />} />
-          <Route path="/username" element={<UsernameSelectionPage />} />
-          <Route path="/avatar" element={<AvatarBuilderPage />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+          {/* Protected Routes — Require Authenticated Student Session */}
+          <Route element={<ProtectedRoute />}>
+            {/* Campus Dashboard & Realtime Rooms */}
+            <Route element={<AppLayout />}>
+              <Route path="/home" element={<HomePage />} />
+              <Route path="/matching" element={<MatchingPage />} />
+              <Route path="/chat/:roomId" element={<ChatPage />} />
+            </Route>
+
+            {/* Campus ID Verification Gate */}
+            <Route element={<AuthLayout />}>
+              <Route path="/verify" element={<VerifyCollegePage />} />
+            </Route>
+
+            {/* Persona Onboarding Flow */}
+            <Route element={<OnboardingLayout />}>
+              <Route path="/profile/setup" element={<ProfileSetupPage />} />
+              <Route path="/username" element={<UsernameSelectionPage />} />
+              <Route path="/avatar" element={<AvatarBuilderPage />} />
+            </Route>
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 };
 

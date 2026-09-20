@@ -9,3 +9,4 @@ export * from './Badge';
 export * from './Avatar';
 export * from './Navbar';
 export * from './PageContainer';
+export * from './ProtectedRoute';
