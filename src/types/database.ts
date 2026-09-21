@@ -173,6 +173,12 @@ export interface Database {
         Args: Record<PropertyKey, never>;
         Returns: Json;
       };
+      save_anonymous_alias: {
+        Args: {
+          p_alias: string;
+        };
+        Returns: Json;
+      };
     };
   };
 }
