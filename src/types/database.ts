@@ -134,6 +134,99 @@ export interface Database {
         };
         Relationships: [];
       };
+      chat_rooms: {
+        Row: {
+          id: string;
+          user_1: string;
+          user_2: string;
+          status: string;
+          created_at: string;
+          ended_at: string | null;
+          end_reason: string | null;
+          user_1_heartbeat_at?: string | null;
+          user_2_heartbeat_at?: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_1: string;
+          user_2: string;
+          status?: string;
+          created_at?: string;
+          ended_at?: string | null;
+          end_reason?: string | null;
+          user_1_heartbeat_at?: string | null;
+          user_2_heartbeat_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_1?: string;
+          user_2?: string;
+          status?: string;
+          created_at?: string;
+          ended_at?: string | null;
+          end_reason?: string | null;
+          user_1_heartbeat_at?: string | null;
+          user_2_heartbeat_at?: string | null;
+        };
+        Relationships: [];
+      };
+      matchmaking_queue: {
+        Row: {
+          id: string;
+          user_id: string;
+          joined_at: string;
+          status: string;
+          heartbeat_at: string;
+          matched_room_id: string | null;
+          matched_user_id: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          joined_at?: string;
+          status?: string;
+          heartbeat_at?: string;
+          matched_room_id?: string | null;
+          matched_user_id?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          joined_at?: string;
+          status?: string;
+          heartbeat_at?: string;
+          matched_room_id?: string | null;
+          matched_user_id?: string | null;
+        };
+        Relationships: [];
+      };
+      chat_messages: {
+        Row: {
+          id: string;
+          room_id: string;
+          sender_id: string;
+          content: string;
+          created_at: string;
+          message_type: string;
+        };
+        Insert: {
+          id?: string;
+          room_id: string;
+          sender_id: string;
+          content: string;
+          created_at?: string;
+          message_type?: string;
+        };
+        Update: {
+          id?: string;
+          room_id?: string;
+          sender_id?: string;
+          content?: string;
+          created_at?: string;
+          message_type?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       public_anonymous_profiles: {
@@ -185,6 +278,59 @@ export interface Database {
         };
         Returns: Json;
       };
+      save_profile_data: {
+        Args: {
+          p_department: string;
+          p_section: string;
+          p_class_name: string;
+          p_batch: string;
+          p_graduation_year: number;
+          p_gender: string;
+        };
+        Returns: Json;
+      };
+      join_matchmaking: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      heartbeat_matchmaking: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      leave_matchmaking: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      send_chat_message: {
+        Args: {
+          p_room_id: string;
+          p_content: string;
+        };
+        Returns: Json;
+      };
+      get_room_peer: {
+        Args: {
+          p_room_id: string;
+        };
+        Returns: Json;
+      };
+      end_chat_room: {
+        Args: {
+          p_room_id: string;
+          p_reason: string;
+        };
+        Returns: Json;
+      };
+      heartbeat_chat_room: {
+        Args: {
+          p_room_id: string;
+        };
+        Returns: Json;
+      };
+      cleanup_stale_sessions: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
     };
   };
 }
@@ -200,3 +346,15 @@ export type CollegeIdentityUpdate = Database['public']['Tables']['college_identi
 export type AnonymousIdentityRow = Database['public']['Tables']['anonymous_identities']['Row'];
 export type AnonymousIdentityInsert = Database['public']['Tables']['anonymous_identities']['Insert'];
 export type AnonymousIdentityUpdate = Database['public']['Tables']['anonymous_identities']['Update'];
+
+export type ChatRoomRow = Database['public']['Tables']['chat_rooms']['Row'];
+export type ChatRoomInsert = Database['public']['Tables']['chat_rooms']['Insert'];
+export type ChatRoomUpdate = Database['public']['Tables']['chat_rooms']['Update'];
+
+export type MatchmakingQueueRow = Database['public']['Tables']['matchmaking_queue']['Row'];
+export type MatchmakingQueueInsert = Database['public']['Tables']['matchmaking_queue']['Insert'];
+export type MatchmakingQueueUpdate = Database['public']['Tables']['matchmaking_queue']['Update'];
+
+export type ChatMessageRow = Database['public']['Tables']['chat_messages']['Row'];
+export type ChatMessageInsert = Database['public']['Tables']['chat_messages']['Insert'];
+export type ChatMessageUpdate = Database['public']['Tables']['chat_messages']['Update'];

@@ -1,15 +1,26 @@
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '../types';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const configuredUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const configuredAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-if (!supabaseUrl || !supabaseAnonKey) {
+export const isSupabaseConfigured = Boolean(
+  configuredUrl &&
+  configuredAnonKey &&
+  !configuredUrl.includes('your-project-id') &&
+  !configuredAnonKey.includes('placeholder')
+);
+
+if (!isSupabaseConfigured) {
   console.warn(
-    '[SupabaseClient] Warning: VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY is not defined in environment variables. ' +
-    'Please copy .env.example to .env.local and configure your keys.'
+    '[SupabaseClient] Warning: VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY is not defined. ' +
+    'Running in unconfigured development mode. Please configure .env.local with valid Supabase credentials.'
   );
 }
+
+// Safe placeholder so createClient never throws an uncaught exception during ES module evaluation
+const supabaseUrl = isSupabaseConfigured ? configuredUrl : 'https://unconfigured.supabase.co';
+const supabaseAnonKey = isSupabaseConfigured ? configuredAnonKey : 'unconfigured-anon-key';
 
 /**
  * Shared Supabase browser client.

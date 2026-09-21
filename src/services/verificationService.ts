@@ -16,7 +16,7 @@
  * - Audit timestamp preservation on unlinking
  */
 
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { ApiResponse, ParsedCollegeQrResult } from '../types';
 
 export interface CollegeIdentityVerificationResult {
@@ -39,6 +39,8 @@ export interface CollegeIdentityUnlinkResult {
 const localDevClaimRegistry = new Map<string, { userId: string; unlinkedAt?: string }>();
 
 export class VerificationService {
+  private lastScanTime: number = 0;
+
   /**
    * Links a verified college ID QR payload to the current authenticated account.
    * Derives the stable fingerprint on the server via PostgreSQL RPC.
@@ -48,6 +50,20 @@ export class VerificationService {
     cooldownHours: number = 0
   ): Promise<ApiResponse<CollegeIdentityVerificationResult>> {
     try {
+      // 0. Rate limiting check: enforce minimum 1.5s between scan attempts
+      const now = Date.now();
+      if (now - this.lastScanTime < 1500) {
+        return {
+          success: false,
+          data: null,
+          error: {
+            code: 'RATE_LIMITED',
+            message: 'Too many QR scan attempts. Please wait a moment before trying again.',
+          },
+        };
+      }
+      this.lastScanTime = now;
+
       // 1. Session verification: Caller must have an active authenticated session
       const { data: sessionData } = await supabase.auth.getSession();
       const currentUserId = sessionData?.session?.user?.id;
@@ -112,13 +128,8 @@ export class VerificationService {
       if (error) {
         console.warn('[VerificationService] Server RPC call returned error:', error);
 
-        // Local Development Fallback: In-memory simulation when Supabase instance is offline
-        if (
-          error.code === 'PGRST202' ||
-          error.message?.includes('fetch') ||
-          error.message?.includes('not found') ||
-          !import.meta.env.VITE_SUPABASE_URL
-        ) {
+        // Fallback ONLY allowed when Supabase is unconfigured in development
+        if (!isSupabaseConfigured) {
           console.info('[VerificationService] Running local development fallback verification');
           const mockIdentityKey = `mock-${ref.toLowerCase()}`;
           const existingClaim = localDevClaimRegistry.get(mockIdentityKey);
@@ -261,13 +272,8 @@ export class VerificationService {
       if (error) {
         console.warn('[VerificationService] Unlink RPC returned error:', error);
 
-        // Fallback for local development
-        if (
-          error.code === 'PGRST202' ||
-          error.message?.includes('fetch') ||
-          error.message?.includes('not found') ||
-          !import.meta.env.VITE_SUPABASE_URL
-        ) {
+        // Fallback for local development when Supabase is unconfigured
+        if (!isSupabaseConfigured) {
           console.info('[VerificationService] Running local development fallback unlinking');
           // Clear active claims in local dev registry for this user
           for (const [key, entry] of localDevClaimRegistry.entries()) {

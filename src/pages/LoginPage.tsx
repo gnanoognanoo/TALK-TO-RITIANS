@@ -18,7 +18,7 @@ import { useAuth } from '../context';
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, session, signInWithEmail, signInWithGoogle, getRedirectPath } = useAuth();
+  const { user, session, signInWithEmail, signInWithPassword, signInWithGoogle, getRedirectPath } = useAuth();
 
   const [email, setEmail] = useState('');
   const [authState, setAuthState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -34,6 +34,16 @@ export const LoginPage: React.FC = () => {
       navigate(destination, { replace: true });
     }
   }, [user, session, fromPath, getRedirectPath, navigate]);
+
+  const handleTestLogin = async (testEmail: string) => {
+    setAuthState('loading');
+    setErrorMessage('');
+    const res = await signInWithPassword(testEmail, 'Password123!');
+    if (!res.success) {
+      setAuthState('error');
+      setErrorMessage(res.error || 'Test sign-in failed');
+    }
+  };
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -213,6 +223,34 @@ export const LoginPage: React.FC = () => {
                 Send Magic Link
               </Button>
             </form>
+
+            {import.meta.env.DEV && (
+              <div className="pt-3 border-t border-slate-800/80 space-y-2">
+                <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider text-center">
+                  Live Cloud Test Accounts
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleTestLogin('student.a.ritian.2026@gmail.com')}
+                    disabled={authState === 'loading'}
+                  >
+                    Login Account A
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleTestLogin('student.b.ritian.2026@gmail.com')}
+                    disabled={authState === 'loading'}
+                  >
+                    Login Account B
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </CardContent>

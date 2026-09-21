@@ -24,10 +24,6 @@ export const HomePage: React.FC = () => {
     .slice(0, 2)
     .toUpperCase();
 
-  const departmentInfo = profile?.department
-    ? `${profile.department}${profile.batch ? ` • ${profile.batch}` : ''}`
-    : 'Rajalakshmi Institute of Technology';
-
   return (
     <PageContainer maxWidth="xl" className="space-y-8">
       {/* Student Welcome Header Card */}
@@ -45,7 +41,7 @@ export const HomePage: React.FC = () => {
               initials={initials}
               presence="online"
             />
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
                   {displayUsername}
@@ -54,10 +50,11 @@ export const HomePage: React.FC = () => {
                   {profile?.college_identity_linked ? 'Campus Verified' : 'Unlinked ID'}
                 </Badge>
               </div>
-              <p className="text-xs sm:text-sm text-slate-400">
-                {departmentInfo}
-              </p>
-              <div className="flex items-center gap-3 pt-1 text-xs text-slate-400">
+              <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                <span>Rajalakshmi Institute of Technology &bull; Profile Data Sealed</span>
+              </div>
+              <div className="flex items-center gap-3 pt-0.5 text-xs text-slate-400">
                 <span className="flex items-center gap-1 text-emerald-400">
                   <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
                   Ready to match
@@ -65,6 +62,10 @@ export const HomePage: React.FC = () => {
                 <span>&bull;</span>
                 <Link to="/avatar" className="text-brand-400 hover:text-brand-300 font-medium">
                   Customize Avatar
+                </Link>
+                <span>&bull;</span>
+                <Link to="/profile/setup" className="text-slate-400 hover:text-slate-300 font-medium">
+                  Cohort Profile
                 </Link>
               </div>
             </div>

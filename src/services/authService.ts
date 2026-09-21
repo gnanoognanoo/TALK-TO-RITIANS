@@ -7,7 +7,7 @@
  */
 
 import { supabase } from '../lib/supabase';
-import { User, Profile, ApiResponse } from '../types';
+import { User, Profile, ApiResponse, isValidAvatarConfig } from '../types';
 import { IAuthService } from './index';
 import type { Session } from '@supabase/supabase-js';
 
@@ -21,13 +21,21 @@ export interface EnsureProfileResult {
  */
 export function getPostLoginRedirect(profile: {
   college_identity_linked?: boolean | null;
+  display_username?: string | null;
+  avatar_config?: any;
   profile_completed?: boolean | null;
 } | null): string {
   if (!profile || !profile.college_identity_linked) {
     return '/verify';
   }
-  if (!profile.profile_completed) {
+  if (!profile.display_username || profile.display_username.startsWith('Unknown User')) {
     return '/username';
+  }
+  if (!isValidAvatarConfig(profile.avatar_config)) {
+    return '/avatar';
+  }
+  if (!profile.profile_completed) {
+    return '/profile/setup';
   }
   return '/home';
 }
@@ -127,6 +135,42 @@ export class AuthService implements IAuthService {
       };
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to send magic link';
+      return {
+        success: false,
+        data: null,
+        error: { code: 'NETWORK_ERROR', message },
+      };
+    }
+  }
+
+  /**
+   * Direct password sign-in for testing environments.
+   */
+  async signInWithPassword(
+    email: string,
+    password: string
+  ): Promise<ApiResponse<{ session: Session | null }>> {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      });
+
+      if (error) {
+        return {
+          success: false,
+          data: null,
+          error: { code: 'AUTH_FAILED', message: error.message },
+        };
+      }
+
+      return {
+        success: true,
+        data: { session: data.session },
+        error: null,
+      };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Sign in failed';
       return {
         success: false,
         data: null,

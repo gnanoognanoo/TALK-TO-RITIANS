@@ -8,9 +8,9 @@ export interface OnboardingLayoutProps {
 }
 
 const steps = [
-  { id: 'profile', name: 'Profile Setup', path: '/profile/setup', stepNum: 1 },
-  { id: 'username', name: 'Anonymous Handle', path: '/username', stepNum: 2 },
-  { id: 'avatar', name: 'Avatar Builder', path: '/avatar', stepNum: 3 },
+  { id: 'username', name: 'Anonymous Handle', path: '/username', stepNum: 1 },
+  { id: 'avatar', name: 'Avatar Builder', path: '/avatar', stepNum: 2 },
+  { id: 'profile', name: 'Campus Profile', path: '/profile/setup', stepNum: 3 },
 ];
 
 export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({ children }) => {

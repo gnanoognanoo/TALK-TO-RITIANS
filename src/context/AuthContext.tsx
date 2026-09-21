@@ -19,6 +19,7 @@ export interface AuthContextType {
   profile: ProfileRow | null;
   loading: boolean;
   signInWithEmail: (email: string) => Promise<{ success: boolean; error?: string }>;
+  signInWithPassword: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signInWithGoogle: () => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -177,6 +178,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   /**
+   * Direct Password Sign In (Testing & Admin)
+   */
+  const signInWithPassword = async (
+    email: string,
+    password: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    const res = await authService.signInWithPassword(email, password);
+    if (!res.success) {
+      return { success: false, error: res.error?.message || 'Authentication failed' };
+    }
+    return { success: true };
+  };
+
+  /**
    * Google OAuth Sign In
    */
   const signInWithGoogle = async (): Promise<{ success: boolean; error?: string }> => {
@@ -237,6 +252,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     profile,
     loading,
     signInWithEmail,
+    signInWithPassword,
     signInWithGoogle,
     signOut,
     refreshProfile,

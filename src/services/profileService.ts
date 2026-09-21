@@ -6,9 +6,10 @@
  * and avatar configuration updates.
  */
 
-import { supabase } from '../lib/supabase';
-import { ApiResponse, Profile, AvatarConfig, isValidAvatarConfig, Json } from '../types';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { ApiResponse, Profile, AvatarConfig, isValidAvatarConfig, Json, ProfileSetupFormData } from '../types';
 import { isValidAliasFormat } from './aliasPool';
+import { validateProfileSetup } from '../config/profileConfig';
 
 export class ProfileService {
   /**
@@ -53,13 +54,8 @@ export class ProfileService {
       if (error) {
         console.warn('[ProfileService] RPC call save_anonymous_alias error:', error);
 
-        // Fallback for local development when Supabase RPC is offline
-        if (
-          error.code === 'PGRST202' ||
-          error.message?.includes('fetch') ||
-          error.message?.includes('not found') ||
-          !import.meta.env.VITE_SUPABASE_URL
-        ) {
+        // Fallback only if Supabase is unconfigured
+        if (!isSupabaseConfigured) {
           console.info('[ProfileService] Running local development fallback for alias save');
           // Update in profiles table directly if possible
           await supabase
@@ -160,13 +156,8 @@ export class ProfileService {
       if (error) {
         console.warn('[ProfileService] RPC call save_avatar_config error:', error);
 
-        // Fallback for local development when Supabase RPC is offline
-        if (
-          error.code === 'PGRST202' ||
-          error.message?.includes('fetch') ||
-          error.message?.includes('not found') ||
-          !import.meta.env.VITE_SUPABASE_URL
-        ) {
+        // Fallback only if Supabase is unconfigured
+        if (!isSupabaseConfigured) {
           console.info('[ProfileService] Running local development fallback for avatar save');
           await supabase
             .from('profiles')
@@ -215,6 +206,126 @@ export class ProfileService {
       };
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown avatar save error';
+      return {
+        success: false,
+        data: null,
+        error: { code: 'CLIENT_ERROR', message },
+      };
+    }
+  }
+
+  /**
+   * Saves the student's private profile metadata and marks onboarding completed.
+   * Calls the server-side RPC procedure `save_profile_data`.
+   */
+  async saveProfileData(
+    formData: ProfileSetupFormData
+  ): Promise<ApiResponse<{ profileCompleted: boolean }>> {
+    try {
+      // 1. Client-side validation
+      const validation = validateProfileSetup(formData);
+      if (!validation.isValid) {
+        const firstError = Object.values(validation.errors)[0] || 'Invalid profile information.';
+        return {
+          success: false,
+          data: null,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: firstError,
+          },
+        };
+      }
+
+      // 2. Session check
+      const { data: sessionData } = await supabase.auth.getSession();
+      const currentUserId = sessionData?.session?.user?.id;
+
+      if (!currentUserId) {
+        return {
+          success: false,
+          data: null,
+          error: {
+            code: 'UNAUTHENTICATED',
+            message: 'You must be signed in to complete your profile.',
+          },
+        };
+      }
+
+      // 3. Call server-side RPC procedure
+      const gradYearNum = typeof formData.graduationYear === 'number'
+        ? formData.graduationYear
+        : parseInt(String(formData.graduationYear), 10);
+
+      const { data, error } = await supabase.rpc('save_profile_data', {
+        p_department: formData.department.trim(),
+        p_section: formData.section.trim().toUpperCase(),
+        p_class_name: formData.className.trim(),
+        p_batch: formData.batch.trim(),
+        p_graduation_year: gradYearNum,
+        p_gender: formData.gender.trim(),
+      });
+
+      if (error) {
+        console.warn('[ProfileService] RPC call save_profile_data error:', error);
+
+        // Fallback only if Supabase is unconfigured
+        if (!isSupabaseConfigured) {
+          console.info('[ProfileService] Running local development fallback for profile setup');
+          await supabase
+            .from('profiles')
+            .update({
+              department: formData.department.trim(),
+              section: formData.section.trim().toUpperCase(),
+              class_name: formData.className.trim(),
+              batch: formData.batch.trim(),
+              graduation_year: gradYearNum,
+              gender: formData.gender.trim(),
+              profile_completed: true,
+            })
+            .eq('id', currentUserId);
+
+          return {
+            success: true,
+            data: { profileCompleted: true },
+            error: null,
+          };
+        }
+
+        return {
+          success: false,
+          data: null,
+          error: {
+            code: error.code || 'SAVE_FAILED',
+            message: error.message || 'Failed to save profile information on server.',
+          },
+        };
+      }
+
+      const response = data as {
+        success?: boolean;
+        error?: string;
+        message?: string;
+        profile_completed?: boolean;
+      } | null;
+
+      if (response && response.success === false) {
+        return {
+          success: false,
+          data: null,
+          error: {
+            code: response.error || 'SAVE_REJECTED',
+            message: response.message || 'Unable to save profile setup.',
+          },
+        };
+      }
+
+      return {
+        success: true,
+        data: { profileCompleted: Boolean(response?.profile_completed ?? true) },
+        error: null,
+      };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown profile save error';
       return {
         success: false,
         data: null,

@@ -79,3 +79,17 @@ export interface AnonymousIdentity {
   avatarId: string;                // Public avatar identifier
   avatarConfig?: AvatarConfig | Record<string, unknown>; // Visual rendering properties
 }
+
+/**
+ * Validated Form Payload for Phase 8 Campus Profile Setup.
+ * All fields are strictly private matching metadata.
+ */
+export interface ProfileSetupFormData {
+  department: string;              // Institutional department code (e.g. 'CSE', 'IT')
+  section: string;                 // Section / division (e.g. 'A', 'B')
+  className: string;               // Academic year / class level (e.g. '3rd Year')
+  batch: string;                   // Academic batch (e.g. '2023-2027')
+  graduationYear: number;          // Realistic expected graduation year (e.g. 2027)
+  gender: string;                  // Self-reported gender identity
+}
+

@@ -4,6 +4,7 @@ import { MessageSquare, Shield, Menu, X, LogIn, LogOut } from 'lucide-react';
 import { Badge } from './Badge';
 import { Avatar } from './Avatar';
 import { useAuth } from '../context';
+import { isSupabaseConfigured } from '../lib/supabase';
 
 export interface NavbarProps {
   isAuthenticated?: boolean;
@@ -18,7 +19,9 @@ export const Navbar: React.FC<NavbarProps> = () => {
   const navLinks = [
     { name: 'Home', path: '/home' },
     { name: 'Matchmaking', path: '/matching' },
-    { name: 'Onboarding', path: '/profile/setup' },
+    ...(profile?.profile_completed
+      ? [{ name: 'Avatar', path: '/avatar' }]
+      : [{ name: 'Onboarding', path: '/profile/setup' }]),
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -45,6 +48,13 @@ export const Navbar: React.FC<NavbarProps> = () => {
                   Campus
                 </Badge>
               </span>
+              {import.meta.env.DEV && (
+                <span className="hidden lg:inline-flex items-center gap-1">
+                  <Badge variant={isSupabaseConfigured ? 'success' : 'warning'} size="sm" withDot>
+                    {isSupabaseConfigured ? 'BACKEND: SUPABASE LIVE' : 'MOCK DEV'}
+                  </Badge>
+                </span>
+              )}
             </div>
             <span className="text-[11px] text-slate-400 font-medium hidden xs:block">
               Anonymous Student Community

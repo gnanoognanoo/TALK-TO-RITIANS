@@ -112,6 +112,74 @@ This document describes the foundational database architecture, PostgreSQL schem
 
 ---
 
+### 2.4 `matchmaking_queue`
+**Purpose**: Atomic random matchmaking pool.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `UUID` | `PRIMARY KEY DEFAULT gen_random_uuid()` | Queue entry identifier. |
+| `user_id` | `UUID` | `NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE` | Queue applicant. |
+| `joined_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT timezone('utc'::text, now())` | Time user joined queue. |
+| `status` | `TEXT` | `NOT NULL DEFAULT 'searching'` | Status (`searching`, `matched`, `cancelled`, `expired`). |
+| `heartbeat_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT timezone('utc'::text, now())` | Updated every 3-5 seconds. |
+| `matched_room_id` | `UUID` | `NULL` | Assigned when pairing occurs. |
+| `matched_user_id` | `UUID` | `NULL` | Internal paired user ID. |
+
+**RLS Enforcement**: Restricted to `auth.uid() = user_id`. Realtime publication enabled.
+
+---
+
+### 2.5 `chat_rooms`
+**Purpose**: 1-to-1 conversation session container.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `UUID` | `PRIMARY KEY DEFAULT gen_random_uuid()` | Room UUID. |
+| `user_1` | `UUID` | `NOT NULL REFERENCES auth.users(id)` | First participant. |
+| `user_2` | `UUID` | `NOT NULL REFERENCES auth.users(id)` | Second participant (`CHECK user_1 <> user_2`). |
+| `status` | `TEXT` | `NOT NULL DEFAULT 'active'` | Session status (`active`, `ended`, `skipped`). |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT timezone('utc'::text, now())` | Room start timestamp. |
+| `ended_at` | `TIMESTAMPTZ` | `NULL` | Room termination timestamp. |
+| `end_reason` | `TEXT` | `NULL` | Reason (`skip`, `leave`, `disconnect`). |
+| `user_1_heartbeat_at` | `TIMESTAMPTZ` | `NULL` | User 1 presence heartbeat. |
+| `user_2_heartbeat_at` | `TIMESTAMPTZ` | `NULL` | User 2 presence heartbeat. |
+
+**RLS Enforcement**: Restricted to `auth.uid() = user_1 OR auth.uid() = user_2`. Realtime publication enabled.
+
+---
+
+### 2.6 `chat_messages`
+**Purpose**: Realtime text messages exchanged within an active conversation room.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `UUID` | `PRIMARY KEY DEFAULT gen_random_uuid()` | Message UUID. |
+| `room_id` | `UUID` | `NOT NULL REFERENCES chat_rooms(id) ON DELETE CASCADE` | Associated room. |
+| `sender_id` | `UUID` | `NOT NULL REFERENCES auth.users(id)` | Message author. |
+| `content` | `TEXT` | `NOT NULL` | Text content (1-1000 characters). |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT timezone('utc'::text, now())` | Timestamp. |
+| `message_type` | `TEXT` | `NOT NULL DEFAULT 'text'` | Type (`text`, `system`). |
+
+**RLS Enforcement**:
+- **SELECT**: Restricted to room participants (`auth.uid() IN (SELECT user_1 FROM chat_rooms WHERE id = room_id UNION SELECT user_2 FROM chat_rooms WHERE id = room_id)`).
+- **INSERT**: Requires room status = `active` and `sender_id = auth.uid()`. Realtime publication enabled.
+
+---
+
+### 2.7 `rate_limits`
+**Purpose**: High-frequency abuse prevention sliding window tracking.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `UUID` | `PRIMARY KEY DEFAULT gen_random_uuid()` | Record UUID. |
+| `user_id` | `UUID` | `NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE` | Actor UUID. |
+| `action` | `TEXT` | `NOT NULL` | Action key (e.g. `join_matchmaking`, `send_message`, `skip_room`). |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT timezone('utc'::text, now())` | Action timestamp. |
+
+**RLS Enforcement**: Restricted to `auth.uid() = user_id`.
+
+---
+
 ## 3. Sanitized Public View
 
 ### `public_anonymous_profiles`
