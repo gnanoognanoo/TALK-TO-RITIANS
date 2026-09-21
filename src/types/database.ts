@@ -179,6 +179,12 @@ export interface Database {
         };
         Returns: Json;
       };
+      save_avatar_config: {
+        Args: {
+          p_config: Json;
+        };
+        Returns: Json;
+      };
     };
   };
 }

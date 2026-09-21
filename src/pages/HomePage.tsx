@@ -39,7 +39,12 @@ export const HomePage: React.FC = () => {
 
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <Avatar size="xl" initials={initials} presence="online" />
+            <Avatar
+              size="xl"
+              avatarConfig={profile?.avatar_config as any}
+              initials={initials}
+              presence="online"
+            />
             <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">

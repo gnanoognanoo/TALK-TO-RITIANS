@@ -1,4 +1,6 @@
 import React from 'react';
+import { AvatarConfig, isValidAvatarConfig } from '../types';
+import { AvatarRenderer } from '../features/avatar';
 
 export type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 export type PresenceStatus = 'online' | 'matching' | 'offline' | 'none';
@@ -6,6 +8,7 @@ export type PresenceStatus = 'online' | 'matching' | 'offline' | 'none';
 export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
   size?: AvatarSize;
   src?: string;
+  avatarConfig?: AvatarConfig | Record<string, unknown> | null;
   alt?: string;
   initials?: string;
   icon?: React.ReactNode;
@@ -31,6 +34,7 @@ const presenceClasses: Record<Exclude<PresenceStatus, 'none'>, string> = {
 export const Avatar: React.FC<AvatarProps> = ({
   size = 'md',
   src,
+  avatarConfig,
   alt = 'Avatar',
   initials,
   icon,
@@ -41,11 +45,16 @@ export const Avatar: React.FC<AvatarProps> = ({
 }) => {
   const config = sizeClasses[size];
   const radius = shape === 'circle' ? 'rounded-full' : 'rounded-2xl';
+  const hasModularConfig = Boolean(
+    avatarConfig &&
+      typeof avatarConfig === 'object' &&
+      ('face' in avatarConfig || 'skin' in avatarConfig || isValidAvatarConfig(avatarConfig))
+  );
 
   return (
     <div
       className={`
-        relative inline-flex items-center justify-center shrink-0 select-none
+        relative inline-flex items-center justify-center shrink-0 select-none overflow-hidden
         bg-gradient-to-br from-brand-600/20 via-indigo-600/20 to-purple-600/20
         border border-brand-500/30 text-brand-300 shadow-inner
         ${radius} ${config.box} ${className}
@@ -58,6 +67,11 @@ export const Avatar: React.FC<AvatarProps> = ({
         <img
           src={src}
           alt={alt}
+          className={`h-full w-full object-cover ${radius}`}
+        />
+      ) : hasModularConfig ? (
+        <AvatarRenderer
+          config={avatarConfig}
           className={`h-full w-full object-cover ${radius}`}
         />
       ) : icon ? (

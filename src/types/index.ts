@@ -10,3 +10,4 @@ export * from './matchmaking';
 export * from './qr';
 export * from './api';
 export * from './database';
+export * from './avatar';

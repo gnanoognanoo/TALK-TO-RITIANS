@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { MessageSquare, Shield, Menu, X, LogIn, LogOut, User as UserIcon } from 'lucide-react';
+import { MessageSquare, Shield, Menu, X, LogIn, LogOut } from 'lucide-react';
 import { Badge } from './Badge';
+import { Avatar } from './Avatar';
 import { useAuth } from '../context';
 
 export interface NavbarProps {
@@ -81,8 +82,13 @@ export const Navbar: React.FC<NavbarProps> = () => {
 
           {user ? (
             <div className="flex items-center gap-2.5">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs">
-                <UserIcon className="h-3.5 w-3.5 text-brand-400" />
+              <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs">
+                <Avatar
+                  size="xs"
+                  avatarConfig={profile?.avatar_config as any}
+                  initials={profile?.display_username?.slice(0, 2) || 'ST'}
+                  shape="circle"
+                />
                 <span className="font-semibold text-slate-200">
                   {profile?.display_username || 'Student'}
                 </span>
@@ -167,8 +173,13 @@ export const Navbar: React.FC<NavbarProps> = () => {
           <div className="pt-2 border-t border-slate-800/80 flex flex-col gap-2">
             {user ? (
               <>
-                <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs">
-                  <UserIcon className="h-4 w-4 text-brand-400" />
+                <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs">
+                  <Avatar
+                    size="sm"
+                    avatarConfig={profile?.avatar_config as any}
+                    initials={profile?.display_username?.slice(0, 2) || 'ST'}
+                    shape="circle"
+                  />
                   <span className="font-semibold text-slate-200 truncate">
                     {profile?.display_username || 'Student'}
                   </span>

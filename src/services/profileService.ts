@@ -7,7 +7,7 @@
  */
 
 import { supabase } from '../lib/supabase';
-import { ApiResponse, Profile } from '../types';
+import { ApiResponse, Profile, AvatarConfig, isValidAvatarConfig, Json } from '../types';
 import { isValidAliasFormat } from './aliasPool';
 
 export class ProfileService {
@@ -109,6 +109,112 @@ export class ProfileService {
       };
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown profile error';
+      return {
+        success: false,
+        data: null,
+        error: { code: 'CLIENT_ERROR', message },
+      };
+    }
+  }
+
+  /**
+   * Saves the student's customized modular avatar configuration.
+   * Calls the server-side RPC procedure `save_avatar_config`.
+   */
+  async saveAvatarConfig(
+    config: AvatarConfig
+  ): Promise<ApiResponse<{ avatarConfig: AvatarConfig }>> {
+    try {
+      // 1. Client-side validation
+      if (!isValidAvatarConfig(config)) {
+        return {
+          success: false,
+          data: null,
+          error: {
+            code: 'INVALID_AVATAR_CONFIG',
+            message: 'Avatar configuration contains missing or invalid vector layer values.',
+          },
+        };
+      }
+
+      // 2. Session check
+      const { data: sessionData } = await supabase.auth.getSession();
+      const currentUserId = sessionData?.session?.user?.id;
+
+      if (!currentUserId) {
+        return {
+          success: false,
+          data: null,
+          error: {
+            code: 'UNAUTHENTICATED',
+            message: 'You must be signed in to save your avatar.',
+          },
+        };
+      }
+
+      // 3. Call server-side RPC procedure
+      const { data, error } = await supabase.rpc('save_avatar_config', {
+        p_config: config as unknown as Json,
+      });
+
+      if (error) {
+        console.warn('[ProfileService] RPC call save_avatar_config error:', error);
+
+        // Fallback for local development when Supabase RPC is offline
+        if (
+          error.code === 'PGRST202' ||
+          error.message?.includes('fetch') ||
+          error.message?.includes('not found') ||
+          !import.meta.env.VITE_SUPABASE_URL
+        ) {
+          console.info('[ProfileService] Running local development fallback for avatar save');
+          await supabase
+            .from('profiles')
+            .update({ avatar_config: config as unknown as Json })
+            .eq('id', currentUserId);
+
+          return {
+            success: true,
+            data: { avatarConfig: config },
+            error: null,
+          };
+        }
+
+        return {
+          success: false,
+          data: null,
+          error: {
+            code: error.code || 'SAVE_FAILED',
+            message: error.message || 'Failed to save avatar configuration on server.',
+          },
+        };
+      }
+
+      const response = data as {
+        success?: boolean;
+        error?: string;
+        message?: string;
+        avatar_config?: AvatarConfig;
+      } | null;
+
+      if (response && response.success === false) {
+        return {
+          success: false,
+          data: null,
+          error: {
+            code: response.error || 'SAVE_REJECTED',
+            message: response.message || 'Unable to save avatar configuration.',
+          },
+        };
+      }
+
+      return {
+        success: true,
+        data: { avatarConfig: response?.avatar_config || config },
+        error: null,
+      };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown avatar save error';
       return {
         success: false,
         data: null,

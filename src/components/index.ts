@@ -11,3 +11,4 @@ export * from './Navbar';
 export * from './PageContainer';
 export * from './ProtectedRoute';
 export * from './QrScanner';
+export * from '../features/avatar';

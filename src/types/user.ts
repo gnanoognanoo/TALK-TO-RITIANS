@@ -6,6 +6,8 @@
  * and public anonymous identities.
  */
 
+import { AvatarConfig } from './avatar';
+
 /**
  * Account verification and onboarding states.
  */
@@ -60,7 +62,7 @@ export interface Profile {
   id: string;                      // References User(id)
   anonymousUsername: string;       // Chosen anonymous display handle (e.g., "CosmicOwl")
   avatarId: string;                // Identifier for chosen avatar/preset
-  avatarConfig?: Record<string, unknown>; // Custom color/accessory attributes
+  avatarConfig?: AvatarConfig | Record<string, unknown>; // Custom color/accessory attributes
   bio?: string;                    // Short optional anonymous tag
   interests?: string[];            // Optional topics for post-V1, placeholder in V1
   createdAt: string;               // ISO 8601 timestamp
@@ -75,5 +77,5 @@ export interface Profile {
 export interface AnonymousIdentity {
   anonymousUsername: string;       // Public pseudonym
   avatarId: string;                // Public avatar identifier
-  avatarConfig?: Record<string, unknown>; // Visual rendering properties
+  avatarConfig?: AvatarConfig | Record<string, unknown>; // Visual rendering properties
 }
