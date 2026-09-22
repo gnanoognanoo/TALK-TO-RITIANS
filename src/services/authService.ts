@@ -279,7 +279,7 @@ export class AuthService implements IAuthService {
   async signInWithGoogle(redirectTo?: string): Promise<ApiResponse<{ initiated: boolean }>> {
     try {
       const redirectUrl =
-        redirectTo || (typeof window !== 'undefined' ? `${window.location.origin}/login` : '');
+        redirectTo || (typeof window !== 'undefined' ? window.location.origin : '');
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {

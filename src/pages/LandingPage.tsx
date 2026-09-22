@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   ShieldCheck,
   Users,
@@ -9,8 +9,22 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { Button, Card, Badge } from '../components';
+import { useAuth } from '../context';
 
 export const LandingPage: React.FC = () => {
+  const { user, session, getRedirectPath } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect to onboarding or home when returning from OAuth with tokens/code
+  useEffect(() => {
+    if (user && session) {
+      const hash = typeof window !== 'undefined' ? window.location.hash : '';
+      const search = typeof window !== 'undefined' ? window.location.search : '';
+      if (hash.includes('access_token') || search.includes('code=')) {
+        navigate(getRedirectPath(), { replace: true });
+      }
+    }
+  }, [user, session, getRedirectPath, navigate]);
   return (
     <div className="flex-1 flex flex-col bg-[#F8FAFC]">
       {/* =========================================================================
