@@ -23,6 +23,9 @@ import {
 export interface IAuthService {
   getCurrentUser(): Promise<ApiResponse<User>>;
   signInWithPersonalEmail(email: string): Promise<ApiResponse<{ confirmationSent: boolean }>>;
+  signInWithPassword(email: string, password: string): Promise<ApiResponse<{ session: any | null }>>;
+  signUpWithPassword(email: string, password: string): Promise<ApiResponse<{ user: any; session: any | null }>>;
+  resetPassword(email: string): Promise<ApiResponse<{ sent: boolean }>>;
   signOut(): Promise<ApiResponse<void>>;
 }
 

@@ -20,6 +20,8 @@ export interface AuthContextType {
   loading: boolean;
   signInWithEmail: (email: string) => Promise<{ success: boolean; error?: string }>;
   signInWithPassword: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  signUpWithPassword: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
   signInWithGoogle: () => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -192,6 +194,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   /**
+   * Personal Email & Password Sign Up (Immediate Authentication)
+   */
+  const signUpWithPassword = async (
+    email: string,
+    password: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    const res = await authService.signUpWithPassword(email, password);
+    if (!res.success) {
+      return { success: false, error: res.error?.message || 'Registration failed' };
+    }
+    if (res.data?.user) {
+      await loadProfile(res.data.user.id);
+    }
+    return { success: true };
+  };
+
+  /**
+   * Password Reset via Email
+   */
+  const resetPassword = async (email: string): Promise<{ success: boolean; error?: string }> => {
+    const res = await authService.resetPassword(email);
+    if (!res.success) {
+      return { success: false, error: res.error?.message || 'Password reset failed' };
+    }
+    return { success: true };
+  };
+
+  /**
    * Google OAuth Sign In
    */
   const signInWithGoogle = async (): Promise<{ success: boolean; error?: string }> => {
@@ -253,6 +283,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     loading,
     signInWithEmail,
     signInWithPassword,
+    signUpWithPassword,
+    resetPassword,
     signInWithGoogle,
     signOut,
     refreshProfile,

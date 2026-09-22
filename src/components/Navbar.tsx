@@ -112,7 +112,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
                 Login
               </Link>
               <Link
-                to="/login"
+                to="/login?mode=signup"
                 className="inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white shadow-sm transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
               >
                 <span>Get Started</span>
@@ -133,7 +133,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
             </button>
           ) : (
             <Link
-              to="/login"
+              to="/login?mode=signup"
               className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-600 text-white"
             >
               Get Started

@@ -144,7 +144,7 @@ export class AuthService implements IAuthService {
   }
 
   /**
-   * Direct password sign-in for testing environments.
+   * Direct password sign-in for returning users.
    */
   async signInWithPassword(
     email: string,
@@ -171,6 +171,100 @@ export class AuthService implements IAuthService {
       };
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Sign in failed';
+      return {
+        success: false,
+        data: null,
+        error: { code: 'NETWORK_ERROR', message },
+      };
+    }
+  }
+
+  /**
+   * Registers a new student account with personal email and password.
+   * Auto-authenticates immediately for direct continuation to college verification.
+   */
+  async signUpWithPassword(
+    email: string,
+    password: string
+  ): Promise<ApiResponse<{ user: any; session: Session | null }>> {
+    try {
+      const cleanEmail = email.trim().toLowerCase();
+      const { data, error } = await supabase.auth.signUp({
+        email: cleanEmail,
+        password,
+      });
+
+      if (error) {
+        return {
+          success: false,
+          data: null,
+          error: { code: 'SIGNUP_FAILED', message: error.message },
+        };
+      }
+
+      // If session is returned directly, student is immediately authenticated
+      if (data.session) {
+        return {
+          success: true,
+          data: { user: data.user, session: data.session },
+          error: null,
+        };
+      }
+
+      // If email autoconfirm is handled by backend trigger, sign in immediately to obtain active session
+      const signInRes = await supabase.auth.signInWithPassword({
+        email: cleanEmail,
+        password,
+      });
+
+      if (signInRes.data?.session) {
+        return {
+          success: true,
+          data: { user: signInRes.data.user, session: signInRes.data.session },
+          error: null,
+        };
+      }
+
+      return {
+        success: true,
+        data: { user: data.user, session: null },
+        error: null,
+      };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Registration failed';
+      return {
+        success: false,
+        data: null,
+        error: { code: 'NETWORK_ERROR', message },
+      };
+    }
+  }
+
+  /**
+   * Sends a password reset email if requested.
+   */
+  async resetPassword(email: string): Promise<ApiResponse<{ sent: boolean }>> {
+    try {
+      const redirectUrl = typeof window !== 'undefined' ? `${window.location.origin}/login` : '';
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+        redirectTo: redirectUrl,
+      });
+
+      if (error) {
+        return {
+          success: false,
+          data: null,
+          error: { code: 'RESET_FAILED', message: error.message },
+        };
+      }
+
+      return {
+        success: true,
+        data: { sent: true },
+        error: null,
+      };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Password reset failed';
       return {
         success: false,
         data: null,
