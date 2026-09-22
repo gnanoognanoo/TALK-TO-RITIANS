@@ -17,15 +17,15 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    'bg-brand-600 hover:bg-brand-500 text-white shadow-lg shadow-brand-600/25 border border-brand-500/30 active:scale-[0.98]',
+    'bg-brand-600 hover:bg-brand-700 text-white shadow-sm border border-transparent active:scale-[0.98]',
   secondary:
-    'bg-slate-800/90 hover:bg-slate-750 text-slate-200 border border-slate-700/70 hover:border-slate-600 active:scale-[0.98]',
+    'bg-white hover:bg-slate-50 text-gray-700 border border-gray-200 hover:border-gray-300 shadow-sm active:scale-[0.98]',
   danger:
-    'bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 hover:border-rose-500/60 active:scale-[0.98]',
+    'bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 hover:border-rose-300 active:scale-[0.98]',
   outline:
-    'bg-transparent hover:bg-slate-800/50 text-slate-200 border border-slate-700 hover:border-slate-600 active:scale-[0.98]',
+    'bg-transparent hover:bg-slate-100 text-gray-700 border border-gray-300 hover:border-gray-400 active:scale-[0.98]',
   ghost:
-    'bg-transparent hover:bg-slate-800/60 text-slate-300 hover:text-white active:scale-[0.98]',
+    'bg-transparent hover:bg-slate-100 text-gray-600 hover:text-gray-900 active:scale-[0.98]',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
@@ -62,7 +62,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         aria-busy={isLoading}
         className={`
           inline-flex items-center justify-center transition-all duration-200 select-none
-          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white
           disabled:opacity-50 disabled:pointer-events-none disabled:shadow-none
           ${variantStyles[variant]}
           ${sizeStyles[size]}

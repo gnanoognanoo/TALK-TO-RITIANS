@@ -20,15 +20,15 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
     <div
       className={`
         flex flex-col items-center justify-center text-center p-8 sm:p-12
-        rounded-2xl border border-dashed border-slate-800 bg-slate-950/40 ${className}
+        rounded-2xl border border-dashed border-gray-200 bg-white/80 shadow-sm ${className}
       `.trim()}
     >
-      <div className="h-14 w-14 rounded-2xl bg-brand-500/10 border border-brand-500/20 text-brand-400 flex items-center justify-center mb-4 shadow-inner">
+      <div className="h-14 w-14 rounded-2xl bg-brand-50 border border-brand-100 text-brand-600 flex items-center justify-center mb-4 shadow-sm">
         {icon || <MessageSquareOff className="h-7 w-7" aria-hidden="true" />}
       </div>
 
-      <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">{title}</h3>
-      <p className="text-xs sm:text-sm text-slate-400 max-w-sm mt-1.5 leading-relaxed">
+      <h3 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">{title}</h3>
+      <p className="text-xs sm:text-sm text-gray-500 max-w-sm mt-1.5 leading-relaxed">
         {description}
       </p>
 

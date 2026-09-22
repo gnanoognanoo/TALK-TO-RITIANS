@@ -28,6 +28,8 @@ import {
   HelpCircle,
   Unlink,
   AlertTriangle,
+  CreditCard,
+  Hash,
 } from 'lucide-react';
 import {
   Button,
@@ -143,38 +145,38 @@ export const VerifyCollegePage: React.FC = () => {
 
   return (
     <>
-      <Card className="border-slate-800 bg-slate-900/80 shadow-2xl">
-        <CardHeader className="text-center">
+      <Card className="border-gray-200 bg-white shadow-card">
+        <CardHeader className="text-center pb-3">
           <div className="mx-auto mb-2">
             <Badge variant="brand" size="sm" withDot>
               Step 1 &bull; College Verification
             </Badge>
           </div>
-          <CardTitle>
-            {viewState === 'scanning' && 'Scan Student ID Card'}
+          <CardTitle className="text-2xl font-bold text-gray-900">
+            {viewState === 'scanning' && 'Verify Your College ID'}
             {viewState === 'review' && 'Review Detected Identity'}
-            {viewState === 'success' && 'Student ID Verified!'}
+            {viewState === 'success' && 'College Identity Verified!'}
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-sm text-gray-500">
             {viewState === 'scanning' &&
-              'Scan the QR code printed on the back of your physical college ID card to link your student status.'}
+              'Scan the QR code on the back of your RIT ID card.'}
             {viewState === 'review' &&
               'Confirm the student information decoded from your card before choosing your anonymous handle.'}
             {viewState === 'success' &&
-              'Your college identity is securely verified and linked. Your real student information will remain strictly private.'}
+              'Your college identity has been linked successfully.'}
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 pt-2">
           {/* Active Verification Status Banner (If already linked) */}
           {profile?.college_identity_linked && viewState === 'scanning' && (
-            <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between">
+            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />
+                <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
                 <div>
-                  <h4 className="text-xs font-bold text-white">College ID Already Linked</h4>
-                  <p className="text-[11px] text-slate-300">
-                    Dept: <span className="font-semibold text-emerald-400">{profile.department || 'RIT'}</span>
+                  <h4 className="text-xs font-bold text-gray-900">College ID Already Linked</h4>
+                  <p className="text-[11px] text-gray-600">
+                    Dept: <span className="font-semibold text-emerald-700">{profile.department || 'RIT'}</span>
                     {profile.batch && ` • Batch: ${profile.batch}`}
                   </p>
                 </div>
@@ -184,8 +186,8 @@ export const VerifyCollegePage: React.FC = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => setShowUnlinkModal(true)}
-                leftIcon={<Unlink className="h-3.5 w-3.5 text-rose-400" />}
-                className="hover:border-rose-500/50 hover:text-rose-300 text-xs"
+                leftIcon={<Unlink className="h-3.5 w-3.5 text-rose-500" />}
+                className="hover:border-rose-300 hover:text-rose-600 text-xs"
               >
                 Unlink Card
               </Button>
@@ -193,11 +195,11 @@ export const VerifyCollegePage: React.FC = () => {
           )}
 
           {/* =========================================================================
-              STATE 1: SCANNING VIEW
+              STATE 1: SCANNING VIEW (Phase 4)
               ========================================================================= */}
           {viewState === 'scanning' && (
             <div className="space-y-5">
-              {/* Live Camera Scanner */}
+              {/* Live Camera Scanner with subtle corner brackets */}
               <QrScanner onScan={handleQrCaptured} onError={(err) => setScanError(err)} />
 
               {/* Scan Error Message */}
@@ -209,15 +211,27 @@ export const VerifyCollegePage: React.FC = () => {
                 />
               )}
 
-              {/* Privacy Guarantee Banner */}
-              <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 text-xs text-slate-400 space-y-1.5">
-                <div className="flex items-center gap-1.5 font-semibold text-emerald-400">
-                  <ShieldCheck className="h-4 w-4 shrink-0" />
+              {/* Where to find it? Help Card */}
+              <div className="p-4 rounded-xl bg-gray-50 border border-gray-200 flex items-start gap-3">
+                <div className="h-9 w-9 rounded-lg bg-brand-50 border border-brand-100 text-brand-600 flex items-center justify-center shrink-0">
+                  <CreditCard className="h-5 w-5" />
+                </div>
+                <div className="text-xs space-y-0.5">
+                  <span className="font-bold text-gray-900">Where to find it?</span>
+                  <p className="text-gray-500 leading-relaxed">
+                    The QR code is printed on the back side of your physical college ID card.
+                  </p>
+                </div>
+              </div>
+
+              {/* Privacy Guarantee Notice */}
+              <div className="p-3.5 rounded-xl bg-brand-50/50 border border-brand-100 text-xs text-gray-600 space-y-1">
+                <div className="flex items-center gap-1.5 font-semibold text-brand-700">
+                  <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-600" />
                   <span>Zero-Storage Camera Privacy</span>
                 </div>
-                <p className="text-[11px] leading-relaxed text-slate-400">
-                  Your camera stream is processed entirely within your browser memory. We never upload,
-                  record, or store camera frames, snapshots, or photos of your student ID card.
+                <p className="text-[11px] leading-relaxed text-gray-500">
+                  Camera frames are processed in local memory. We never record, upload, or store snapshots of your card.
                 </p>
               </div>
             </div>
@@ -227,27 +241,25 @@ export const VerifyCollegePage: React.FC = () => {
               STATE 2: QR REVIEW SCREEN
               ========================================================================= */}
           {viewState === 'review' && parsedResult && (
-            <div className="space-y-5 animate-in fade-in zoom-in-95">
-              {/* Development Mock Warning Banner */}
+            <div className="space-y-5 animate-in fade-in">
+              {/* Development Mock Notice Banner */}
               {parsedResult.isMockData && (
-                <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 space-y-1">
+                <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 space-y-1">
                   <div className="flex items-center gap-1.5 font-bold text-xs">
-                    <AlertCircle className="h-4 w-4 text-amber-400 shrink-0" />
+                    <AlertCircle className="h-4 w-4 text-amber-600 shrink-0" />
                     <span>DEVELOPMENT MOCK DATA DETECTED</span>
                   </div>
-                  <p className="text-[11px] text-amber-200/90 leading-relaxed">
-                    Real RIT ID card format will be calibrated once physical card samples are scanned.
-                    This verification uses simulated student credentials for local testing and does NOT
-                    represent institutional RIT verification.
+                  <p className="text-[11px] text-amber-800 leading-relaxed">
+                    This verification uses simulated student credentials for local testing.
                   </p>
                 </div>
               )}
 
               {/* Card Showing Decoded Student Information */}
-              <div className="rounded-xl bg-slate-950 border border-slate-800 p-4 space-y-3 shadow-inner">
-                <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
-                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                    Decoded Card Fields
+              <div className="rounded-xl bg-gray-50 border border-gray-200 p-4 space-y-3">
+                <div className="flex items-center justify-between border-b border-gray-200 pb-2.5">
+                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Decoded Card Attributes
                   </span>
                   <Badge variant={parsedResult.isMockData ? 'warning' : 'success'} size="sm">
                     {parsedResult.isMockData ? 'Dev Mock' : 'Card Scanned'}
@@ -257,40 +269,40 @@ export const VerifyCollegePage: React.FC = () => {
                 <div className="space-y-2.5 pt-1">
                   {/* Detected Name */}
                   <div className="flex items-center justify-between text-xs">
-                    <span className="flex items-center gap-1.5 text-slate-400 font-medium">
-                      <User className="h-3.5 w-3.5 text-slate-500" />
+                    <span className="flex items-center gap-1.5 text-gray-500 font-medium">
+                      <User className="h-3.5 w-3.5 text-gray-400" />
                       Detected Name:
                     </span>
-                    <span className="font-semibold text-white">
+                    <span className="font-semibold text-gray-900">
                       {parsedResult.fields.name || 'Not Specified'}
                     </span>
                   </div>
 
                   {/* Detected Department */}
                   <div className="flex items-center justify-between text-xs">
-                    <span className="flex items-center gap-1.5 text-slate-400 font-medium">
-                      <GraduationCap className="h-3.5 w-3.5 text-slate-500" />
+                    <span className="flex items-center gap-1.5 text-gray-500 font-medium">
+                      <GraduationCap className="h-3.5 w-3.5 text-gray-400" />
                       Detected Department:
                     </span>
-                    <span className="font-semibold text-brand-300">
+                    <span className="font-semibold text-brand-600">
                       {parsedResult.fields.department || 'Not Specified'}
                     </span>
                   </div>
 
                   {/* Detected Batch */}
                   <div className="flex items-center justify-between text-xs">
-                    <span className="flex items-center gap-1.5 text-slate-400 font-medium">
-                      <Calendar className="h-3.5 w-3.5 text-slate-500" />
+                    <span className="flex items-center gap-1.5 text-gray-500 font-medium">
+                      <Calendar className="h-3.5 w-3.5 text-gray-400" />
                       Detected Batch:
                     </span>
-                    <span className="font-mono font-semibold text-slate-200">
+                    <span className="font-mono font-semibold text-gray-800">
                       {parsedResult.fields.batch || 'Not Specified'}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Link Error Message (Duplicate or Validation Failure) */}
+              {/* Link Error Message */}
               {linkError && (
                 <ErrorMessage
                   title="Verification Rejected"
@@ -299,12 +311,11 @@ export const VerifyCollegePage: React.FC = () => {
                 />
               )}
 
-              {/* Security Warning Notice */}
-              <div className="p-3 rounded-lg bg-slate-950/40 border border-slate-800/60 text-[11px] text-slate-400 leading-relaxed flex items-start gap-2">
-                <HelpCircle className="h-4 w-4 text-slate-500 shrink-0 mt-0.5" />
+              {/* Security Notice */}
+              <div className="p-3 rounded-lg bg-gray-50 border border-gray-200 text-[11px] text-gray-500 leading-relaxed flex items-start gap-2">
+                <HelpCircle className="h-4 w-4 text-gray-400 shrink-0 mt-0.5" />
                 <span>
-                  QR possession verifies card attributes. Server-side salted fingerprinting ensures that
-                  each physical card can only be linked to a single personal account at a time.
+                  QR verification binds this physical student card to your account with cryptographic uniqueness.
                 </span>
               </div>
 
@@ -324,7 +335,7 @@ export const VerifyCollegePage: React.FC = () => {
 
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="secondary"
                   fullWidth
                   disabled={isLinking}
                   onClick={handleScanAgain}
@@ -337,38 +348,92 @@ export const VerifyCollegePage: React.FC = () => {
           )}
 
           {/* =========================================================================
-              STATE 3: SUCCESS CONFIRMATION
+              STATE 3: SUCCESS CONFIRMATION (Phase 5)
               ========================================================================= */}
           {viewState === 'success' && (
-            <div className="text-center space-y-5 animate-in zoom-in-95">
-              <div className="h-16 w-16 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 mx-auto flex items-center justify-center shadow-xl shadow-emerald-500/10">
+            <div className="text-center space-y-5 animate-in fade-in">
+              {/* Large Soft Green Circular Check Icon */}
+              <div className="h-16 w-16 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 mx-auto flex items-center justify-center shadow-sm">
                 <CheckCircle2 className="h-8 w-8" />
               </div>
 
               <div className="space-y-1.5">
-                <h3 className="text-lg font-bold text-white">
-                  {verifiedData?.alreadyLinkedToSelf ? 'Identity Confirmed!' : 'Student ID Verified!'}
+                <h3 className="text-xl font-bold text-gray-900">
+                  {verifiedData?.alreadyLinkedToSelf ? 'Identity Confirmed!' : 'College Identity Verified!'}
                 </h3>
-                <p className="text-xs text-slate-300 max-w-xs mx-auto leading-relaxed">
-                  {verifiedData?.alreadyLinkedToSelf
-                    ? 'This college identity is already linked to your personal account.'
-                    : `Your personal account is now linked to an RIT student identity (${verifiedData?.department || 'RIT'}).`}
+                <p className="text-xs text-gray-500 max-w-xs mx-auto leading-relaxed">
+                  Your college identity has been linked successfully.
                 </p>
-                {verifiedData?.identityHashPreview && (
-                  <p className="text-[11px] text-slate-500 font-mono pt-1">
-                    Fingerprint: {verifiedData.identityHashPreview}
-                  </p>
+              </div>
+
+              {/* Clean Information Card (Name, Department, Batch) */}
+              <div className="rounded-xl bg-gray-50 border border-gray-200 p-4 text-left text-xs space-y-2.5 shadow-sm">
+                <div className="flex items-center justify-between pb-2 border-b border-gray-200">
+                  <span className="font-semibold text-gray-500 uppercase tracking-wider text-[11px]">
+                    Verified Student Credentials
+                  </span>
+                  <Badge variant="success" size="sm" withDot>
+                    Linked
+                  </Badge>
+                </div>
+
+                {Boolean(parsedResult?.fields?.name || verifiedData) && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500 flex items-center gap-1.5">
+                      <User className="h-3.5 w-3.5 text-gray-400" />
+                      Name:
+                    </span>
+                    <span className="font-semibold text-gray-900">
+                      {String(parsedResult?.fields?.name || 'Verified Student')}
+                    </span>
+                  </div>
+                )}
+
+                {Boolean(parsedResult?.fields?.studentReference || (parsedResult?.fields as any)?.rollNumber) && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500 flex items-center gap-1.5">
+                      <Hash className="h-3.5 w-3.5 text-gray-400" />
+                      Roll / ID:
+                    </span>
+                    <span className="font-mono font-semibold text-gray-800">
+                      {String(parsedResult?.fields?.studentReference || (parsedResult?.fields as any)?.rollNumber)}
+                    </span>
+                  </div>
+                )}
+
+                {Boolean(verifiedData?.department || parsedResult?.fields?.department) && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500 flex items-center gap-1.5">
+                      <GraduationCap className="h-3.5 w-3.5 text-gray-400" />
+                      Department:
+                    </span>
+                    <span className="font-semibold text-brand-600">
+                      {String(verifiedData?.department || parsedResult?.fields?.department)}
+                    </span>
+                  </div>
+                )}
+
+                {Boolean(verifiedData?.batch || parsedResult?.fields?.batch) && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500 flex items-center gap-1.5">
+                      <Calendar className="h-3.5 w-3.5 text-gray-400" />
+                      Batch:
+                    </span>
+                    <span className="font-mono font-semibold text-gray-800">
+                      {String(verifiedData?.batch || parsedResult?.fields?.batch)}
+                    </span>
+                  </div>
                 )}
               </div>
 
-              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-left text-xs text-slate-400 space-y-1">
-                <div className="flex items-center gap-1.5 text-emerald-400 font-semibold">
-                  <ShieldCheck className="h-4 w-4" />
+              {/* Private Shield Note */}
+              <div className="p-3 rounded-xl bg-brand-50/60 border border-brand-100 text-left text-xs text-gray-600 space-y-1">
+                <div className="flex items-center gap-1.5 text-brand-700 font-semibold">
+                  <ShieldCheck className="h-4 w-4 text-emerald-600" />
                   <span>Private Identity Shield Active</span>
                 </div>
-                <p className="text-[11px] text-slate-400">
-                  Your real student name, roll number, and department are sealed. Next, choose your
-                  anonymous handle and avatar for campus chats.
+                <p className="text-[11px] text-gray-500">
+                  Your real name and credentials will NEVER be shown to other students in chats.
                 </p>
               </div>
 
@@ -378,18 +443,19 @@ export const VerifyCollegePage: React.FC = () => {
                 fullWidth
                 onClick={() => navigate('/username')}
                 rightIcon={<ArrowRight className="h-4 w-4" />}
+                className="py-2.5 font-semibold shadow-sm"
               >
-                Continue to Choose Anonymous Handle
+                Continue
               </Button>
             </div>
           )}
         </CardContent>
 
-        <CardFooter className="justify-center border-t border-slate-800/60 pt-4">
+        <CardFooter className="justify-center border-t border-gray-100 pt-4">
           <button
             type="button"
             onClick={() => navigate('/username')}
-            className="text-xs text-slate-400 hover:text-white underline underline-offset-4"
+            className="text-xs text-gray-400 hover:text-brand-600 underline underline-offset-4"
           >
             Skip verification for UI preview &rarr;
           </button>
@@ -403,8 +469,8 @@ export const VerifyCollegePage: React.FC = () => {
         title="Unlink College Identity"
       >
         <div className="space-y-4">
-          <div className="flex items-start gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs leading-relaxed">
-            <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
+          <div className="flex items-start gap-3 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs leading-relaxed">
+            <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
             <p>
               Unlinking your student ID card will revoke your campus chat access until another ID card
               is verified. Your audit history will be securely retained for system integrity.
@@ -422,7 +488,7 @@ export const VerifyCollegePage: React.FC = () => {
           <div className="flex gap-3 justify-end pt-2">
             <Button
               type="button"
-              variant="ghost"
+              variant="secondary"
               size="sm"
               disabled={isUnlinking}
               onClick={() => setShowUnlinkModal(false)}
@@ -434,7 +500,7 @@ export const VerifyCollegePage: React.FC = () => {
               variant="danger"
               size="sm"
               isLoading={isUnlinking}
-              loadingText="Unlinking ID card..."
+              loadingText="Unlinking..."
               onClick={handleUnlink}
             >
               Confirm Unlink

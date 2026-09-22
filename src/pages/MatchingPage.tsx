@@ -2,21 +2,20 @@
  * ============================================================================
  * TALK TO RITIANS - Random 1-to-1 Matchmaking Screen (Phase 9)
  * ============================================================================
- * Live matching interface connecting verified students.
+ * Clean, minimal student matchmaking interface connecting verified peers.
  *
  * Implements:
  * - Server-side queue joining via `joinMatchmaking()`
- * - Heartbeat lifecycle & stale queue handling (Step 6)
- * - Safe exit / cancellation on leave (Step 5)
- * - Multiple-tab safety (Step 7)
+ * - Heartbeat lifecycle & stale queue handling
+ * - Safe exit / cancellation on leave
+ * - Multiple-tab safety
  * - Strict Privacy Invariant: Receives ONLY roomId, anonymous username, and avatar.
- *   Zero personal email, roll number, department, section, batch, or gender (Step 4).
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Radio, X, Sparkles, ShieldCheck } from 'lucide-react';
-import { Button, Card, Badge, ErrorMessage } from '../components';
+import { User, X, Lightbulb } from 'lucide-react';
+import { Button, Card, ErrorMessage } from '../components';
 import { useAuth } from '../context';
 import { matchmakingService } from '../services/matchmakingService';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
@@ -140,7 +139,6 @@ export const MatchingPage: React.FC = () => {
             const newRow = payload.new as { status?: string; matched_room_id?: string; matched_user_id?: string };
 
             if (newRow.status === 'matched' && newRow.matched_room_id) {
-              // Trigger heartbeat to fetch sanitized peer info and resolve
               const hbRes = await matchmakingService.sendHeartbeat();
               if (hbRes.success && hbRes.data?.roomId) {
                 handleMatchSuccess(hbRes.data.roomId, hbRes.data.peer);
@@ -153,13 +151,13 @@ export const MatchingPage: React.FC = () => {
         .subscribe();
     }
 
-    // 5. Browser close / tab refresh handler (Step 6)
+    // 5. Browser close / tab refresh handler
     const handleBeforeUnload = () => {
       matchmakingService.leaveMatchmaking();
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
 
-    // Cleanup on unmount (Step 5)
+    // Cleanup on unmount
     return () => {
       isMounted = false;
       if (heartbeatTimerRef.current) clearInterval(heartbeatTimerRef.current);
@@ -175,44 +173,44 @@ export const MatchingPage: React.FC = () => {
   }, [user?.id, handleMatchSuccess]);
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center px-4 py-12 relative overflow-hidden">
-      {/* Ambient background glow */}
-      <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-brand-600/10 blur-[120px] rounded-full pointer-events-none"
-        aria-hidden="true"
-      />
-
-      <div className="relative z-10 w-full max-w-md text-center space-y-8">
-        {/* Radar Animation Display */}
-        <div className="relative flex items-center justify-center h-56 w-56 mx-auto">
-          {/* Outer Ripple Rings */}
-          <div className="absolute inset-0 rounded-full border border-brand-500/20 animate-ping opacity-25" />
-          <div className="absolute -inset-4 rounded-full border border-brand-500/15 animate-pulse-slow" />
-          <div className="absolute inset-4 rounded-full border border-brand-500/30" />
-          <div className="absolute inset-12 rounded-full border border-brand-500/40 bg-brand-950/30" />
-
-          {/* Center Beacon */}
-          <div className="relative z-10 h-20 w-20 rounded-2xl bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center text-white shadow-2xl shadow-brand-500/40">
-            <Radio className="h-9 w-9 animate-pulse" />
-          </div>
-
-          {/* Floating Campus Ping Indicator */}
-          <span className="absolute top-6 right-8 h-3 w-3 rounded-full bg-emerald-400 ring-2 ring-slate-950 animate-bounce" />
-        </div>
-
-        {/* Status Message */}
+    <div className="flex-1 flex flex-col items-center justify-center px-4 py-16 sm:py-24">
+      <div className="w-full max-w-md text-center space-y-8">
+        {/* Header Titles */}
         <div className="space-y-2">
-          <Badge variant="brand" size="md" withDot>
-            Pairing in Progress ({secondsElapsed}s)
-          </Badge>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            Finding a Fellow RITian...
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+            Finding Your Next Conversation...
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 max-w-sm mx-auto leading-relaxed">
-            Matching you randomly with an active, verified student from Rajalakshmi Institute of
-            Technology.
+          <p className="text-sm text-gray-500">
+            Connecting you with a random RITian
           </p>
         </div>
+
+        {/* Circular Animated Indicator with Soft Purple Rings (Zero Neon) */}
+        <div className="relative flex items-center justify-center h-64 w-64 mx-auto my-6">
+          {/* Outermost subtle pulse ring */}
+          <div className="absolute inset-0 rounded-full bg-[#F5F3FF] animate-ping opacity-30" />
+          {/* Middle soft purple rings */}
+          <div className="absolute inset-2 rounded-full border-2 border-[#EDE9FE] animate-pulse" />
+          <div className="absolute inset-8 rounded-full bg-[#F5F3FF]/70 border border-[#DDD6FE]" />
+          <div className="absolute inset-16 rounded-full bg-[#EDE9FE]/80 border border-[#C4B5FD]" />
+
+          {/* Center Avatar Badge */}
+          <div className="relative z-10 h-16 w-16 rounded-full bg-[#6C4CF5] flex items-center justify-center text-white shadow-md">
+            <User className="h-8 w-8 text-white" />
+          </div>
+        </div>
+
+        {/* Friendly Message / Icebreaker Card */}
+        <Card className="p-4 bg-white border-gray-200 shadow-sm text-left max-w-sm mx-auto">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-amber-50 text-amber-500 shrink-0">
+              <Lightbulb className="h-5 w-5" />
+            </div>
+            <p className="text-xs sm:text-sm text-gray-700 font-medium">
+              &ldquo;Good conversations start with open minds.&rdquo;
+            </p>
+          </div>
+        </Card>
 
         {/* Error notification if matching failed */}
         {matchingError && (
@@ -223,41 +221,25 @@ export const MatchingPage: React.FC = () => {
           />
         )}
 
-        {/* Icebreaker Card */}
-        <Card className="p-4 bg-slate-900/60 border-slate-800 text-left">
-          <div className="flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-amber-500/10 text-amber-400 shrink-0">
-              <Sparkles className="h-4 w-4" />
-            </div>
-            <div className="text-xs space-y-1">
-              <span className="font-semibold text-white">Icebreaker Idea:</span>
-              <p className="text-slate-400 leading-relaxed">
-                "Are you a day scholar or hosteller? What's your favorite spot on campus during breaks?"
-              </p>
-            </div>
-          </div>
-        </Card>
-
-        {/* Actions: Cancel Option */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+        {/* Cancel Action */}
+        <div className="pt-2">
           <Button
             type="button"
             variant="secondary"
-            size="lg"
+            size="md"
             onClick={handleCancel}
             disabled={isLeaving || isMatchingResolved}
             leftIcon={<X className="h-4 w-4" />}
-            className="w-full sm:w-auto shadow-lg"
+            className="px-6"
           >
-            {isLeaving ? 'Exiting Pool...' : 'Cancel & Return Home'}
+            {isLeaving ? 'Exiting...' : 'Cancel'}
           </Button>
         </div>
 
-        {/* Security / Privacy Trust Guarantee */}
-        <div className="flex items-center justify-center gap-2 text-[11px] text-slate-500">
-          <ShieldCheck className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-          <span>Random 1-to-1 matching &bull; Real identity stays sealed</span>
-        </div>
+        {/* Subtitle / elapsed timer counter */}
+        <p className="text-xs text-gray-400">
+          Searching for {secondsElapsed}s &bull; Safe & Anonymous
+        </p>
       </div>
     </div>
   );

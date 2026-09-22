@@ -64,7 +64,7 @@ export const Modal: React.FC<ModalProps> = ({
     >
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity duration-200"
+        className="fixed inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity duration-200"
         aria-hidden="true"
         onClick={onClose}
       />
@@ -73,22 +73,22 @@ export const Modal: React.FC<ModalProps> = ({
       <div
         ref={modalRef}
         className={`
-          relative w-full ${maxWidthClasses[maxWidth]} bg-slate-900 border border-slate-800
-          rounded-2xl shadow-2xl shadow-black/60 z-10 overflow-hidden transform transition-all duration-200
+          relative w-full ${maxWidthClasses[maxWidth]} bg-white border border-gray-200
+          rounded-2xl shadow-xl z-10 overflow-hidden transform transition-all duration-200
           animate-in fade-in zoom-in-95
         `.trim()}
       >
         {/* Header */}
         {(title || showCloseButton) && (
-          <div className="flex items-start justify-between p-5 pb-3 border-b border-slate-800/60">
+          <div className="flex items-start justify-between p-5 pb-3 border-b border-gray-100">
             <div>
               {title && (
-                <h2 id={titleId} className="text-lg font-bold text-white tracking-tight">
+                <h2 id={titleId} className="text-lg font-bold text-gray-900 tracking-tight">
                   {title}
                 </h2>
               )}
               {description && (
-                <p id={descriptionId} className="text-xs text-slate-400 mt-1">
+                <p id={descriptionId} className="text-xs text-gray-500 mt-1">
                   {description}
                 </p>
               )}
@@ -98,7 +98,7 @@ export const Modal: React.FC<ModalProps> = ({
                 type="button"
                 onClick={onClose}
                 aria-label="Close modal"
-                className="text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 p-1.5 rounded-lg transition-colors ml-auto"
+                className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-1.5 rounded-lg transition-colors ml-auto"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -107,11 +107,11 @@ export const Modal: React.FC<ModalProps> = ({
         )}
 
         {/* Body */}
-        <div className="p-5 text-sm text-slate-300">{children}</div>
+        <div className="p-5 text-sm text-gray-600">{children}</div>
 
         {/* Footer */}
         {footer && (
-          <div className="p-5 pt-3 border-t border-slate-800/60 bg-slate-950/40 flex items-center justify-end gap-3">
+          <div className="p-5 pt-3 border-t border-gray-100 bg-gray-50/50 flex items-center justify-end gap-3">
             {footer}
           </div>
         )}

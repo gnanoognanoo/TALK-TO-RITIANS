@@ -53,7 +53,7 @@ export const AvatarCategorySelector: React.FC<AvatarCategorySelectorProps> = ({
   return (
     <div className="space-y-6">
       {/* Category Navigation Tabs */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none border-b border-slate-800/80">
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none border-b border-gray-200">
         {CATEGORY_TABS.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
@@ -66,8 +66,8 @@ export const AvatarCategorySelector: React.FC<AvatarCategorySelectorProps> = ({
                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500
                 ${
                   isActive
-                    ? 'bg-brand-600 text-white shadow-md shadow-brand-600/30'
-                    : 'bg-slate-900/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-slate-800'
+                    ? 'bg-brand-600 text-white shadow-sm'
+                    : 'bg-white text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-gray-200'
                 }
               `.trim()}
             >
@@ -87,7 +87,7 @@ export const AvatarCategorySelector: React.FC<AvatarCategorySelectorProps> = ({
           <div className="space-y-5">
             {/* Skin Tone Swatches */}
             <div className="space-y-2.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+              <label className="text-xs font-semibold text-gray-700">
                 Skin Tone
               </label>
               <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5">
@@ -102,13 +102,13 @@ export const AvatarCategorySelector: React.FC<AvatarCategorySelectorProps> = ({
                         group p-2 rounded-xl border flex items-center gap-2.5 transition-all
                         ${
                           isSelected
-                            ? 'bg-slate-800 border-brand-500 ring-2 ring-brand-500/30 text-white'
-                            : 'bg-slate-950/50 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-300'
+                            ? 'bg-brand-50 border-brand-500 ring-2 ring-brand-100 text-brand-900 font-semibold shadow-sm'
+                            : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-900 hover:bg-gray-50'
                         }
                       `.trim()}
                     >
                       <span
-                        className="h-5 w-5 rounded-full border border-black/20 shrink-0 shadow-inner flex items-center justify-center text-slate-950"
+                        className="h-5 w-5 rounded-full border border-black/15 shrink-0 shadow-inner flex items-center justify-center text-gray-900"
                         style={{ backgroundColor: tone.color }}
                       >
                         {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
@@ -122,7 +122,7 @@ export const AvatarCategorySelector: React.FC<AvatarCategorySelectorProps> = ({
 
             {/* Face Shape */}
             <div className="space-y-2.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+              <label className="text-xs font-semibold text-gray-700">
                 Face Shape
               </label>
               <div className="grid grid-cols-3 gap-2.5">
@@ -137,8 +137,8 @@ export const AvatarCategorySelector: React.FC<AvatarCategorySelectorProps> = ({
                         p-3 rounded-xl border text-xs font-medium transition-all text-center
                         ${
                           isSelected
-                            ? 'bg-brand-600/20 border-brand-500 text-brand-300 shadow-sm'
-                            : 'bg-slate-950/50 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-300'
+                            ? 'bg-brand-50 border-brand-500 text-brand-700 ring-2 ring-brand-100 font-semibold shadow-sm'
+                            : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'
                         }
                       `.trim()}
                     >
@@ -158,7 +158,7 @@ export const AvatarCategorySelector: React.FC<AvatarCategorySelectorProps> = ({
           <div className="space-y-5">
             {/* Hair Style */}
             <div className="space-y-2.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+              <label className="text-xs font-semibold text-gray-700">
                 Hairstyle
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -173,8 +173,8 @@ export const AvatarCategorySelector: React.FC<AvatarCategorySelectorProps> = ({
                         p-3 rounded-xl border text-xs font-medium transition-all text-center
                         ${
                           isSelected
-                            ? 'bg-brand-600/20 border-brand-500 text-brand-300 shadow-sm'
-                            : 'bg-slate-950/50 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-300'
+                            ? 'bg-brand-50 border-brand-500 text-brand-700 ring-2 ring-brand-100 font-semibold shadow-sm'
+                            : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'
                         }
                       `.trim()}
                     >
@@ -187,7 +187,7 @@ export const AvatarCategorySelector: React.FC<AvatarCategorySelectorProps> = ({
 
             {/* Hair Color */}
             <div className="space-y-2.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+              <label className="text-xs font-semibold text-gray-700">
                 Hair Color
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -202,13 +202,13 @@ export const AvatarCategorySelector: React.FC<AvatarCategorySelectorProps> = ({
                         p-2 rounded-xl border flex items-center gap-2.5 transition-all
                         ${
                           isSelected
-                            ? 'bg-slate-800 border-brand-500 ring-2 ring-brand-500/30 text-white'
-                            : 'bg-slate-950/50 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-300'
+                            ? 'bg-brand-50 border-brand-500 ring-2 ring-brand-100 text-brand-900 font-semibold shadow-sm'
+                            : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-900 hover:bg-gray-50'
                         }
                       `.trim()}
                     >
                       <span
-                        className="h-4 w-4 rounded-full border border-white/20 shrink-0 shadow-sm flex items-center justify-center text-white"
+                        className="h-4 w-4 rounded-full border border-black/15 shrink-0 shadow-sm flex items-center justify-center text-white"
                         style={{ backgroundColor: col.color }}
                       >
                         {isSelected && <Check className="h-2.5 w-2.5 stroke-[3]" />}
@@ -229,7 +229,7 @@ export const AvatarCategorySelector: React.FC<AvatarCategorySelectorProps> = ({
           <div className="space-y-5">
             {/* Eyes */}
             <div className="space-y-2.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+              <label className="text-xs font-semibold text-gray-700">
                 Eyes Expression
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
@@ -244,8 +244,8 @@ export const AvatarCategorySelector: React.FC<AvatarCategorySelectorProps> = ({
                         p-2.5 rounded-xl border text-xs font-medium transition-all text-center
                         ${
                           isSelected
-                            ? 'bg-brand-600/20 border-brand-500 text-brand-300 shadow-sm'
-                            : 'bg-slate-950/50 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-300'
+                            ? 'bg-brand-50 border-brand-500 text-brand-700 ring-2 ring-brand-100 font-semibold shadow-sm'
+                            : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'
                         }
                       `.trim()}
                     >
@@ -258,7 +258,7 @@ export const AvatarCategorySelector: React.FC<AvatarCategorySelectorProps> = ({
 
             {/* Eyebrows */}
             <div className="space-y-2.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+              <label className="text-xs font-semibold text-gray-700">
                 Eyebrows Style
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -273,8 +273,8 @@ export const AvatarCategorySelector: React.FC<AvatarCategorySelectorProps> = ({
                         p-2.5 rounded-xl border text-xs font-medium transition-all text-center
                         ${
                           isSelected
-                            ? 'bg-brand-600/20 border-brand-500 text-brand-300 shadow-sm'
-                            : 'bg-slate-950/50 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-300'
+                            ? 'bg-brand-50 border-brand-500 text-brand-700 ring-2 ring-brand-100 font-semibold shadow-sm'
+                            : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'
                         }
                       `.trim()}
                     >
@@ -287,8 +287,8 @@ export const AvatarCategorySelector: React.FC<AvatarCategorySelectorProps> = ({
 
             {/* Mouth */}
             <div className="space-y-2.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
-                Mouth & Mood
+              <label className="text-xs font-semibold text-gray-700">
+                Mouth &amp; Mood
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                 {MOUTH_OPTIONS.map((opt) => {
@@ -302,8 +302,8 @@ export const AvatarCategorySelector: React.FC<AvatarCategorySelectorProps> = ({
                         p-2.5 rounded-xl border text-xs font-medium transition-all text-center
                         ${
                           isSelected
-                            ? 'bg-brand-600/20 border-brand-500 text-brand-300 shadow-sm'
-                            : 'bg-slate-950/50 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-300'
+                            ? 'bg-brand-50 border-brand-500 text-brand-700 ring-2 ring-brand-100 font-semibold shadow-sm'
+                            : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'
                         }
                       `.trim()}
                     >
@@ -323,7 +323,7 @@ export const AvatarCategorySelector: React.FC<AvatarCategorySelectorProps> = ({
           <div className="space-y-5">
             {/* Shirt Style */}
             <div className="space-y-2.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+              <label className="text-xs font-semibold text-gray-700">
                 Top Style
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -338,8 +338,8 @@ export const AvatarCategorySelector: React.FC<AvatarCategorySelectorProps> = ({
                         p-3 rounded-xl border text-xs font-medium transition-all text-center
                         ${
                           isSelected
-                            ? 'bg-brand-600/20 border-brand-500 text-brand-300 shadow-sm'
-                            : 'bg-slate-950/50 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-300'
+                            ? 'bg-brand-50 border-brand-500 text-brand-700 ring-2 ring-brand-100 font-semibold shadow-sm'
+                            : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'
                         }
                       `.trim()}
                     >
@@ -352,7 +352,7 @@ export const AvatarCategorySelector: React.FC<AvatarCategorySelectorProps> = ({
 
             {/* Shirt Color Palette */}
             <div className="space-y-2.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+              <label className="text-xs font-semibold text-gray-700">
                 Outfit Color
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -367,13 +367,13 @@ export const AvatarCategorySelector: React.FC<AvatarCategorySelectorProps> = ({
                         p-2 rounded-xl border flex items-center gap-2.5 transition-all
                         ${
                           isSelected
-                            ? 'bg-slate-800 border-brand-500 ring-2 ring-brand-500/30 text-white'
-                            : 'bg-slate-950/50 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-300'
+                            ? 'bg-brand-50 border-brand-500 ring-2 ring-brand-100 text-brand-900 font-semibold shadow-sm'
+                            : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-900 hover:bg-gray-50'
                         }
                       `.trim()}
                     >
                       <span
-                        className="h-4 w-4 rounded-full border border-white/20 shrink-0 shadow-sm flex items-center justify-center text-white"
+                        className="h-4 w-4 rounded-full border border-black/15 shrink-0 shadow-sm flex items-center justify-center text-white"
                         style={{ backgroundColor: col.color }}
                       >
                         {isSelected && <Check className="h-2.5 w-2.5 stroke-[3]" />}
@@ -393,8 +393,8 @@ export const AvatarCategorySelector: React.FC<AvatarCategorySelectorProps> = ({
         {activeTab === 'accessory' && (
           <div className="space-y-5">
             <div className="space-y-2.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
-                Campus Wear & Gear
+              <label className="text-xs font-semibold text-gray-700">
+                Campus Wear &amp; Gear
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                 {ACCESSORY_OPTIONS.map((acc) => {
@@ -408,8 +408,8 @@ export const AvatarCategorySelector: React.FC<AvatarCategorySelectorProps> = ({
                         p-3 rounded-xl border text-xs font-medium transition-all text-center
                         ${
                           isSelected
-                            ? 'bg-brand-600/20 border-brand-500 text-brand-300 shadow-sm'
-                            : 'bg-slate-950/50 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-300'
+                            ? 'bg-brand-50 border-brand-500 text-brand-700 ring-2 ring-brand-100 font-semibold shadow-sm'
+                            : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'
                         }
                       `.trim()}
                     >
@@ -428,8 +428,8 @@ export const AvatarCategorySelector: React.FC<AvatarCategorySelectorProps> = ({
         {activeTab === 'background' && (
           <div className="space-y-5">
             <div className="space-y-2.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
-                Avatar Glow & Backdrop
+              <label className="text-xs font-semibold text-gray-700">
+                Avatar Backdrop &amp; Color
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                 {BACKGROUND_THEMES.map((theme) => {
@@ -443,13 +443,13 @@ export const AvatarCategorySelector: React.FC<AvatarCategorySelectorProps> = ({
                         p-2.5 rounded-xl border flex items-center gap-2.5 transition-all text-left
                         ${
                           isSelected
-                            ? 'bg-slate-800 border-brand-500 ring-2 ring-brand-500/30 text-white'
-                            : 'bg-slate-950/50 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-300'
+                            ? 'bg-brand-50 border-brand-500 ring-2 ring-brand-100 text-brand-900 font-semibold shadow-sm'
+                            : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-900 hover:bg-gray-50'
                         }
                       `.trim()}
                     >
                       <span
-                        className={`h-4 w-4 rounded-full bg-gradient-to-br ${theme.gradient} shrink-0 border border-white/20`}
+                        className={`h-4 w-4 rounded-full bg-gradient-to-br ${theme.gradient} shrink-0 border border-black/15 shadow-sm`}
                       />
                       <span className="text-[11px] font-medium truncate">{theme.name}</span>
                     </button>

@@ -177,27 +177,27 @@ export const QrScanner: React.FC<QrScannerProps> = ({ onScan, onError, disabled 
   return (
     <div className="space-y-4">
       {/* Scanner Viewport Container */}
-      <div className="relative aspect-square max-w-[320px] mx-auto rounded-2xl bg-slate-950 border-2 border-slate-800 overflow-hidden shadow-2xl flex flex-col items-center justify-center">
+      <div className="relative aspect-square max-w-[280px] sm:max-w-[300px] mx-auto rounded-2xl bg-gray-50 border border-gray-200 overflow-hidden shadow-sm flex flex-col items-center justify-center">
         {/* DOM node where html5-qrcode attaches the <video> element */}
         <div
           id={containerId}
           className={`w-full h-full object-cover ${status === 'scanning' ? 'block' : 'hidden'}`}
         />
 
-        {/* Viewfinder Overlay with Reticles & Animated Laser */}
+        {/* Viewfinder Overlay with Subtle Corner Brackets */}
         {status === 'scanning' && (
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center p-6">
-            <div className="relative w-full h-full border border-brand-500/20 rounded-xl overflow-hidden">
+            <div className="relative w-full h-full rounded-xl overflow-hidden">
               {/* Corner brackets */}
-              <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-brand-400 rounded-tl" />
-              <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-brand-400 rounded-tr" />
-              <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-brand-400 rounded-bl" />
-              <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-brand-400 rounded-br" />
+              <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-brand-500 rounded-tl" />
+              <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-brand-500 rounded-tr" />
+              <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-brand-500 rounded-bl" />
+              <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-brand-500 rounded-br" />
 
-              {/* Animated Laser Scanning Beam */}
+              {/* Subtle Scanning Pulse Indicator */}
               <div
-                className="absolute inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-brand-400 to-transparent shadow-[0_0_12px_#818cf8] animate-pulse"
-                style={{ top: '45%' }}
+                className="absolute inset-x-4 h-0.5 bg-brand-500/60 rounded-full animate-pulse"
+                style={{ top: '48%' }}
               />
             </div>
           </div>
@@ -205,22 +205,22 @@ export const QrScanner: React.FC<QrScannerProps> = ({ onScan, onError, disabled 
 
         {/* State: Checking support */}
         {status === 'checking_support' && (
-          <div className="text-center p-6 space-y-3 text-slate-400">
-            <RefreshCw className="h-8 w-8 mx-auto text-brand-400 animate-spin" />
-            <p className="text-xs font-semibold text-white">Initializing Camera...</p>
-            <p className="text-[11px] text-slate-500">Requesting device video stream</p>
+          <div className="text-center p-6 space-y-3 text-gray-500">
+            <RefreshCw className="h-8 w-8 mx-auto text-brand-600 animate-spin" />
+            <p className="text-xs font-semibold text-gray-900">Initializing Camera...</p>
+            <p className="text-[11px] text-gray-400">Requesting device video stream</p>
           </div>
         )}
 
         {/* State: Permission Denied */}
         {status === 'permission_denied' && (
           <div className="text-center p-5 space-y-3 animate-in fade-in">
-            <div className="h-12 w-12 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 mx-auto flex items-center justify-center">
+            <div className="h-12 w-12 rounded-full bg-amber-50 text-amber-600 border border-amber-200 mx-auto flex items-center justify-center">
               <CameraOff className="h-6 w-6" />
             </div>
             <div className="space-y-1">
-              <h4 className="text-sm font-bold text-white">Camera Access Denied</h4>
-              <p className="text-[11px] text-slate-400 leading-relaxed max-w-[240px] mx-auto">
+              <h4 className="text-sm font-bold text-gray-900">Camera Access Denied</h4>
+              <p className="text-[11px] text-gray-500 leading-relaxed max-w-[240px] mx-auto">
                 {errorMessage}
               </p>
             </div>
@@ -239,12 +239,12 @@ export const QrScanner: React.FC<QrScannerProps> = ({ onScan, onError, disabled 
         {/* State: No Camera */}
         {status === 'no_camera' && (
           <div className="text-center p-5 space-y-3 animate-in fade-in">
-            <div className="h-12 w-12 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 mx-auto flex items-center justify-center">
+            <div className="h-12 w-12 rounded-full bg-rose-50 text-rose-600 border border-rose-200 mx-auto flex items-center justify-center">
               <CameraOff className="h-6 w-6" />
             </div>
             <div className="space-y-1">
-              <h4 className="text-sm font-bold text-white">No Camera Found</h4>
-              <p className="text-[11px] text-slate-400 leading-relaxed max-w-[240px] mx-auto">
+              <h4 className="text-sm font-bold text-gray-900">No Camera Found</h4>
+              <p className="text-[11px] text-gray-500 leading-relaxed max-w-[240px] mx-auto">
                 {errorMessage}
               </p>
             </div>
@@ -263,12 +263,12 @@ export const QrScanner: React.FC<QrScannerProps> = ({ onScan, onError, disabled 
         {/* State: Scan Error */}
         {status === 'scan_error' && (
           <div className="text-center p-5 space-y-3 animate-in fade-in">
-            <div className="h-12 w-12 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 mx-auto flex items-center justify-center">
+            <div className="h-12 w-12 rounded-full bg-rose-50 text-rose-600 border border-rose-200 mx-auto flex items-center justify-center">
               <AlertTriangle className="h-6 w-6" />
             </div>
             <div className="space-y-1">
-              <h4 className="text-sm font-bold text-white">Scanner Interrupted</h4>
-              <p className="text-[11px] text-slate-400 leading-relaxed max-w-[240px] mx-auto">
+              <h4 className="text-sm font-bold text-gray-900">Scanner Interrupted</h4>
+              <p className="text-[11px] text-gray-500 leading-relaxed max-w-[240px] mx-auto">
                 {errorMessage}
               </p>
             </div>
@@ -287,11 +287,11 @@ export const QrScanner: React.FC<QrScannerProps> = ({ onScan, onError, disabled 
         {/* State: Scan Success */}
         {status === 'scan_success' && (
           <div className="text-center p-5 space-y-2 animate-in zoom-in-95">
-            <div className="h-12 w-12 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 mx-auto flex items-center justify-center shadow-lg shadow-emerald-500/10">
+            <div className="h-12 w-12 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 mx-auto flex items-center justify-center shadow-sm">
               <CheckCircle2 className="h-6 w-6" />
             </div>
-            <h4 className="text-sm font-bold text-white">QR Code Captured!</h4>
-            <p className="text-[11px] text-emerald-400">Parsing student card attributes...</p>
+            <h4 className="text-sm font-bold text-gray-900">QR Code Captured!</h4>
+            <p className="text-[11px] text-emerald-600">Parsing student card attributes...</p>
           </div>
         )}
       </div>
@@ -302,7 +302,7 @@ export const QrScanner: React.FC<QrScannerProps> = ({ onScan, onError, disabled 
           <button
             type="button"
             onClick={toggleFacingMode}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs hover:bg-slate-700 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 text-xs hover:bg-gray-50 transition-colors shadow-sm"
           >
             <Camera className="h-3.5 w-3.5" />
             <span>Switch to {facingMode === 'environment' ? 'Front' : 'Back'} Camera</span>
@@ -311,41 +311,40 @@ export const QrScanner: React.FC<QrScannerProps> = ({ onScan, onError, disabled 
       )}
 
       {/* Development Mock Simulation Toolbar */}
-      {/* Allows effortless testing in environments without a physical camera or RIT ID card */}
-      <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2">
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-brand-400">
-          <Sparkles className="h-3.5 w-3.5" />
+      <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200 space-y-2">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-brand-700">
+          <Sparkles className="h-3.5 w-3.5 text-brand-600" />
           <span>Development Testing Tools (Mock QR Inputs)</span>
         </div>
-        <p className="text-[11px] text-slate-400 leading-relaxed">
-          Don't have a physical student card handy? Test the scanner and review interface with pre-configured mock payloads:
+        <p className="text-[11px] text-gray-500 leading-relaxed">
+          Don't have a physical student card handy? Test the scanner with pre-configured mock payloads:
         </p>
         <div className="grid grid-cols-2 gap-2 pt-1">
           <button
             type="button"
             onClick={() => handleSimulateMock(MOCK_COLLEGE_QR_SAMPLES.validMockCSE)}
-            className="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:border-brand-500/50 hover:bg-slate-850 text-left text-[11px] text-slate-200 transition-all font-medium"
+            className="px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 hover:border-brand-300 hover:bg-brand-50/50 text-left text-[11px] text-gray-700 transition-all font-medium shadow-sm"
           >
             🎓 Mock CSE Student
           </button>
           <button
             type="button"
             onClick={() => handleSimulateMock(MOCK_COLLEGE_QR_SAMPLES.validMockECE)}
-            className="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:border-brand-500/50 hover:bg-slate-850 text-left text-[11px] text-slate-200 transition-all font-medium"
+            className="px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 hover:border-brand-300 hover:bg-brand-50/50 text-left text-[11px] text-gray-700 transition-all font-medium shadow-sm"
           >
             ⚡ Mock ECE Student
           </button>
           <button
             type="button"
             onClick={() => handleSimulateMock(MOCK_COLLEGE_QR_SAMPLES.delimitedSample)}
-            className="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:border-amber-500/50 hover:bg-slate-850 text-left text-[11px] text-slate-200 transition-all font-medium"
+            className="px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 hover:border-amber-300 hover:bg-amber-50/50 text-left text-[11px] text-gray-700 transition-all font-medium shadow-sm"
           >
             📋 Delimited Key-Value
           </button>
           <button
             type="button"
             onClick={() => handleSimulateMock(MOCK_COLLEGE_QR_SAMPLES.invalidQr)}
-            className="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:border-rose-500/50 hover:bg-slate-850 text-left text-[11px] text-slate-200 transition-all font-medium"
+            className="px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 hover:border-rose-300 hover:bg-rose-50/50 text-left text-[11px] text-gray-700 transition-all font-medium shadow-sm"
           >
             ❌ Invalid External QR
           </button>

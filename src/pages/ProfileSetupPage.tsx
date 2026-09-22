@@ -4,19 +4,6 @@
  * ============================================================================
  * Final onboarding step after College ID verification, anonymous username
  * selection, and avatar customization.
- *
- * Captures private student cohort metadata for relevant campus matching:
- * - Department
- * - Section
- * - Class / Academic Year
- * - Batch
- * - Expected Graduation Year
- * - Gender
- *
- * CRITICAL PRIVACY RULE:
- * These fields are strictly PRIVATE profile & matching metadata. They are
- * protected at the database engine level via Row Level Security and are NEVER
- * displayed publicly to strangers in V1 chat.
  */
 
 import React, { useState, useEffect } from 'react';
@@ -24,7 +11,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   BookOpen,
   GraduationCap,
-  Users,
   ShieldCheck,
   Calendar,
   Layers,
@@ -33,7 +19,7 @@ import {
   CheckCircle2,
   Lock,
   Edit2,
-  AlertCircle,
+  Users,
 } from 'lucide-react';
 import {
   Button,
@@ -42,7 +28,6 @@ import {
   CardFooter,
   Badge,
   ErrorMessage,
-  Spinner,
 } from '../components';
 import { useAuth } from '../context';
 import {
@@ -93,7 +78,7 @@ export const ProfileSetupPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Automatically sync graduation year when batch changes (unless explicitly customized)
+  // Automatically sync graduation year when batch changes
   const handleBatchChange = (newBatch: string) => {
     setBatch(newBatch);
     const derivedGradYear = deriveGraduationYearFromBatch(newBatch);
@@ -179,7 +164,7 @@ export const ProfileSetupPage: React.FC = () => {
       await refreshProfile();
 
       setIsSubmitting(false);
-      // STEP 6: Route to /home
+      // Route to /home
       navigate('/home');
     } catch (err: unknown) {
       setIsSubmitting(false);
@@ -189,35 +174,31 @@ export const ProfileSetupPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto">
+    <div className="space-y-6 max-w-2xl mx-auto w-full">
       {/* Header & Step Badge */}
       <div className="text-center space-y-2">
         <Badge variant="brand" size="sm" withDot>
-          Onboarding Step 3
+          Step 4 &bull; Profile
         </Badge>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-          Campus Profile Setup
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+          Complete Your Profile
         </h1>
-        <p className="text-xs sm:text-sm text-slate-400 max-w-lg mx-auto leading-relaxed">
-          Provide your academic cohort details for relevant peer matching. Real student data is
-          permanently sealed from chat rooms.
+        <p className="text-xs sm:text-sm text-gray-500 max-w-md mx-auto leading-relaxed">
+          Help us keep the community relevant and safe.
         </p>
       </div>
 
-      {/* =========================================================================
-          GATE CHECK: If college ID is not yet linked
-          ========================================================================= */}
+      {/* Verification Gate */}
       {!isCollegeVerified ? (
-        <Card className="border-slate-800 bg-slate-900/80 shadow-2xl text-center p-8 space-y-5 animate-in fade-in">
-          <div className="h-16 w-16 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 mx-auto flex items-center justify-center">
+        <Card className="border-gray-200 bg-white shadow-card text-center p-8 space-y-5 animate-in fade-in">
+          <div className="h-16 w-16 rounded-full bg-amber-50 text-amber-600 border border-amber-200 mx-auto flex items-center justify-center">
             <Lock className="h-8 w-8" />
           </div>
 
           <div className="space-y-2 max-w-sm mx-auto">
-            <h2 className="text-lg font-bold text-white">College Verification Required</h2>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Profile setup is unlocked exclusively for verified Rajalakshmi Institute of Technology
-              students. Please verify your physical ID card first.
+            <h3 className="text-lg font-bold text-gray-900">College ID Required</h3>
+            <p className="text-xs text-gray-600 leading-relaxed">
+              Academic profile setup is restricted to verified students. Please scan your physical ID card first.
             </p>
           </div>
 
@@ -234,66 +215,66 @@ export const ProfileSetupPage: React.FC = () => {
           </div>
         </Card>
       ) : (
-        <Card className="border-slate-800 bg-slate-900/90 shadow-2xl backdrop-blur-md">
-          {/* Strict Privacy Guarantee Banner */}
-          <div className="bg-slate-950/80 border-b border-slate-800/80 p-4 sm:p-5 flex items-start gap-3.5">
-            <div className="h-9 w-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+        <Card className="border-gray-200 bg-white shadow-card">
+          {/* Privacy Guarantee Banner */}
+          <div className="bg-gray-50/80 border-b border-gray-100 p-4 sm:p-5 flex items-start gap-3.5">
+            <div className="h-9 w-9 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
               <ShieldCheck className="h-5 w-5" />
             </div>
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <h2 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
-                  Cryptographic Privacy Guarantee
+                <h2 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
+                  Privacy Guarantee
                 </h2>
                 <Badge variant="success" size="sm">
                   Sealed
                 </Badge>
               </div>
-              <p className="text-[11px] sm:text-xs text-slate-400 leading-relaxed">
-                These academic fields are strictly <strong className="text-slate-300">private metadata</strong> used
-                for peer matching. Under Row-Level Security, matched strangers in chat rooms will
-                <strong className="text-rose-300"> never</strong> see your department, section, batch, or gender.
+              <p className="text-[11px] sm:text-xs text-gray-500 leading-relaxed">
+                These academic fields are strictly <strong className="text-gray-700 font-semibold">private matching metadata</strong>.
+                Chat partners will <strong className="text-gray-700 font-semibold">never</strong> see your real details.
               </p>
             </div>
           </div>
 
           <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-6 pt-6 sm:p-6">
+            <CardContent className="space-y-5 pt-6 sm:p-6">
               {submitError && (
                 <ErrorMessage
                   title="Profile Setup Error"
                   message={submitError}
+                  onDismiss={() => setSubmitError(null)}
                 />
               )}
 
               {/* Field 1: Department */}
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label
                     htmlFor="department-select"
-                    className="block text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5"
+                    className="block text-xs font-semibold text-gray-700 flex items-center gap-1.5"
                   >
-                    <BookOpen className="h-4 w-4 text-brand-400" />
-                    <span>Department / Branch</span>
-                    <span className="text-rose-400">*</span>
+                    <BookOpen className="h-3.5 w-3.5 text-brand-600" />
+                    <span>Department</span>
+                    <span className="text-rose-500">*</span>
                   </label>
                   {isDeptLocked ? (
                     <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full font-medium">
-                        <CheckCircle2 className="h-3 w-3" />
+                      <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-medium">
+                        <CheckCircle2 className="h-3 w-3 text-emerald-600" />
                         Verified from ID Card
                       </span>
                       <button
                         type="button"
                         onClick={() => setIsDeptLocked(false)}
-                        className="text-[11px] text-brand-400 hover:text-brand-300 flex items-center gap-1 font-medium transition-colors"
+                        className="text-[11px] text-brand-600 hover:text-brand-700 flex items-center gap-1 font-medium transition-colors"
                       >
                         <Edit2 className="h-3 w-3" />
                         Edit
                       </button>
                     </div>
                   ) : (
-                    <span className="text-[11px] text-slate-500">Official RIT Departments</span>
+                    <span className="text-[11px] text-gray-400">Official RIT Departments</span>
                   )}
                 </div>
 
@@ -308,85 +289,35 @@ export const ProfileSetupPage: React.FC = () => {
                     }
                   }}
                   className={`
-                    w-full bg-slate-900 text-slate-100 rounded-xl border px-4 py-2.5 text-sm transition-colors
-                    focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-500
-                    ${isDeptLocked ? 'opacity-85 cursor-not-allowed bg-slate-950 border-slate-800' : 'border-slate-800 hover:border-slate-700'}
-                    ${fieldErrors.department ? 'border-rose-500/60 focus-visible:ring-rose-500' : 'focus-visible:border-brand-500'}
+                    w-full bg-white text-gray-900 rounded-xl border px-4 py-2.5 text-sm transition-all
+                    focus-visible:outline-none focus-visible:border-brand-600 focus-visible:ring-4 focus-visible:ring-brand-500/10
+                    ${isDeptLocked ? 'opacity-85 cursor-not-allowed bg-gray-50 border-gray-200' : 'border-gray-200 hover:border-gray-300'}
+                    ${fieldErrors.department ? 'border-rose-300 text-rose-900' : ''}
                   `.trim()}
                 >
                   {INSTITUTIONAL_DEPARTMENTS.map((dept) => (
-                    <option key={dept.code} value={dept.code} className="bg-slate-900 text-slate-100">
+                    <option key={dept.code} value={dept.code} className="text-gray-900">
                       {dept.code} &mdash; {dept.name}
                     </option>
                   ))}
                 </select>
-
-                {fieldErrors.department ? (
-                  <p className="text-[11px] text-rose-400 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {fieldErrors.department}
-                  </p>
-                ) : (
-                  <p className="text-[11px] text-slate-500">
-                    Used to match you with peers in your field of study.
-                  </p>
+                {fieldErrors.department && (
+                  <p className="text-xs text-rose-600 mt-1">{fieldErrors.department}</p>
                 )}
               </div>
 
-              {/* Two-Column Grid: Section & Class */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                {/* Field 2: Section */}
-                <div className="space-y-2">
-                  <label
-                    htmlFor="section-select"
-                    className="block text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5"
-                  >
-                    <Layers className="h-4 w-4 text-cyan-400" />
-                    <span>Section / Division</span>
-                    <span className="text-rose-400">*</span>
-                  </label>
-
-                  <select
-                    id="section-select"
-                    value={section}
-                    onChange={(e) => {
-                      setSection(e.target.value);
-                      if (fieldErrors.section) {
-                        setFieldErrors((prev) => ({ ...prev, section: undefined }));
-                      }
-                    }}
-                    className={`
-                      w-full bg-slate-900 text-slate-100 rounded-xl border border-slate-800 px-4 py-2.5 text-sm transition-colors
-                      focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-500
-                      ${fieldErrors.section ? 'border-rose-500/60 focus-visible:ring-rose-500' : 'focus-visible:border-brand-500'}
-                    `.trim()}
-                  >
-                    {SECTION_OPTIONS.map((sec) => (
-                      <option key={sec} value={sec} className="bg-slate-900 text-slate-100">
-                        Section {sec}
-                      </option>
-                    ))}
-                  </select>
-
-                  {fieldErrors.section && (
-                    <p className="text-[11px] text-rose-400 flex items-center gap-1">
-                      <AlertCircle className="h-3 w-3" />
-                      {fieldErrors.section}
-                    </p>
-                  )}
-                </div>
-
-                {/* Field 3: Class / Academic Year */}
-                <div className="space-y-2">
+              {/* Grid for Class, Year/Batch, Section */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* Field 2: Academic Year / Class */}
+                <div className="space-y-1.5">
                   <label
                     htmlFor="class-select"
-                    className="block text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5"
+                    className="block text-xs font-semibold text-gray-700 flex items-center gap-1.5"
                   >
-                    <GraduationCap className="h-4 w-4 text-emerald-400" />
-                    <span>Current Class Year</span>
-                    <span className="text-rose-400">*</span>
+                    <GraduationCap className="h-3.5 w-3.5 text-brand-600" />
+                    <span>Class</span>
+                    <span className="text-rose-500">*</span>
                   </label>
-
                   <select
                     id="class-select"
                     value={className}
@@ -396,178 +327,171 @@ export const ProfileSetupPage: React.FC = () => {
                         setFieldErrors((prev) => ({ ...prev, className: undefined }));
                       }
                     }}
-                    className={`
-                      w-full bg-slate-900 text-slate-100 rounded-xl border border-slate-800 px-4 py-2.5 text-sm transition-colors
-                      focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-500
-                      ${fieldErrors.className ? 'border-rose-500/60 focus-visible:ring-rose-500' : 'focus-visible:border-brand-500'}
-                    `.trim()}
+                    className="w-full bg-white text-gray-900 rounded-xl border border-gray-200 hover:border-gray-300 px-4 py-2.5 text-sm focus-visible:outline-none focus-visible:border-brand-600 focus-visible:ring-4 focus-visible:ring-brand-500/10"
                   >
-                    {CLASS_OPTIONS.map((yr) => (
-                      <option key={yr} value={yr} className="bg-slate-900 text-slate-100">
-                        {yr}
+                    {CLASS_OPTIONS.map((c) => (
+                      <option key={c} value={c} className="text-gray-900">
+                        {c}
                       </option>
                     ))}
                   </select>
-
                   {fieldErrors.className && (
-                    <p className="text-[11px] text-rose-400 flex items-center gap-1">
-                      <AlertCircle className="h-3 w-3" />
-                      {fieldErrors.className}
-                    </p>
+                    <p className="text-xs text-rose-600 mt-1">{fieldErrors.className}</p>
                   )}
                 </div>
-              </div>
 
-              {/* Two-Column Grid: Batch & Expected Graduation Year */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                {/* Field 4: Batch */}
-                <div className="space-y-2">
+                {/* Field 3: Academic Batch */}
+                <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label
                       htmlFor="batch-select"
-                      className="block text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5"
+                      className="block text-xs font-semibold text-gray-700 flex items-center gap-1.5"
                     >
-                      <Calendar className="h-4 w-4 text-amber-400" />
-                      <span>Academic Batch</span>
-                      <span className="text-rose-400">*</span>
+                      <Calendar className="h-3.5 w-3.5 text-brand-600" />
+                      <span>Year / Batch</span>
+                      <span className="text-rose-500">*</span>
                     </label>
-                    {isBatchLocked ? (
-                      <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full font-medium">
-                          <CheckCircle2 className="h-3 w-3" />
-                          Verified
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setIsBatchLocked(false)}
-                          className="text-[11px] text-brand-400 hover:text-brand-300 flex items-center gap-1 font-medium transition-colors"
-                        >
-                          <Edit2 className="h-3 w-3" />
-                          Edit
-                        </button>
-                      </div>
-                    ) : null}
+                    {isBatchLocked && (
+                      <button
+                        type="button"
+                        onClick={() => setIsBatchLocked(false)}
+                        className="text-[11px] text-brand-600 hover:text-brand-700 font-medium"
+                      >
+                        Edit
+                      </button>
+                    )}
                   </div>
-
                   <select
                     id="batch-select"
                     value={batch}
                     disabled={isBatchLocked}
                     onChange={(e) => handleBatchChange(e.target.value)}
                     className={`
-                      w-full bg-slate-900 text-slate-100 rounded-xl border px-4 py-2.5 text-sm transition-colors
-                      focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-500
-                      ${isBatchLocked ? 'opacity-85 cursor-not-allowed bg-slate-950 border-slate-800' : 'border-slate-800 hover:border-slate-700'}
-                      ${fieldErrors.batch ? 'border-rose-500/60 focus-visible:ring-rose-500' : 'focus-visible:border-brand-500'}
+                      w-full bg-white text-gray-900 rounded-xl border px-4 py-2.5 text-sm transition-all
+                      focus-visible:outline-none focus-visible:border-brand-600 focus-visible:ring-4 focus-visible:ring-brand-500/10
+                      ${isBatchLocked ? 'opacity-85 cursor-not-allowed bg-gray-50 border-gray-200' : 'border-gray-200 hover:border-gray-300'}
+                      ${fieldErrors.batch ? 'border-rose-300 text-rose-900' : ''}
                     `.trim()}
                   >
                     {BATCH_OPTIONS.map((b) => (
-                      <option key={b} value={b} className="bg-slate-900 text-slate-100">
-                        Batch {b}
+                      <option key={b} value={b} className="text-gray-900">
+                        {b}
                       </option>
                     ))}
                   </select>
-
                   {fieldErrors.batch && (
-                    <p className="text-[11px] text-rose-400 flex items-center gap-1">
-                      <AlertCircle className="h-3 w-3" />
-                      {fieldErrors.batch}
-                    </p>
+                    <p className="text-xs text-rose-600 mt-1">{fieldErrors.batch}</p>
                   )}
                 </div>
 
+                {/* Field 4: Section */}
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="section-select"
+                    className="block text-xs font-semibold text-gray-700 flex items-center gap-1.5"
+                  >
+                    <Layers className="h-3.5 w-3.5 text-brand-600" />
+                    <span>Section</span>
+                    <span className="text-rose-500">*</span>
+                  </label>
+                  <select
+                    id="section-select"
+                    value={section}
+                    onChange={(e) => {
+                      setSection(e.target.value);
+                      if (fieldErrors.section) {
+                        setFieldErrors((prev) => ({ ...prev, section: undefined }));
+                      }
+                    }}
+                    className="w-full bg-white text-gray-900 rounded-xl border border-gray-200 hover:border-gray-300 px-4 py-2.5 text-sm focus-visible:outline-none focus-visible:border-brand-600 focus-visible:ring-4 focus-visible:ring-brand-500/10"
+                  >
+                    {SECTION_OPTIONS.map((sec) => (
+                      <option key={sec} value={sec} className="text-gray-900">
+                        Section {sec}
+                      </option>
+                    ))}
+                  </select>
+                  {fieldErrors.section && (
+                    <p className="text-xs text-rose-600 mt-1">{fieldErrors.section}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Grid for Graduation Year & Gender */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Field 5: Expected Graduation Year */}
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <label
                     htmlFor="grad-year-select"
-                    className="block text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5"
+                    className="block text-xs font-semibold text-gray-700 flex items-center gap-1.5"
                   >
-                    <GraduationCap className="h-4 w-4 text-brand-400" />
+                    <Calendar className="h-3.5 w-3.5 text-brand-600" />
                     <span>Graduation Year</span>
-                    <span className="text-rose-400">*</span>
+                    <span className="text-rose-500">*</span>
                   </label>
-
                   <select
                     id="grad-year-select"
                     value={graduationYear}
                     onChange={(e) => {
-                      setGraduationYear(Number(e.target.value));
+                      setGraduationYear(parseInt(e.target.value, 10));
                       if (fieldErrors.graduationYear) {
                         setFieldErrors((prev) => ({ ...prev, graduationYear: undefined }));
                       }
                     }}
-                    className={`
-                      w-full bg-slate-900 text-slate-100 rounded-xl border border-slate-800 px-4 py-2.5 text-sm transition-colors
-                      focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-500
-                      ${fieldErrors.graduationYear ? 'border-rose-500/60 focus-visible:ring-rose-500' : 'focus-visible:border-brand-500'}
-                    `.trim()}
+                    className="w-full bg-white text-gray-900 rounded-xl border border-gray-200 hover:border-gray-300 px-4 py-2.5 text-sm focus-visible:outline-none focus-visible:border-brand-600 focus-visible:ring-4 focus-visible:ring-brand-500/10"
                   >
                     {GRADUATION_YEAR_OPTIONS.map((yr) => (
-                      <option key={yr} value={yr} className="bg-slate-900 text-slate-100">
-                        {yr} (Projected)
+                      <option key={yr} value={yr} className="text-gray-900">
+                        Class of {yr}
                       </option>
                     ))}
                   </select>
-
                   {fieldErrors.graduationYear && (
-                    <p className="text-[11px] text-rose-400 flex items-center gap-1">
-                      <AlertCircle className="h-3 w-3" />
-                      {fieldErrors.graduationYear}
-                    </p>
+                    <p className="text-xs text-rose-600 mt-1">{fieldErrors.graduationYear}</p>
+                  )}
+                </div>
+
+                {/* Field 6: Gender */}
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="gender-select"
+                    className="block text-xs font-semibold text-gray-700 flex items-center gap-1.5"
+                  >
+                    <Users className="h-3.5 w-3.5 text-brand-600" />
+                    <span>Gender</span>
+                    <span className="text-rose-500">*</span>
+                  </label>
+                  <select
+                    id="gender-select"
+                    value={gender}
+                    onChange={(e) => {
+                      setGender(e.target.value);
+                      if (fieldErrors.gender) {
+                        setFieldErrors((prev) => ({ ...prev, gender: undefined }));
+                      }
+                    }}
+                    className="w-full bg-white text-gray-900 rounded-xl border border-gray-200 hover:border-gray-300 px-4 py-2.5 text-sm focus-visible:outline-none focus-visible:border-brand-600 focus-visible:ring-4 focus-visible:ring-brand-500/10"
+                  >
+                    {GENDER_OPTIONS.map((g) => (
+                      <option key={g} value={g} className="text-gray-900">
+                        {g}
+                      </option>
+                    ))}
+                  </select>
+                  {fieldErrors.gender && (
+                    <p className="text-xs text-rose-600 mt-1">{fieldErrors.gender}</p>
                   )}
                 </div>
               </div>
-
-              {/* Field 6: Gender */}
-              <div className="space-y-2">
-                <label
-                  htmlFor="gender-select"
-                  className="block text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5"
-                >
-                  <Users className="h-4 w-4 text-purple-400" />
-                  <span>Gender</span>
-                  <span className="text-rose-400">*</span>
-                </label>
-
-                <select
-                  id="gender-select"
-                  value={gender}
-                  onChange={(e) => {
-                    setGender(e.target.value);
-                    if (fieldErrors.gender) {
-                      setFieldErrors((prev) => ({ ...prev, gender: undefined }));
-                    }
-                  }}
-                  className={`
-                    w-full bg-slate-900 text-slate-100 rounded-xl border border-slate-800 px-4 py-2.5 text-sm transition-colors
-                    focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-500
-                    ${fieldErrors.gender ? 'border-rose-500/60 focus-visible:ring-rose-500' : 'focus-visible:border-brand-500'}
-                  `.trim()}
-                >
-                  {GENDER_OPTIONS.map((g) => (
-                    <option key={g} value={g} className="bg-slate-900 text-slate-100">
-                      {g}
-                    </option>
-                  ))}
-                </select>
-
-                {fieldErrors.gender && (
-                  <p className="text-[11px] text-rose-400 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {fieldErrors.gender}
-                  </p>
-                )}
-              </div>
             </CardContent>
 
-            <CardFooter className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-800/80 p-6 bg-slate-950/40">
+            <CardFooter className="flex items-center justify-between border-t border-gray-100 pt-5">
               <Button
                 type="button"
-                variant="ghost"
+                variant="secondary"
                 size="sm"
                 onClick={() => navigate('/avatar')}
                 leftIcon={<ArrowLeft className="h-4 w-4" />}
-                disabled={isSubmitting}
               >
                 Back to Avatar
               </Button>
@@ -575,18 +499,12 @@ export const ProfileSetupPage: React.FC = () => {
               <Button
                 type="submit"
                 variant="primary"
-                size="lg"
-                disabled={isSubmitting}
-                rightIcon={
-                  isSubmitting ? (
-                    <Spinner size="sm" variant="white" />
-                  ) : (
-                    <ArrowRight className="h-4 w-4" />
-                  )
-                }
-                className="w-full sm:w-auto shadow-xl shadow-brand-600/25 font-bold"
+                isLoading={isSubmitting}
+                loadingText="Saving Profile..."
+                rightIcon={<ArrowRight className="h-4 w-4" />}
+                className="py-2.5 font-semibold shadow-sm"
               >
-                {isSubmitting ? 'Finalizing Setup...' : 'Complete Setup & Enter Campus'}
+                Save Profile
               </Button>
             </CardFooter>
           </form>

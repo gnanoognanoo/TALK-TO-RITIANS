@@ -4,55 +4,54 @@
 
 @layer base {
   body {
-    @apply bg-slate-950 text-slate-100 antialiased min-h-screen selection:bg-indigo-500 selection:text-white;
+    @apply bg-[#F8FAFC] text-gray-900 antialiased min-h-screen selection:bg-brand-600 selection:text-white font-sans;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   }
 
   /* Accessible focus indicators */
   :focus-visible {
-    @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-slate-950;
+    @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-white;
   }
 }
 
 @layer components {
-  /* Design System: Primary Button */
+  /* Design System: Primary Button (Solid Purple, Clean) */
   .btn-primary {
-    @apply inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200
-           bg-brand-600 hover:bg-brand-500 text-white shadow-lg shadow-brand-600/25 active:scale-[0.98]
+    @apply inline-flex items-center justify-center font-medium rounded-xl transition-all duration-150
+           bg-brand-600 hover:bg-brand-700 text-white shadow-sm active:scale-[0.98]
            disabled:opacity-50 disabled:pointer-events-none disabled:shadow-none;
   }
 
-  /* Design System: Secondary Button */
+  /* Design System: Secondary Button (Clean White with subtle border) */
   .btn-secondary {
-    @apply inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200
-           bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border border-slate-700/60
-           hover:border-slate-600 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
+    @apply inline-flex items-center justify-center font-medium rounded-xl transition-all duration-150
+           bg-white hover:bg-slate-50 text-gray-700 border border-gray-200
+           hover:border-gray-300 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none shadow-sm;
   }
 
-  /* Design System: Danger Action */
+  /* Design System: Danger Action (Soft Red) */
   .btn-danger {
-    @apply inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200
-           bg-rose-600/15 hover:bg-rose-600/25 text-rose-300 border border-rose-500/30
-           hover:border-rose-500/60 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
+    @apply inline-flex items-center justify-center font-medium rounded-xl transition-all duration-150
+           bg-white hover:bg-rose-50 text-rose-600 border border-rose-200
+           hover:border-rose-300 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
   }
 
-  /* Design System: Form Input */
+  /* Design System: Form Input (Clean White with Purple Focus Ring) */
   .form-input {
-    @apply w-full bg-slate-900/90 text-slate-100 placeholder-slate-500 rounded-xl
-           border border-slate-800 px-4 py-2.5 text-sm transition-all duration-150
-           hover:border-slate-700 focus:border-brand-500 focus:ring-1 focus:ring-brand-500
-           disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply w-full bg-white text-gray-900 placeholder-gray-400 rounded-xl
+           border border-gray-200 px-4 py-2.5 text-sm transition-all duration-150
+           hover:border-gray-300 focus:border-brand-600 focus:ring-4 focus:ring-brand-500/10 focus:outline-none
+           disabled:opacity-50 disabled:bg-gray-50 disabled:cursor-not-allowed;
   }
 
-  /* Design System: Card */
+  /* Design System: Card (White with 1px border and very subtle shadow) */
   .card-surface {
-    @apply bg-slate-900/60 backdrop-blur-md border border-slate-800/80 rounded-2xl
-           shadow-xl shadow-black/20;
+    @apply bg-white border border-gray-200/80 rounded-2xl shadow-card;
   }
 
-  /* Design System: Navbar */
+  /* Design System: Navbar (Crisp White with thin bottom border) */
   .navbar-container {
-    @apply sticky top-0 z-40 w-full border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-xl;
+    @apply sticky top-0 z-40 w-full border-b border-gray-200/80 bg-white/95 backdrop-blur-sm;
   }
 
   /* Design System: Badge */
@@ -62,9 +61,7 @@
 
   /* Design System: Avatar Container */
   .avatar-ring {
-    @apply relative inline-flex items-center justify-center rounded-2xl bg-gradient-to-br
-           from-brand-600/20 to-purple-600/20 border border-brand-500/30 text-brand-300
-           font-semibold shadow-inner overflow-hidden select-none;
+    @apply relative inline-flex items-center justify-center rounded-2xl bg-brand-50
+           border border-brand-200 text-brand-700 font-semibold overflow-hidden select-none;
   }
 }
-

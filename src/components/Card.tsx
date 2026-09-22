@@ -6,11 +6,11 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const variantStyles = {
-  default: 'bg-slate-900/60 backdrop-blur-md border border-slate-800/80 shadow-xl shadow-black/20',
+  default: 'bg-white border border-gray-200/80 shadow-card',
   interactive:
-    'bg-slate-900/60 backdrop-blur-md border border-slate-800/80 hover:border-slate-700/80 transition-all duration-200 hover:shadow-2xl hover:shadow-brand-500/5',
-  outline: 'bg-transparent border border-slate-800/80',
-  glass: 'bg-slate-950/40 backdrop-blur-xl border border-white/5 shadow-2xl',
+    'bg-white border border-gray-200/80 hover:border-brand-300 hover:shadow-md transition-all duration-200',
+  outline: 'bg-transparent border border-gray-200',
+  glass: 'bg-white/95 backdrop-blur-md border border-gray-200/80 shadow-card',
 };
 
 export const Card: React.FC<CardProps> = ({
@@ -48,7 +48,7 @@ export const CardTitle: React.FC<React.HTMLAttributes<HTMLHeadingElement>> = ({
 }) => {
   return (
     <h3
-      className={`text-lg sm:text-xl font-bold tracking-tight text-white ${className}`}
+      className={`text-lg sm:text-xl font-bold tracking-tight text-gray-900 ${className}`}
       {...props}
     >
       {children}
@@ -62,7 +62,7 @@ export const CardDescription: React.FC<React.HTMLAttributes<HTMLParagraphElement
   ...props
 }) => {
   return (
-    <p className={`text-xs sm:text-sm text-slate-400 leading-relaxed ${className}`} {...props}>
+    <p className={`text-xs sm:text-sm text-gray-500 leading-relaxed ${className}`} {...props}>
       {children}
     </p>
   );
@@ -87,7 +87,7 @@ export const CardFooter: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
 }) => {
   return (
     <div
-      className={`p-6 pt-0 border-t border-slate-800/40 mt-3 flex items-center justify-between gap-4 ${className}`}
+      className={`p-6 pt-0 border-t border-gray-100 mt-3 flex items-center justify-between gap-4 ${className}`}
       {...props}
     >
       {children}

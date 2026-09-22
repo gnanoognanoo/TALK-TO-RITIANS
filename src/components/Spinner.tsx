@@ -14,9 +14,9 @@ const sizeClasses = {
 };
 
 const variantClasses = {
-  brand: 'border-brand-500/20 border-t-brand-500',
+  brand: 'border-brand-200 border-t-brand-600',
   white: 'border-white/20 border-t-white',
-  slate: 'border-slate-600/30 border-t-slate-300',
+  slate: 'border-gray-200 border-t-gray-600',
 };
 
 export const Spinner: React.FC<SpinnerProps> = ({
