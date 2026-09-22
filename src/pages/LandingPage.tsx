@@ -37,7 +37,7 @@ export const LandingPage: React.FC = () => {
 
             {/* Action Buttons */}
             <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
-              <Link to="/login?mode=signup" className="w-full sm:w-auto">
+              <Link to="/login" className="w-full sm:w-auto">
                 <Button
                   variant="primary"
                   size="lg"
@@ -191,7 +191,7 @@ export const LandingPage: React.FC = () => {
         </div>
 
         <div className="text-center pt-2">
-          <Link to="/login?mode=signup">
+          <Link to="/login">
             <Button variant="primary" size="lg" rightIcon={<ArrowRight className="h-4 w-4" />}>
               Get Started Now
             </Button>

@@ -22,7 +22,7 @@ export interface AuthContextType {
   signInWithPassword: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signUpWithPassword: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
-  signInWithGoogle: () => Promise<{ success: boolean; error?: string }>;
+  signInWithGoogle: (redirectTo?: string) => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   unlinkCollegeIdentity: () => Promise<{ success: boolean; error?: string }>;
@@ -224,8 +224,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   /**
    * Google OAuth Sign In
    */
-  const signInWithGoogle = async (): Promise<{ success: boolean; error?: string }> => {
-    const res = await authService.signInWithGoogle();
+  const signInWithGoogle = async (redirectTo?: string): Promise<{ success: boolean; error?: string }> => {
+    const res = await authService.signInWithGoogle(redirectTo);
     if (!res.success) {
       return { success: false, error: res.error?.message || 'Failed to initialize Google login' };
     }

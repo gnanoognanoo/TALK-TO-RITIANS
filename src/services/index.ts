@@ -25,6 +25,7 @@ export interface IAuthService {
   signInWithPersonalEmail(email: string): Promise<ApiResponse<{ confirmationSent: boolean }>>;
   signInWithPassword(email: string, password: string): Promise<ApiResponse<{ session: any | null }>>;
   signUpWithPassword(email: string, password: string): Promise<ApiResponse<{ user: any; session: any | null }>>;
+  signInWithGoogle(redirectTo?: string): Promise<ApiResponse<{ initiated: boolean }>>;
   resetPassword(email: string): Promise<ApiResponse<{ sent: boolean }>>;
   signOut(): Promise<ApiResponse<void>>;
 }

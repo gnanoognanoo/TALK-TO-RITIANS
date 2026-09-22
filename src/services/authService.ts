@@ -274,15 +274,20 @@ export class AuthService implements IAuthService {
   }
 
   /**
-   * Initiates Google OAuth redirect.
+   * Initiates Google OAuth redirect with account selector prompt.
    */
-  async signInWithGoogle(): Promise<ApiResponse<{ initiated: boolean }>> {
+  async signInWithGoogle(redirectTo?: string): Promise<ApiResponse<{ initiated: boolean }>> {
     try {
-      const redirectUrl = typeof window !== 'undefined' ? window.location.origin : '';
+      const redirectUrl =
+        redirectTo || (typeof window !== 'undefined' ? `${window.location.origin}/login` : '');
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: redirectUrl,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'select_account',
+          },
         },
       });
 

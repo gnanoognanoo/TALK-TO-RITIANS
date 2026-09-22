@@ -1,5 +1,4 @@
-import React from 'react';
-import { Outlet, Link } from 'react-router-dom';
+import { Outlet, Link, useLocation } from 'react-router-dom';
 import { ShieldCheck, ArrowLeft } from 'lucide-react';
 import { Logo } from '../components/Logo';
 
@@ -8,6 +7,9 @@ export interface AuthLayoutProps {
 }
 
 export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
+  const location = useLocation();
+  const isLoginPage = location.pathname === '/login';
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-gray-900 flex flex-col relative overflow-hidden selection:bg-brand-600 selection:text-white">
       {/* Auth Navigation Bar */}
@@ -38,12 +40,16 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
             >
               <Logo size="lg" showText={false} />
             </Link>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900">
-              Talk to RITians
-            </h1>
-            <p className="text-xs sm:text-sm text-gray-500 mt-1">
-              Rajalakshmi Institute of Technology Student Community
-            </p>
+            {!isLoginPage && (
+              <>
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900">
+                  Talk to RITians
+                </h1>
+                <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                  Rajalakshmi Institute of Technology Student Community
+                </p>
+              </>
+            )}
           </div>
 
           {/* Child Outlet */}
