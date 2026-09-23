@@ -129,6 +129,8 @@ export class VerificationService {
           userMessage = "We couldn't verify the ID right now. Please try again.";
         } else if (errorCode === 'INVALID_RIT_PAGE') {
           userMessage = 'The RIT verification page did not contain the expected student information.';
+        } else if (errorCode === 'INSUFFICIENT_IDENTITY_DATA') {
+          userMessage = 'Could not extract a valid student identifier from the official RIT page. Please try scanning again.';
         } else if (errorCode === 'INVALID_QR') {
           userMessage = 'This QR is not a recognized RIT student ID.';
         }

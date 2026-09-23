@@ -78,11 +78,13 @@ function decodeHtmlEntities(str) {
     .replace(/&ndash;/g, '-')
     .replace(/&mdash;/g, '-')
     .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
-    .replace(/&#x([a-fA-F0-9]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+    .replace(/&#x([a-fA-F0-9]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/[\u00a0\u200b\u200c\u200d\u00ad\ufeff]/g, ' ');
 }
 
 function stripHtml(str) {
   return decodeHtmlEntities(str)
+    .replace(/<br\s*\/?>/gi, ' ')
     .replace(/<[^>]*>/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
@@ -92,43 +94,43 @@ function matchFieldType(rawLabel) {
   const clean = rawLabel.toLowerCase().replace(/[^a-z0-9]/g, '');
 
   if (
-    clean.includes('registerno') ||
-    clean.includes('registernumber') ||
-    clean.includes('regno') ||
-    clean.includes('registrationno') ||
-    clean.includes('registrationnumber') ||
-    clean.includes('rollno') ||
-    clean.includes('rollnumber') ||
-    clean === 'regno'
+    clean.includes('registerno') || clean.includes('registernumber') ||
+    clean.includes('regno') || clean.includes('registrationno') ||
+    clean.includes('registrationnumber') || clean.includes('regdno') ||
+    clean.includes('regdnumber') || clean.includes('registrationid') ||
+    clean.includes('regid') || clean.includes('rollno') ||
+    clean.includes('rollnumber') || clean.includes('enrolmentno') ||
+    clean.includes('enrollmentno') || clean.includes('enrolmentnumber') ||
+    clean.includes('enrollmentnumber') || clean.includes('admissionno') ||
+    clean.includes('admissionnumber') || clean.includes('hallticketno') ||
+    clean.includes('hallTicketnumber') || clean.includes('usn') ||
+    clean.includes('studentid') ||
+    clean === 'regno' || clean === 'regdno' || clean === 'rollno' || clean === 'usn'
   ) {
     return 'registerNumber';
   }
 
   if (
-    clean.includes('studentname') ||
-    clean.includes('candidatename') ||
-    clean.includes('fullname') ||
-    clean === 'name' ||
-    clean.startsWith('nameof')
+    clean.includes('studentname') || clean.includes('candidatename') ||
+    clean.includes('fullname') || clean.includes('pupilname') ||
+    clean === 'name' || clean.startsWith('nameof')
   ) {
     return 'name';
   }
 
   if (
-    clean.includes('course') ||
-    clean.includes('degree') ||
-    clean.includes('branch') ||
-    clean.includes('programme') ||
-    clean.includes('program')
+    clean.includes('course') || clean.includes('degree') ||
+    clean.includes('branch') || clean.includes('programme') ||
+    clean.includes('program') || clean.includes('specialization') ||
+    clean.includes('specialisation') || clean.includes('stream')
   ) {
     return 'course';
   }
 
   if (
-    clean.includes('batch') ||
-    clean.includes('academicyear') ||
-    clean.includes('yearofadmission') ||
-    clean === 'batch'
+    clean.includes('batch') || clean.includes('academicyear') ||
+    clean.includes('yearofadmission') || clean.includes('yearofjoin') ||
+    clean.includes('joiningyear') || clean === 'batch'
   ) {
     return 'batch';
   }
@@ -175,15 +177,20 @@ function normalizeBatch(raw) {
 
 function parseRitOfficialPage(htmlContent) {
   if (!htmlContent || typeof htmlContent !== 'string' || htmlContent.trim().length === 0) {
-    return { success: false, errorCode: 'EMPTY_PAGE', errorMessage: 'The RIT verification page was empty or unreadable.' };
+    return {
+      success: false,
+      errorCode: 'EMPTY_PAGE',
+      errorMessage: 'The RIT verification page was empty or unreadable.',
+    };
   }
 
   const rawExtracted = {};
   const cleanHtml = htmlContent
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ')
-    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ');
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
+    .replace(/<!--[\s\S]*?-->/g, ' ');
 
-  // Strategy A: Table Row Key-Value Extraction
+  // Strategy A: Table Row Key-Value Extraction (<tr><td>Label</td><td>Value</td></tr>)
   const trMatches = cleanHtml.match(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi) || [];
   for (const tr of trMatches) {
     const cells = tr.match(/<(?:td|th)\b[^>]*>([\s\S]*?)<\/(?:td|th)>/gi);
@@ -197,7 +204,7 @@ function parseRitOfficialPage(htmlContent) {
     }
   }
 
-  // Strategy B: Definition List (<dt>/<dd>)
+  // Strategy B: Definition List (<dt>Label</dt><dd>Value</dd>)
   const dtMatches = Array.from(cleanHtml.matchAll(/<dt\b[^>]*>([\s\S]*?)<\/dt>\s*<dd\b[^>]*>([\s\S]*?)<\/dd>/gi));
   for (const match of dtMatches) {
     const labelText = stripHtml(match[1]);
@@ -208,9 +215,9 @@ function parseRitOfficialPage(htmlContent) {
     }
   }
 
-  // Strategy C: Div / Span label pairs
+  // Strategy C: Generic Key-Value Label Container Elements
   if (!rawExtracted.name || !rawExtracted.registerNumber || !rawExtracted.course || !rawExtracted.batch) {
-    const inlinePairRegex = /<(?:label|span|strong|b|p|div)\b[^>]*>([^<:]{2,40})[:\-]?<\/(?:label|span|strong|b|p|div)>\s*<(?:span|div|p|dd)\b[^>]*>([^<]{2,100})<\/(?:span|div|p|dd)>/gi;
+    const inlinePairRegex = /<(?:label|span|strong|b|p|div)\b[^>]*>([^<:]{2,40})[:\-]?<\/(?:label|span|strong|b|p|div)>\s*<(?:span|div|p|dd|input|a)\b[^>]*>([^<]{2,100})<\/(?:span|div|p|dd|input|a)>/gi;
     let match;
     while ((match = inlinePairRegex.exec(cleanHtml)) !== null) {
       const labelText = stripHtml(match[1]);
@@ -222,49 +229,113 @@ function parseRitOfficialPage(htmlContent) {
     }
   }
 
-  // Strategy D: Text regex fallback
+  // Strategy E: Input/form value extraction (ASP.NET, PHP-rendered pages)
+  if (!rawExtracted.name || !rawExtracted.registerNumber || !rawExtracted.course || !rawExtracted.batch) {
+    const labelInputRegex = /<(?:label|span|strong|b|p|div|td|th)\b[^>]*>([\s\S]{2,60}?)<\/(?:label|span|strong|b|p|div|td|th)>[\s\S]{0,100}?<(?:input|textarea)\b[^>]*?\bvalue\s*=\s*["']([^"']{2,100})["'][^>]*\/?>/gi;
+    let match;
+    while ((match = labelInputRegex.exec(cleanHtml)) !== null) {
+      const labelText = stripHtml(match[1]);
+      const valueText = match[2].trim();
+      const fieldType = matchFieldType(labelText);
+      if (fieldType && valueText && !rawExtracted[fieldType]) {
+        rawExtracted[fieldType] = valueText;
+      }
+    }
+  }
+
+  // Strategy E2: Standalone input with name/id attribute matching known field names
+  if (!rawExtracted.name || !rawExtracted.registerNumber || !rawExtracted.course || !rawExtracted.batch) {
+    const namedInputRegex = /<input\b[^>]*?\b(?:name|id)\s*=\s*["']([^"']{2,60})["'][^>]*?\bvalue\s*=\s*["']([^"']{2,100})["'][^>]*\/?>/gi;
+    let match;
+    while ((match = namedInputRegex.exec(cleanHtml)) !== null) {
+      const fieldType = matchFieldType(match[1]);
+      const valueText = match[2].trim();
+      if (fieldType && valueText && !rawExtracted[fieldType]) {
+        rawExtracted[fieldType] = valueText;
+      }
+    }
+    const namedInputRegex2 = /<input\b[^>]*?\bvalue\s*=\s*["']([^"']{2,100})["'][^>]*?\b(?:name|id)\s*=\s*["']([^"']{2,60})["'][^>]*\/?>/gi;
+    while ((match = namedInputRegex2.exec(cleanHtml)) !== null) {
+      const fieldType = matchFieldType(match[2]);
+      const valueText = match[1].trim();
+      if (fieldType && valueText && !rawExtracted[fieldType]) {
+        rawExtracted[fieldType] = valueText;
+      }
+    }
+  }
+
+  // Strategy F: Colon-separated label:value within a single element
+  if (!rawExtracted.name || !rawExtracted.registerNumber || !rawExtracted.course || !rawExtracted.batch) {
+    const singleElementRegex = /<(?:td|th|p|div|span|li)\b[^>]*>([\s\S]{4,200}?)<\/(?:td|th|p|div|span|li)>/gi;
+    let match;
+    while ((match = singleElementRegex.exec(cleanHtml)) !== null) {
+      const innerText = stripHtml(match[1]);
+      const kvMatch = innerText.match(/^([^:]{2,40})\s*[:\-]\s*(.{2,100})$/i);
+      if (kvMatch) {
+        const fieldType = matchFieldType(kvMatch[1].trim());
+        const valueText = kvMatch[2].trim();
+        if (fieldType && valueText && !rawExtracted[fieldType]) {
+          rawExtracted[fieldType] = valueText;
+        }
+      }
+    }
+  }
+
+  // Strategy D: Plain Text / Regex Key-Value matching (broadened patterns)
   if (!rawExtracted.name || !rawExtracted.registerNumber || !rawExtracted.course || !rawExtracted.batch) {
     const strippedText = stripHtml(cleanHtml);
 
     if (!rawExtracted.name) {
-      const nameMatch = strippedText.match(/(?:Student\s*Name|Candidate\s*Name|Full\s*Name|Name)\s*[:\-]\s*([A-Za-z\s.]{2,80}?)(?=(?:Register|Reg\b|Roll|Course|Branch|Batch|Degree|\n|$))/i);
-      if (nameMatch && nameMatch[1].trim()) rawExtracted.name = nameMatch[1].trim();
+      const nameMatch = strippedText.match(/(?:Student\s*Name|Candidate\s*Name|Full\s*Name|Name\s*of\s*Student|Name)\s*[:\-]?\s*([A-Za-z\s.]{2,80}?)(?=(?:Register|Regd|Reg\b|Roll|Enrol|Course|Branch|Batch|Degree|\n|$))/i);
+      if (nameMatch && nameMatch[1].trim()) {
+        rawExtracted.name = nameMatch[1].trim();
+      }
     }
+
     if (!rawExtracted.registerNumber) {
-      const regMatch = strippedText.match(/(?:Register\s*(?:No|Number)|Registration\s*(?:No|Number)|Reg\s*No\.?|Roll\s*(?:No|Number))\s*[:\-]?\s*([A-Za-z0-9]{4,30})/i);
-      if (regMatch && regMatch[1].trim()) rawExtracted.registerNumber = regMatch[1].trim();
+      const regMatch = strippedText.match(/(?:Register\s*(?:No\.?|Number)|Regd?\.?\s*(?:No\.?|Number)|Registration\s*(?:No\.?|Number|Id)|Roll\s*(?:No\.?|Number)|Enro(?:l|ll)ment\s*(?:No\.?|Number)|Admission\s*(?:No\.?|Number)|Hall\s*Ticket\s*No\.?|Student\s*(?:Id|ID))\s*[:\-]?\s*([A-Za-z0-9\-\/]{4,30})/i);
+      if (regMatch && regMatch[1].trim()) {
+        rawExtracted.registerNumber = regMatch[1].trim();
+      }
     }
+
     if (!rawExtracted.course) {
-      const courseMatch = strippedText.match(/(?:Course|Degree\s*(?:&|and|\/)?\s*Branch|Branch|Degree)\s*[:\-]\s*([A-Za-z0-9&.\/\s\-]{2,80}?)(?=(?:Batch|Year|Academic|Register|Reg\b|Roll|Name|\n|$))/i);
-      if (courseMatch && courseMatch[1].trim()) rawExtracted.course = courseMatch[1].trim();
+      const courseMatch = strippedText.match(/(?:Course|Degree\s*(?:&|and|\/)?\s*Branch|Branch|Degree|Programme|Program|Specialization|Stream)\s*[:\-]?\s*([A-Za-z0-9&.\/\s\-]{2,80}?)(?=(?:Batch|Year|Academic|Register|Regd|Reg\b|Roll|Enrol|Name|\n|$))/i);
+      if (courseMatch && courseMatch[1].trim()) {
+        rawExtracted.course = courseMatch[1].trim();
+      }
     }
+
     if (!rawExtracted.batch) {
-      const batchMatch = strippedText.match(/(?:Batch|Academic\s*Batch|Academic\s*Year)\s*[:\-]\s*(\d{4}\s*[-–]\s*\d{2,4})/i);
-      if (batchMatch && batchMatch[1].trim()) rawExtracted.batch = batchMatch[1].trim().replace('–', '-');
+      const batchMatch = strippedText.match(/(?:Batch|Academic\s*Batch|Academic\s*Year|Year\s*of\s*(?:Admission|Join))\s*[:\-]?\s*(\d{4}\s*[-\u2013]\s*\d{2,4})/i);
+      if (batchMatch && batchMatch[1].trim()) {
+        rawExtracted.batch = batchMatch[1].trim().replace('\u2013', '-');
+      }
     }
   }
 
-  // Validate presence of all 4 required fields
-  const missing = [];
-  if (!rawExtracted.name || rawExtracted.name.trim().length === 0) missing.push('Student Name');
-  if (!rawExtracted.registerNumber || rawExtracted.registerNumber.trim().length === 0) missing.push('Register Number');
-  if (!rawExtracted.course || rawExtracted.course.trim().length === 0) missing.push('Course');
-  if (!rawExtracted.batch || rawExtracted.batch.trim().length === 0) missing.push('Batch');
-
-  if (missing.length > 0) {
+  // CRITICAL: Only registerNumber is mandatory for identity uniqueness.
+  // Other fields use safe fallback defaults if extraction failed.
+  if (!rawExtracted.registerNumber || rawExtracted.registerNumber.trim().length === 0) {
+    const missingFields = [];
+    if (!rawExtracted.name) missingFields.push('Student Name');
+    if (!rawExtracted.registerNumber) missingFields.push('Register Number');
+    if (!rawExtracted.course) missingFields.push('Course');
+    if (!rawExtracted.batch) missingFields.push('Batch');
     return {
       success: false,
       errorCode: 'INVALID_RIT_PAGE',
       errorMessage: 'The RIT verification page did not contain the expected student information.',
-      missingFields: missing,
+      missingFields,
     };
   }
 
-  const cleanName = rawExtracted.name.trim().replace(/\s+/g, ' ');
-  const cleanRegNo = rawExtracted.registerNumber.trim().toUpperCase().replace(/\s+/g, '');
-  const cleanCourse = rawExtracted.course.trim().replace(/\s+/g, ' ');
+  // Field Sanitization & Normalization with safe defaults
+  const cleanName = rawExtracted.name ? rawExtracted.name.trim().replace(/\s+/g, ' ') : 'RIT Student';
+  const cleanRegNo = rawExtracted.registerNumber.trim().toUpperCase().replace(/[\s\-]/g, '');
+  const cleanCourse = rawExtracted.course ? rawExtracted.course.trim().replace(/\s+/g, ' ') : 'Unknown';
   const normBatch = normalizeBatch(rawExtracted.batch);
-  const canonicalDept = normalizeDepartment(cleanCourse);
+  const canonicalDept = normalizeDepartment(cleanCourse) || 'RIT';
 
   return {
     success: true,
@@ -455,22 +526,7 @@ describe('Phase 4 - Real RIT Student ID QR Verification Architecture', () => {
     });
   });
 
-  describe('3. Missing Field Detection & Safe Rejection', () => {
-    test('rejects page missing Student Name with INVALID_RIT_PAGE', () => {
-      const noNameHtml = `
-        <table>
-          <tr><th>Register Number</th><td>210821104111</td></tr>
-          <tr><th>Course</th><td>B.E. CSE</td></tr>
-          <tr><th>Batch</th><td>2024-2028</td></tr>
-        </table>
-      `;
-
-      const result = parseRitOfficialPage(noNameHtml);
-      assert.equal(result.success, false);
-      assert.equal(result.errorCode, 'INVALID_RIT_PAGE');
-      assert.ok(result.missingFields.includes('Student Name'));
-    });
-
+  describe('3. Required Identity Field Detection & Graceful Fallbacks', () => {
     test('rejects page missing Register Number with INVALID_RIT_PAGE', () => {
       const noRegHtml = `
         <table>
@@ -486,7 +542,22 @@ describe('Phase 4 - Real RIT Student ID QR Verification Architecture', () => {
       assert.ok(result.missingFields.includes('Register Number'));
     });
 
-    test('rejects page missing Course with INVALID_RIT_PAGE', () => {
+    test('succeeds with fallback when Student Name is missing', () => {
+      const noNameHtml = `
+        <table>
+          <tr><th>Register Number</th><td>210821104111</td></tr>
+          <tr><th>Course</th><td>B.E. CSE</td></tr>
+          <tr><th>Batch</th><td>2024-2028</td></tr>
+        </table>
+      `;
+
+      const result = parseRitOfficialPage(noNameHtml);
+      assert.equal(result.success, true);
+      assert.equal(result.data.registerNumber, '210821104111');
+      assert.equal(result.data.name, 'RIT Student');
+    });
+
+    test('succeeds with fallback when Course is missing', () => {
       const noCourseHtml = `
         <table>
           <tr><th>Student Name</th><td>Synthetic Name</td></tr>
@@ -496,12 +567,13 @@ describe('Phase 4 - Real RIT Student ID QR Verification Architecture', () => {
       `;
 
       const result = parseRitOfficialPage(noCourseHtml);
-      assert.equal(result.success, false);
-      assert.equal(result.errorCode, 'INVALID_RIT_PAGE');
-      assert.ok(result.missingFields.includes('Course'));
+      assert.equal(result.success, true);
+      assert.equal(result.data.registerNumber, '210821104222');
+      assert.equal(result.data.course, 'Unknown');
+      assert.equal(result.data.department, 'RIT');
     });
 
-    test('rejects page missing Batch with INVALID_RIT_PAGE', () => {
+    test('succeeds with fallback when Batch is missing', () => {
       const noBatchHtml = `
         <table>
           <tr><th>Student Name</th><td>Synthetic Name</td></tr>
@@ -511,9 +583,9 @@ describe('Phase 4 - Real RIT Student ID QR Verification Architecture', () => {
       `;
 
       const result = parseRitOfficialPage(noBatchHtml);
-      assert.equal(result.success, false);
-      assert.equal(result.errorCode, 'INVALID_RIT_PAGE');
-      assert.ok(result.missingFields.includes('Batch'));
+      assert.equal(result.success, true);
+      assert.equal(result.data.registerNumber, '210821104333');
+      assert.equal(result.data.batch, '2024-2028');
     });
 
     test('rejects empty or blank HTML', () => {
@@ -612,7 +684,6 @@ describe('Phase 4 - Real RIT Student ID QR Verification Architecture', () => {
         batch: '2024-2028',
       };
 
-      // Peer resolution API projection (as in get_room_peer)
       const peerPublicView = {
         anonymous_username: profile.anonymous_username,
         avatar_config: profile.avatar_config,
@@ -625,6 +696,212 @@ describe('Phase 4 - Real RIT Student ID QR Verification Architecture', () => {
       assert.equal(peerPublicView.email, undefined);
       assert.equal(peerPublicView.department, undefined);
       assert.equal(peerPublicView.batch, undefined);
+    });
+  });
+
+  describe('7. Strategy E: Input/Form Value Extraction (ASP.NET/PHP Pages)', () => {
+    test('extracts fields from label + input value pairs', () => {
+      const aspNetHtml = `
+        <div class="form-group">
+          <label for="txtName">Student Name</label>
+          <input type="text" id="txtName" value="Synthetic Student Gamma" readonly />
+        </div>
+        <div class="form-group">
+          <label for="txtRegNo">Register No.</label>
+          <input type="text" id="txtRegNo" value="210824407666" readonly />
+        </div>
+        <div class="form-group">
+          <label for="txtCourse">Course</label>
+          <input type="text" id="txtCourse" value="B.E. ECE" readonly />
+        </div>
+        <div class="form-group">
+          <label for="txtBatch">Batch</label>
+          <input type="text" id="txtBatch" value="2024-2028" readonly />
+        </div>
+      `;
+
+      const result = parseRitOfficialPage(aspNetHtml);
+      assert.equal(result.success, true);
+      assert.equal(result.data.name, 'Synthetic Student Gamma');
+      assert.equal(result.data.registerNumber, '210824407666');
+      assert.equal(result.data.department, 'ECE');
+      assert.equal(result.data.batch, '2024-2028');
+    });
+
+    test('extracts fields from table cell + input value pairs', () => {
+      const tableInputHtml = `
+        <table>
+          <tr><td>Student Name</td><td><input value="Synthetic Student Delta" disabled /></td></tr>
+          <tr><td>Regd. No</td><td><input value="210825508555" disabled /></td></tr>
+          <tr><td>Course</td><td><input value="B.Tech AI & DS" disabled /></td></tr>
+          <tr><td>Batch</td><td><input value="2025-2029" disabled /></td></tr>
+        </table>
+      `;
+
+      const result = parseRitOfficialPage(tableInputHtml);
+      assert.equal(result.success, true);
+      assert.equal(result.data.registerNumber, '210825508555');
+      assert.equal(result.data.department, 'AI/DS');
+    });
+  });
+
+  describe('8. Strategy E2: Named Input Extraction', () => {
+    test('extracts fields from input name/id attributes matching field names', () => {
+      const namedInputHtml = `
+        <form>
+          <input name="StudentName" value="Synthetic Student Epsilon" type="text" readonly />
+          <input name="RegisterNo" value="210826609444" type="text" readonly />
+          <input name="Course" value="B.E. MECH" type="text" readonly />
+          <input name="Batch" value="2023-2027" type="text" readonly />
+        </form>
+      `;
+
+      const result = parseRitOfficialPage(namedInputHtml);
+      assert.equal(result.success, true);
+      assert.equal(result.data.registerNumber, '210826609444');
+      assert.equal(result.data.department, 'MECH');
+      assert.equal(result.data.batch, '2023-2027');
+    });
+  });
+
+  describe('9. Strategy F: Colon-Separated Values in Single Elements', () => {
+    test('extracts fields from single td with colon-separated label:value', () => {
+      const colonHtml = `
+        <table>
+          <tr><td>Student Name : Synthetic Student Zeta</td></tr>
+          <tr><td>Register Number : 210827710333</td></tr>
+          <tr><td>Course : B.E. Computer Science and Engineering</td></tr>
+          <tr><td>Batch : 2024-2028</td></tr>
+        </table>
+      `;
+
+      const result = parseRitOfficialPage(colonHtml);
+      assert.equal(result.success, true);
+      assert.equal(result.data.name, 'Synthetic Student Zeta');
+      assert.equal(result.data.registerNumber, '210827710333');
+      assert.equal(result.data.department, 'CSE');
+    });
+
+    test('extracts from p tags with colon separation', () => {
+      const pColonHtml = `
+        <div class="student-card">
+          <p>Student Name : Synthetic Student Eta</p>
+          <p>Reg No : 210828811222</p>
+          <p>Course : B.Tech IT</p>
+          <p>Batch : 2025-2029</p>
+        </div>
+      `;
+
+      const result = parseRitOfficialPage(pColonHtml);
+      assert.equal(result.success, true);
+      assert.equal(result.data.registerNumber, '210828811222');
+      assert.equal(result.data.department, 'IT');
+    });
+  });
+
+  describe('10. Partial Field Extraction (Register Number Only)', () => {
+    test('succeeds with only register number extracted, uses safe defaults', () => {
+      const minimalHtml = `
+        <div>
+          <span>Register Number</span>
+          <span>210829912111</span>
+        </div>
+      `;
+
+      const result = parseRitOfficialPage(minimalHtml);
+      assert.equal(result.success, true);
+      assert.equal(result.data.registerNumber, '210829912111');
+      assert.equal(result.data.name, 'RIT Student');
+      assert.equal(result.data.course, 'Unknown');
+    });
+
+    test('fails when register number is missing even if other fields present', () => {
+      const noRegHtml = `
+        <table>
+          <tr><th>Student Name</th><td>Synthetic Name</td></tr>
+          <tr><th>Course</th><td>B.E. CSE</td></tr>
+          <tr><th>Batch</th><td>2024-2028</td></tr>
+        </table>
+      `;
+
+      const result = parseRitOfficialPage(noRegHtml);
+      assert.equal(result.success, false);
+      assert.equal(result.errorCode, 'INVALID_RIT_PAGE');
+      assert.ok(result.missingFields.includes('Register Number'));
+    });
+  });
+
+  describe('11. Broader Label Variant Recognition', () => {
+    test('matches Regd. No label variant', () => {
+      assert.equal(matchFieldType('Regd. No'), 'registerNumber');
+      assert.equal(matchFieldType('Regd No'), 'registerNumber');
+      assert.equal(matchFieldType('REGD. NO.'), 'registerNumber');
+    });
+
+    test('matches Enrolment/Enrollment No label variant', () => {
+      assert.equal(matchFieldType('Enrolment No'), 'registerNumber');
+      assert.equal(matchFieldType('Enrollment Number'), 'registerNumber');
+    });
+
+    test('matches Admission No label variant', () => {
+      assert.equal(matchFieldType('Admission No'), 'registerNumber');
+      assert.equal(matchFieldType('Admission Number'), 'registerNumber');
+    });
+
+    test('matches Hall Ticket No label variant', () => {
+      assert.equal(matchFieldType('Hall Ticket No'), 'registerNumber');
+      assert.equal(matchFieldType('Hall Ticket No.'), 'registerNumber');
+    });
+
+    test('matches Student ID label variant', () => {
+      assert.equal(matchFieldType('Student ID'), 'registerNumber');
+      assert.equal(matchFieldType('Student Id'), 'registerNumber');
+    });
+
+    test('matches USN label', () => {
+      assert.equal(matchFieldType('USN'), 'registerNumber');
+    });
+
+    test('matches Year of Joining / Joining Year batch variants', () => {
+      assert.equal(matchFieldType('Year of Join'), 'batch');
+      assert.equal(matchFieldType('Joining Year'), 'batch');
+    });
+
+    test('matches Specialization / Stream course variants', () => {
+      assert.equal(matchFieldType('Specialization'), 'course');
+      assert.equal(matchFieldType('Specialisation'), 'course');
+      assert.equal(matchFieldType('Stream'), 'course');
+    });
+  });
+
+  describe('12. Whitespace and Entity Edge Cases', () => {
+    test('handles non-breaking spaces in labels and values', () => {
+      const nbspHtml = `
+        <table>
+          <tr><th>Student&nbsp;Name</th><td>&nbsp;Synthetic&nbsp;Student&nbsp;</td></tr>
+          <tr><th>Register&nbsp;Number</th><td>&nbsp;210830013000&nbsp;</td></tr>
+          <tr><th>Course</th><td>B.E.&nbsp;CSE</td></tr>
+          <tr><th>Batch</th><td>2024&nbsp;-&nbsp;2028</td></tr>
+        </table>
+      `;
+
+      const result = parseRitOfficialPage(nbspHtml);
+      assert.equal(result.success, true);
+      assert.equal(result.data.registerNumber, '210830013000');
+    });
+
+    test('handles br tags between label and value', () => {
+      const brHtml = `
+        <div>Student Name<br/>Synthetic Student Iota</div>
+        <div>Register Number<br>210831114999</div>
+        <div>Course<br />B.E. EEE</div>
+        <div>Batch<br/>2024-2028</div>
+      `;
+
+      // The br tags get converted to spaces, enabling text regex fallback
+      const result = parseRitOfficialPage(brHtml);
+      assert.equal(result.success, true);
+      assert.equal(result.data.registerNumber, '210831114999');
     });
   });
 });

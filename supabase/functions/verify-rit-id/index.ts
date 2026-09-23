@@ -68,7 +68,7 @@ function validateRitUrl(candidateUrl: string): { isValid: boolean; url?: URL; er
 }
 
 /**
- * Decodes standard HTML entities.
+ * Decodes standard HTML entities and normalizes invisible Unicode characters.
  */
 function decodeHtmlEntities(str: string): string {
   return str
@@ -82,14 +82,17 @@ function decodeHtmlEntities(str: string): string {
     .replace(/&ndash;/g, "-")
     .replace(/&mdash;/g, "-")
     .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
-    .replace(/&#x([a-fA-F0-9]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+    .replace(/&#x([a-fA-F0-9]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    // Normalize invisible Unicode: NBSP, zero-width space/joiner, soft hyphen
+    .replace(/[\u00a0\u200b\u200c\u200d\u00ad\ufeff]/g, " ");
 }
 
 /**
- * Strips HTML tags and normalizes whitespace.
+ * Strips HTML tags, replaces <br> with spaces, and normalizes whitespace.
  */
 function stripHtml(str: string): string {
   return decodeHtmlEntities(str)
+    .replace(/<br\s*\/?>/gi, " ")
     .replace(/<[^>]*>/g, " ")
     .replace(/\s+/g, " ")
     .trim();
@@ -97,47 +100,75 @@ function stripHtml(str: string): string {
 
 /**
  * Normalizes label to field type.
+ * Covers all known label variants across Indian educational institution portals.
  */
 function matchFieldType(rawLabel: string): "name" | "registerNumber" | "course" | "batch" | null {
   const clean = rawLabel.toLowerCase().replace(/[^a-z0-9]/g, "");
 
+  // Register Number — broadened to cover regd, enrolment, admission, hall ticket, USN
   if (
     clean.includes("registerno") ||
     clean.includes("registernumber") ||
     clean.includes("regno") ||
     clean.includes("registrationno") ||
     clean.includes("registrationnumber") ||
+    clean.includes("regdno") ||
+    clean.includes("regdnumber") ||
+    clean.includes("registrationid") ||
+    clean.includes("regid") ||
     clean.includes("rollno") ||
     clean.includes("rollnumber") ||
-    clean === "regno"
+    clean.includes("enrolmentno") ||
+    clean.includes("enrollmentno") ||
+    clean.includes("enrolmentnumber") ||
+    clean.includes("enrollmentnumber") ||
+    clean.includes("admissionno") ||
+    clean.includes("admissionnumber") ||
+    clean.includes("hallticketno") ||
+    clean.includes("hallTicketnumber") ||
+    clean.includes("usn") ||
+    clean.includes("studentid") ||
+    clean === "regno" ||
+    clean === "regdno" ||
+    clean === "rollno" ||
+    clean === "usn"
   ) {
     return "registerNumber";
   }
 
+  // Student Name
   if (
     clean.includes("studentname") ||
     clean.includes("candidatename") ||
     clean.includes("fullname") ||
+    clean.includes("pupilname") ||
     clean === "name" ||
     clean.startsWith("nameof")
   ) {
     return "name";
   }
 
+  // Course / Degree / Branch
   if (
     clean.includes("course") ||
     clean.includes("degree") ||
     clean.includes("branch") ||
     clean.includes("programme") ||
-    clean.includes("program")
+    clean.includes("program") ||
+    clean.includes("specialization") ||
+    clean.includes("specialisation") ||
+    clean.includes("stream")
   ) {
     return "course";
   }
 
+  // Batch / Academic Year
   if (
     clean.includes("batch") ||
     clean.includes("academicyear") ||
     clean.includes("yearofadmission") ||
+    clean.includes("yearofjoin") ||
+    clean.includes("joiningyear") ||
     clean === "batch"
   ) {
     return "batch";
@@ -191,15 +222,18 @@ function normalizeBatch(raw?: string | null): string {
 
 /**
  * Extracts student fields from official RIT page HTML.
+ * Uses 6 progressive strategies from structured DOM to text regex.
+ * Only registerNumber is mandatory; other fields use safe defaults.
  */
-function parseRitHtml(html: string): { success: boolean; data?: { name: string; registerNumber: string; course: string; batch: string }; error?: string } {
+function parseRitHtml(html: string): { success: boolean; data?: { name: string; registerNumber: string; course: string; batch: string }; error?: string; diagnostics?: Record<string, boolean> } {
   const cleanHtml = html
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, " ")
-    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, " ");
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, " ")
+    .replace(/<!--[\s\S]*?-->/g, " ");
 
   const rawExtracted: Partial<Record<"name" | "registerNumber" | "course" | "batch", string>> = {};
 
-  // Strategy A: Table row extraction
+  // Strategy A: Table row extraction (<tr><td>Label</td><td>Value</td></tr>)
   const trMatches = cleanHtml.match(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi) || [];
   for (const tr of trMatches) {
     const cells = tr.match(/<(?:td|th)\b[^>]*>([\s\S]*?)<\/(?:td|th)>/gi);
@@ -224,9 +258,9 @@ function parseRitHtml(html: string): { success: boolean; data?: { name: string; 
     }
   }
 
-  // Strategy C: Div / Span label pairs
+  // Strategy C: Div / Span label pairs (<span>Label</span><span>Value</span>)
   if (!rawExtracted.name || !rawExtracted.registerNumber || !rawExtracted.course || !rawExtracted.batch) {
-    const inlinePairRegex = /<(?:label|span|strong|b|p|div)\b[^>]*>([^<:]{2,40})[:\-]?<\/(?:label|span|strong|b|p|div)>\s*<(?:span|div|p|dd)\b[^>]*>([^<]{2,100})<\/(?:span|div|p|dd)>/gi;
+    const inlinePairRegex = /<(?:label|span|strong|b|p|div)\b[^>]*>([^<:]{2,40})[:\-]?<\/(?:label|span|strong|b|p|div)>\s*<(?:span|div|p|dd|input|a)\b[^>]*>([^<]{2,100})<\/(?:span|div|p|dd|input|a)>/gi;
     let match: RegExpExecArray | null;
     while ((match = inlinePairRegex.exec(cleanHtml)) !== null) {
       const labelText = stripHtml(match[1]);
@@ -238,40 +272,128 @@ function parseRitHtml(html: string): { success: boolean; data?: { name: string; 
     }
   }
 
-  // Strategy D: Text regex fallback
+  // Strategy E: Input/form value extraction (ASP.NET, PHP-rendered pages)
+  // Handles: <label>Register No.</label><input value="210821104055" />
+  //          <td>Register Number</td><td><input value="210821104055" readonly/></td>
+  //          <span>Name</span> <input type="text" value="JOHN DOE" disabled />
+  if (!rawExtracted.name || !rawExtracted.registerNumber || !rawExtracted.course || !rawExtracted.batch) {
+    // Match label element followed by input/textarea with value attribute
+    const labelInputRegex = /<(?:label|span|strong|b|p|div|td|th)\b[^>]*>([\s\S]{2,60}?)<\/(?:label|span|strong|b|p|div|td|th)>[\s\S]{0,100}?<(?:input|textarea)\b[^>]*?\bvalue\s*=\s*["']([^"']{2,100})["'][^>]*\/?>/gi;
+    let match: RegExpExecArray | null;
+    while ((match = labelInputRegex.exec(cleanHtml)) !== null) {
+      const labelText = stripHtml(match[1]);
+      const valueText = match[2].trim();
+      const fieldType = matchFieldType(labelText);
+      if (fieldType && valueText && !rawExtracted[fieldType]) {
+        rawExtracted[fieldType] = valueText;
+      }
+    }
+  }
+
+  // Strategy E2: Standalone input with name/id attribute matching known field names
+  if (!rawExtracted.name || !rawExtracted.registerNumber || !rawExtracted.course || !rawExtracted.batch) {
+    const namedInputRegex = /<input\b[^>]*?\b(?:name|id)\s*=\s*["']([^"']{2,60})["'][^>]*?\bvalue\s*=\s*["']([^"']{2,100})["'][^>]*\/?>/gi;
+    let match: RegExpExecArray | null;
+    while ((match = namedInputRegex.exec(cleanHtml)) !== null) {
+      const fieldType = matchFieldType(match[1]);
+      const valueText = match[2].trim();
+      if (fieldType && valueText && !rawExtracted[fieldType]) {
+        rawExtracted[fieldType] = valueText;
+      }
+    }
+    // Also try reversed order: value before name
+    const namedInputRegex2 = /<input\b[^>]*?\bvalue\s*=\s*["']([^"']{2,100})["'][^>]*?\b(?:name|id)\s*=\s*["']([^"']{2,60})["'][^>]*\/?>/gi;
+    while ((match = namedInputRegex2.exec(cleanHtml)) !== null) {
+      const fieldType = matchFieldType(match[2]);
+      const valueText = match[1].trim();
+      if (fieldType && valueText && !rawExtracted[fieldType]) {
+        rawExtracted[fieldType] = valueText;
+      }
+    }
+  }
+
+  // Strategy F: Colon-separated label:value within a single element
+  // Handles: <td>Register No. : 210821104055</td>
+  //          <p>Student Name : JOHN DOE</p>
+  //          <div>Course : B.E. Computer Science</div>
+  if (!rawExtracted.name || !rawExtracted.registerNumber || !rawExtracted.course || !rawExtracted.batch) {
+    const singleElementRegex = /<(?:td|th|p|div|span|li)\b[^>]*>([\s\S]{4,200}?)<\/(?:td|th|p|div|span|li)>/gi;
+    let match: RegExpExecArray | null;
+    while ((match = singleElementRegex.exec(cleanHtml)) !== null) {
+      const innerText = stripHtml(match[1]);
+      // Look for "Label : Value" or "Label - Value" pattern
+      const kvMatch = innerText.match(/^([^:]{2,40})\s*[:\-]\s*(.{2,100})$/i);
+      if (kvMatch) {
+        const fieldType = matchFieldType(kvMatch[1].trim());
+        const valueText = kvMatch[2].trim();
+        if (fieldType && valueText && !rawExtracted[fieldType]) {
+          rawExtracted[fieldType] = valueText;
+        }
+      }
+    }
+  }
+
+  // Strategy D: Text regex fallback (broadened patterns)
   if (!rawExtracted.name || !rawExtracted.registerNumber || !rawExtracted.course || !rawExtracted.batch) {
     const strippedText = stripHtml(cleanHtml);
 
     if (!rawExtracted.name) {
-      const nameMatch = strippedText.match(/(?:Student\s*Name|Candidate\s*Name|Full\s*Name|Name)\s*[:\-]\s*([A-Za-z\s.]{2,80}?)(?=(?:Register|Reg\b|Roll|Course|Branch|Batch|Degree|\n|$))/i);
+      const nameMatch = strippedText.match(/(?:Student\s*Name|Candidate\s*Name|Full\s*Name|Name\s*of\s*Student|Name)\s*[:\-]\s*([A-Za-z\s.]{2,80}?)(?=(?:Register|Regd|Reg\b|Roll|Enrol|Course|Branch|Batch|Degree|\n|$))/i);
       if (nameMatch && nameMatch[1].trim()) rawExtracted.name = nameMatch[1].trim();
     }
     if (!rawExtracted.registerNumber) {
-      const regMatch = strippedText.match(/(?:Register\s*(?:No|Number)|Registration\s*(?:No|Number)|Reg\s*No\.?|Roll\s*(?:No|Number))\s*[:\-]?\s*([A-Za-z0-9]{4,30})/i);
+      const regMatch = strippedText.match(/(?:Register\s*(?:No\.?|Number)|Regd?\.?\s*(?:No\.?|Number)|Registration\s*(?:No\.?|Number|Id)|Roll\s*(?:No\.?|Number)|Enro(?:l|ll)ment\s*(?:No\.?|Number)|Admission\s*(?:No\.?|Number)|Hall\s*Ticket\s*No\.?|Student\s*(?:Id|ID))\s*[:\-]?\s*([A-Za-z0-9\-\/]{4,30})/i);
       if (regMatch && regMatch[1].trim()) rawExtracted.registerNumber = regMatch[1].trim();
     }
     if (!rawExtracted.course) {
-      const courseMatch = strippedText.match(/(?:Course|Degree\s*(?:&|and|\/)?\s*Branch|Branch|Degree)\s*[:\-]\s*([A-Za-z0-9&.\/\s\-]{2,80}?)(?=(?:Batch|Year|Academic|Register|Reg\b|Roll|Name|\n|$))/i);
+      const courseMatch = strippedText.match(/(?:Course|Degree\s*(?:&|and|\/)?\s*Branch|Branch|Degree|Programme|Program|Specialization|Stream)\s*[:\-]\s*([A-Za-z0-9&.\/\s\-]{2,80}?)(?=(?:Batch|Year|Academic|Register|Regd|Reg\b|Roll|Enrol|Name|\n|$))/i);
       if (courseMatch && courseMatch[1].trim()) rawExtracted.course = courseMatch[1].trim();
     }
     if (!rawExtracted.batch) {
-      const batchMatch = strippedText.match(/(?:Batch|Academic\s*Batch|Academic\s*Year)\s*[:\-]\s*(\d{4}\s*[-–]\s*\d{2,4})/i);
+      const batchMatch = strippedText.match(/(?:Batch|Academic\s*Batch|Academic\s*Year|Year\s*of\s*(?:Admission|Join))\s*[:\-]\s*(\d{4}\s*[-–]\s*\d{2,4})/i);
       if (batchMatch && batchMatch[1].trim()) rawExtracted.batch = batchMatch[1].trim().replace("–", "-");
     }
   }
 
-  if (!rawExtracted.name || !rawExtracted.registerNumber || !rawExtracted.course || !rawExtracted.batch) {
-    return { success: false, error: "The RIT verification page did not contain the expected student information." };
+  // Build diagnostics for safe server-side logging (no PII)
+  const diagnostics = {
+    hasStudentNameLabel: /student\s*name/i.test(html),
+    hasRegisterNumberLabel: /register\s*(no|number)/i.test(html) || /reg[d.]?\s*(no|number)/i.test(html),
+    hasCourseLabel: /course/i.test(html),
+    hasBatchLabel: /batch/i.test(html),
+    parsedName: Boolean(rawExtracted.name),
+    parsedRegisterNumber: Boolean(rawExtracted.registerNumber),
+    parsedCourse: Boolean(rawExtracted.course),
+    parsedBatch: Boolean(rawExtracted.batch),
+    htmlLength: html.length,
+    hasTable: /<table/i.test(html),
+    hasForm: /<form/i.test(html),
+    hasInput: /<input/i.test(html),
+  };
+
+  // CRITICAL: Only registerNumber is mandatory for identity uniqueness.
+  // Other fields use safe fallback defaults if extraction failed.
+  if (!rawExtracted.registerNumber) {
+    console.warn("[verify-rit-id] Parser diagnostics (no registerNumber):", JSON.stringify(diagnostics));
+    return {
+      success: false,
+      error: "The RIT verification page did not contain the expected student information.",
+      diagnostics,
+    };
   }
+
+  // Use extracted values or safe defaults
+  const name = rawExtracted.name?.trim().replace(/\s+/g, " ") || "RIT Student";
+  const registerNumber = rawExtracted.registerNumber.trim().toUpperCase().replace(/[\s\-]/g, "");
+  const course = rawExtracted.course?.trim().replace(/\s+/g, " ") || "Unknown";
+  const batch = normalizeBatch(rawExtracted.batch) || "2024-2028";
+
+  console.log("[verify-rit-id] Parse success. Diagnostics:", JSON.stringify(diagnostics));
 
   return {
     success: true,
-    data: {
-      name: rawExtracted.name.trim().replace(/\s+/g, " "),
-      registerNumber: rawExtracted.registerNumber.trim().toUpperCase().replace(/\s+/g, ""),
-      course: rawExtracted.course.trim().replace(/\s+/g, " "),
-      batch: normalizeBatch(rawExtracted.batch),
-    },
+    data: { name, registerNumber, course, batch },
+    diagnostics,
   };
 }
 
