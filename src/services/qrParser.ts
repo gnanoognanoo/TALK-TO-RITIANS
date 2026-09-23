@@ -120,7 +120,7 @@ function normalizeFieldKey(key: string): keyof ExtractedStudentFields | string {
   if (['name', 'studentname', 'fullname', 'fname'].includes(clean)) return 'name';
   if (['dept', 'department', 'branch'].includes(clean)) return 'department';
   if (['batch', 'academicbatch', 'year', 'gradyear'].includes(clean)) return 'batch';
-  if (['studentref', 'studentreference', 'rollno', 'registerno', 'regno', 'id', 'studentid'].includes(clean)) {
+  if (['studentref', 'studentreference', 'rollno', 'registerno', 'regno', 'registernumber', 'registrationno', 'registrationnumber', 'id', 'studentid'].includes(clean)) {
     return 'studentReference';
   }
   if (['email', 'collegeemail', 'studentemail'].includes(clean)) return 'collegeEmail';

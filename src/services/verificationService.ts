@@ -254,8 +254,8 @@ export class VerificationService {
         };
       }
 
-      const { name, department, batch, studentReference } = qrResult.fields;
-      const ref = studentReference?.trim();
+      const { name, department, batch } = qrResult.fields;
+      const ref = ((qrResult.fields as Record<string, unknown>).registerNumber as string | undefined || qrResult.fields.studentReference)?.trim();
 
       // Check for sufficient unique data
       if (

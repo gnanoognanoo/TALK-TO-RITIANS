@@ -74,12 +74,13 @@ function decodeHtmlEntities(str) {
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
     .replace(/&apos;/g, "'")
-    .replace(/&nbsp;/g, ' ')
+    .replace(/&(?:nbsp|ensp|emsp|thinsp);/gi, ' ')
     .replace(/&ndash;/g, '-')
     .replace(/&mdash;/g, '-')
     .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
     .replace(/&#x([a-fA-F0-9]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
-    .replace(/[\u00a0\u200b\u200c\u200d\u00ad\ufeff]/g, ' ');
+    // Normalize invisible Unicode: NBSP, zero-width space/joiner, soft hyphen, spaces
+    .replace(/[\u00a0\u1680\u2000-\u200b\u200c\u200d\u202f\u205f\u3000\u00ad\ufeff]/g, ' ');
 }
 
 function stripHtml(str) {
@@ -88,6 +89,21 @@ function stripHtml(str) {
     .replace(/<[^>]*>/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+function cleanFieldText(val) {
+  return stripHtml(val)
+    .replace(/^[:\-\s]+/, '')
+    .replace(/[:\-\s]+$/, '')
+    .trim();
+}
+
+function extractCellText(cellHtml) {
+  const inputValMatch = cellHtml.match(/<(?:input|textarea)\b[^>]*?\bvalue\s*=\s*["']([^"']+)["'][^>]*\/?>/i);
+  if (inputValMatch && inputValMatch[1].trim()) {
+    return cleanFieldText(inputValMatch[1]);
+  }
+  return stripHtml(cellHtml);
 }
 
 function matchFieldType(rawLabel) {
@@ -190,16 +206,36 @@ function parseRitOfficialPage(htmlContent) {
     .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
     .replace(/<!--[\s\S]*?-->/g, ' ');
 
-  // Strategy A: Table Row Key-Value Extraction (<tr><td>Label</td><td>Value</td></tr>)
+  // Strategy A: Table Row Key-Value Extraction
+  // Handles 3-column (label, separator, value), 2-column, and inline rows
   const trMatches = cleanHtml.match(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi) || [];
   for (const tr of trMatches) {
     const cells = tr.match(/<(?:td|th)\b[^>]*>([\s\S]*?)<\/(?:td|th)>/gi);
-    if (cells && cells.length >= 2) {
-      const labelText = stripHtml(cells[0]);
-      const valueText = stripHtml(cells[1]);
-      const fieldType = matchFieldType(labelText);
-      if (fieldType && valueText && !rawExtracted[fieldType]) {
-        rawExtracted[fieldType] = valueText;
+    if (!cells || cells.length === 0) continue;
+
+    for (let j = 0; j < cells.length; j++) {
+      const cellText = extractCellText(cells[j]);
+      const fieldType = matchFieldType(cellText);
+      if (fieldType && !rawExtracted[fieldType]) {
+        // 1. Check if the cell itself has "Label : Value"
+        const inlineKv = cellText.match(/^([^:]{2,40})[:\-]\s*(.{2,100})$/);
+        if (inlineKv && matchFieldType(inlineKv[1]) === fieldType) {
+          const val = cleanFieldText(inlineKv[2]);
+          if (val.length > 0) {
+            rawExtracted[fieldType] = val;
+            continue;
+          }
+        }
+        // 2. Search subsequent cells for the value, skipping separator cells (like ":", "-", or empty)
+        for (let k = j + 1; k < cells.length; k++) {
+          const rawVal = extractCellText(cells[k]);
+          const val = cleanFieldText(rawVal);
+          if (val.length === 0) continue;
+          if (matchFieldType(rawVal)) break;
+
+          rawExtracted[fieldType] = val;
+          break;
+        }
       }
     }
   }
@@ -208,7 +244,7 @@ function parseRitOfficialPage(htmlContent) {
   const dtMatches = Array.from(cleanHtml.matchAll(/<dt\b[^>]*>([\s\S]*?)<\/dt>\s*<dd\b[^>]*>([\s\S]*?)<\/dd>/gi));
   for (const match of dtMatches) {
     const labelText = stripHtml(match[1]);
-    const valueText = stripHtml(match[2]);
+    const valueText = cleanFieldText(match[2]);
     const fieldType = matchFieldType(labelText);
     if (fieldType && valueText && !rawExtracted[fieldType]) {
       rawExtracted[fieldType] = valueText;
@@ -221,7 +257,7 @@ function parseRitOfficialPage(htmlContent) {
     let match;
     while ((match = inlinePairRegex.exec(cleanHtml)) !== null) {
       const labelText = stripHtml(match[1]);
-      const valueText = stripHtml(match[2]);
+      const valueText = cleanFieldText(match[2]);
       const fieldType = matchFieldType(labelText);
       if (fieldType && valueText && !rawExtracted[fieldType]) {
         rawExtracted[fieldType] = valueText;
@@ -235,7 +271,7 @@ function parseRitOfficialPage(htmlContent) {
     let match;
     while ((match = labelInputRegex.exec(cleanHtml)) !== null) {
       const labelText = stripHtml(match[1]);
-      const valueText = match[2].trim();
+      const valueText = cleanFieldText(match[2]);
       const fieldType = matchFieldType(labelText);
       if (fieldType && valueText && !rawExtracted[fieldType]) {
         rawExtracted[fieldType] = valueText;
@@ -249,7 +285,7 @@ function parseRitOfficialPage(htmlContent) {
     let match;
     while ((match = namedInputRegex.exec(cleanHtml)) !== null) {
       const fieldType = matchFieldType(match[1]);
-      const valueText = match[2].trim();
+      const valueText = cleanFieldText(match[2]);
       if (fieldType && valueText && !rawExtracted[fieldType]) {
         rawExtracted[fieldType] = valueText;
       }
@@ -257,7 +293,7 @@ function parseRitOfficialPage(htmlContent) {
     const namedInputRegex2 = /<input\b[^>]*?\bvalue\s*=\s*["']([^"']{2,100})["'][^>]*?\b(?:name|id)\s*=\s*["']([^"']{2,60})["'][^>]*\/?>/gi;
     while ((match = namedInputRegex2.exec(cleanHtml)) !== null) {
       const fieldType = matchFieldType(match[2]);
-      const valueText = match[1].trim();
+      const valueText = cleanFieldText(match[1]);
       if (fieldType && valueText && !rawExtracted[fieldType]) {
         rawExtracted[fieldType] = valueText;
       }
@@ -273,7 +309,7 @@ function parseRitOfficialPage(htmlContent) {
       const kvMatch = innerText.match(/^([^:]{2,40})\s*[:\-]\s*(.{2,100})$/i);
       if (kvMatch) {
         const fieldType = matchFieldType(kvMatch[1].trim());
-        const valueText = kvMatch[2].trim();
+        const valueText = cleanFieldText(kvMatch[2]);
         if (fieldType && valueText && !rawExtracted[fieldType]) {
           rawExtracted[fieldType] = valueText;
         }
@@ -286,54 +322,79 @@ function parseRitOfficialPage(htmlContent) {
     const strippedText = stripHtml(cleanHtml);
 
     if (!rawExtracted.name) {
-      const nameMatch = strippedText.match(/(?:Student\s*Name|Candidate\s*Name|Full\s*Name|Name\s*of\s*Student|Name)\s*[:\-]?\s*([A-Za-z\s.]{2,80}?)(?=(?:Register|Regd|Reg\b|Roll|Enrol|Course|Branch|Batch|Degree|\n|$))/i);
+      const nameMatch = strippedText.match(/(?:Student\s*Name|Candidate\s*Name|Full\s*Name|Name\s*of\s*Student|Name)\s*[:\-]*\s*([A-Za-z\s.]{2,80}?)(?=(?:Register|Regd|Reg\b|Roll|Enrol|Course|Branch|Batch|Degree|\n|$))/i);
       if (nameMatch && nameMatch[1].trim()) {
-        rawExtracted.name = nameMatch[1].trim();
+        const cleaned = cleanFieldText(nameMatch[1]);
+        if (cleaned) rawExtracted.name = cleaned;
       }
     }
 
     if (!rawExtracted.registerNumber) {
-      const regMatch = strippedText.match(/(?:Register\s*(?:No\.?|Number)|Regd?\.?\s*(?:No\.?|Number)|Registration\s*(?:No\.?|Number|Id)|Roll\s*(?:No\.?|Number)|Enro(?:l|ll)ment\s*(?:No\.?|Number)|Admission\s*(?:No\.?|Number)|Hall\s*Ticket\s*No\.?|Student\s*(?:Id|ID))\s*[:\-]?\s*([A-Za-z0-9\-\/]{4,30})/i);
+      const regMatch = strippedText.match(/(?:Register\s*(?:No\.?|Number)|Regd?\.?\s*(?:No\.?|Number)|Registration\s*(?:No\.?|Number|Id)|Roll\s*(?:No\.?|Number)|Enro(?:l|ll)ment\s*(?:No\.?|Number)|Admission\s*(?:No\.?|Number)|Hall\s*Ticket\s*No\.?|Student\s*(?:Id|ID))\s*[:\-\s]*([A-Za-z0-9\-\/]{4,30})/i);
       if (regMatch && regMatch[1].trim()) {
-        rawExtracted.registerNumber = regMatch[1].trim();
+        const cleaned = cleanFieldText(regMatch[1]);
+        if (cleaned) rawExtracted.registerNumber = cleaned;
       }
     }
 
     if (!rawExtracted.course) {
-      const courseMatch = strippedText.match(/(?:Course|Degree\s*(?:&|and|\/)?\s*Branch|Branch|Degree|Programme|Program|Specialization|Stream)\s*[:\-]?\s*([A-Za-z0-9&.\/\s\-]{2,80}?)(?=(?:Batch|Year|Academic|Register|Regd|Reg\b|Roll|Enrol|Name|\n|$))/i);
+      const courseMatch = strippedText.match(/(?:Course|Degree\s*(?:&|and|\/)?\s*Branch|Branch|Degree|Programme|Program|Specialization|Stream)\s*[:\-]*\s*([A-Za-z0-9&.\/\s\-]{2,80}?)(?=(?:Batch|Year|Academic|Register|Regd|Reg\b|Roll|Enrol|Name|\n|$))/i);
       if (courseMatch && courseMatch[1].trim()) {
-        rawExtracted.course = courseMatch[1].trim();
+        const cleaned = cleanFieldText(courseMatch[1]);
+        if (cleaned) rawExtracted.course = cleaned;
       }
     }
 
     if (!rawExtracted.batch) {
-      const batchMatch = strippedText.match(/(?:Batch|Academic\s*Batch|Academic\s*Year|Year\s*of\s*(?:Admission|Join))\s*[:\-]?\s*(\d{4}\s*[-\u2013]\s*\d{2,4})/i);
+      const batchMatch = strippedText.match(/(?:Batch|Academic\s*Batch|Academic\s*Year|Year\s*of\s*(?:Admission|Join))\s*[:\-]*\s*(\d{4}\s*[-\u2013]\s*\d{2,4})/i);
       if (batchMatch && batchMatch[1].trim()) {
-        rawExtracted.batch = batchMatch[1].trim().replace('\u2013', '-');
+        const cleaned = cleanFieldText(batchMatch[1]).replace('\u2013', '-');
+        if (cleaned) rawExtracted.batch = cleaned;
       }
     }
   }
 
+  // Conservative Register Number Validation:
+  // - trim whitespace
+  // - non-empty
+  // - allow digits and alphanumeric identifiers
+  // - allow actual observed RIT length/range (4 to 30 chars, real RIT is ~13 digits)
+  // - reject obviously malformed values (colons, pure punctuation, generic placeholders)
+  // - MUST REMAIN STRING (never converted to Number / parseInt)
+  const rawReg = rawExtracted.registerNumber;
+  const cleanRegNo = rawReg
+    ? rawReg.trim().toUpperCase().replace(/^[:\-\s]+/, '').replace(/[:\-\s]+$/, '').replace(/\s+/g, '')
+    : '';
+
+  const placeholderValues = new Set(['student', 'sample', 'unknown', 'null', 'undefined', 'na', 'n/a', 'none', 'value', 'registerno', 'registernumber']);
+  const isValidRegNo = Boolean(
+    cleanRegNo &&
+    cleanRegNo.length >= 4 &&
+    cleanRegNo.length <= 30 &&
+    /^[A-Za-z0-9\-\/]+$/.test(cleanRegNo) &&
+    !/^[:\-\s]+$/.test(cleanRegNo) &&
+    !placeholderValues.has(cleanRegNo.toLowerCase())
+  );
+
   // CRITICAL: Only registerNumber is mandatory for identity uniqueness.
   // Other fields use safe fallback defaults if extraction failed.
-  if (!rawExtracted.registerNumber || rawExtracted.registerNumber.trim().length === 0) {
+  if (!isValidRegNo) {
     const missingFields = [];
     if (!rawExtracted.name) missingFields.push('Student Name');
-    if (!rawExtracted.registerNumber) missingFields.push('Register Number');
+    missingFields.push('Register Number');
     if (!rawExtracted.course) missingFields.push('Course');
     if (!rawExtracted.batch) missingFields.push('Batch');
     return {
       success: false,
       errorCode: 'INVALID_RIT_PAGE',
-      errorMessage: 'The RIT verification page did not contain the expected student information.',
+      errorMessage: 'Could not extract a valid student identifier from the official RIT page. Please try scanning again.',
       missingFields,
     };
   }
 
-  // Field Sanitization & Normalization with safe defaults
-  const cleanName = rawExtracted.name ? rawExtracted.name.trim().replace(/\s+/g, ' ') : 'RIT Student';
-  const cleanRegNo = rawExtracted.registerNumber.trim().toUpperCase().replace(/[\s\-]/g, '');
-  const cleanCourse = rawExtracted.course ? rawExtracted.course.trim().replace(/\s+/g, ' ') : 'Unknown';
+  // Field Sanitization & Normalization with safe defaults - registerNumber remains STRICTLY string
+  const cleanName = rawExtracted.name ? cleanFieldText(rawExtracted.name).replace(/\s+/g, ' ') : 'RIT Student';
+  const cleanCourse = rawExtracted.course ? cleanFieldText(rawExtracted.course).replace(/\s+/g, ' ') : 'Unknown';
   const normBatch = normalizeBatch(rawExtracted.batch);
   const canonicalDept = normalizeDepartment(cleanCourse) || 'RIT';
 
@@ -344,7 +405,7 @@ function parseRitOfficialPage(htmlContent) {
       source: 'RIT_OFFICIAL_PAGE',
       officialHost: APPROVED_RIT_DOMAIN,
       name: cleanName,
-      registerNumber: cleanRegNo,
+      registerNumber: cleanRegNo, // String preserved end-to-end
       course: cleanCourse,
       department: canonicalDept,
       batch: normBatch,
@@ -902,6 +963,146 @@ describe('Phase 4 - Real RIT Student ID QR Verification Architecture', () => {
       const result = parseRitOfficialPage(brHtml);
       assert.equal(result.success, true);
       assert.equal(result.data.registerNumber, '210831114999');
+    });
+  });
+
+  describe('13. Anonymized Real-World RIT Fixtures & Long Numeric Strings', () => {
+    test('anonymized realistic fixture: 3-column table with separate colon cell', () => {
+      // Real-device RIT table structure where column 1 is ":"
+      const realRitHtml = `
+        <div class="card-body">
+          <table class="table">
+            <tbody>
+              <tr>
+                <td>Student Name</td>
+                <td>:</td>
+                <td>TEST STUDENT</td>
+              </tr>
+              <tr>
+                <td>Register Number</td>
+                <td>:</td>
+                <td>2117250020107</td>
+              </tr>
+              <tr>
+                <td>Course</td>
+                <td>:</td>
+                <td>B.E. CSE</td>
+              </tr>
+              <tr>
+                <td>Batch</td>
+                <td>:</td>
+                <td>2025-2029</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>This information is verified and issued by RIT</p>
+        </div>
+      `;
+
+      const result = parseRitOfficialPage(realRitHtml);
+      assert.equal(result.success, true);
+      assert.equal(result.data.name, 'TEST STUDENT');
+      assert.equal(result.data.registerNumber, '2117250020107');
+      assert.equal(typeof result.data.registerNumber, 'string');
+      assert.equal(result.data.course, 'B.E. CSE');
+      assert.equal(result.data.department, 'CSE');
+      assert.equal(result.data.batch, '2025-2029');
+    });
+
+    test('preserves long numeric register number strictly as string without precision loss', () => {
+      const longNumHtml = `
+        <table>
+          <tr><td>Register Number:</td><td>2117250020107</td></tr>
+        </table>
+      `;
+
+      const result = parseRitOfficialPage(longNumHtml);
+      assert.equal(result.success, true);
+      assert.strictEqual(result.data.registerNumber, '2117250020107');
+      assert.strictEqual(typeof result.data.registerNumber, 'string');
+      // Verify no numeric coercion happened
+      assert.notStrictEqual(result.data.registerNumber, 2117250020107);
+    });
+
+    test('handles whitespace around colons in various positions', () => {
+      const variedWhitespaceHtml = `
+        <table>
+          <tr><td>Register Number   :   </td><td>   2117250020107   </td></tr>
+        </table>
+      `;
+
+      const result = parseRitOfficialPage(variedWhitespaceHtml);
+      assert.equal(result.success, true);
+      assert.equal(result.data.registerNumber, '2117250020107');
+    });
+
+    test('handles HTML line breaks and &nbsp; entities inside cells', () => {
+      const complexHtml = `
+        <table>
+          <tr>
+            <td>Register&nbsp;Number<br></td>
+            <td>&nbsp;:&nbsp;</td>
+            <td>&nbsp;<br>2117250020107&nbsp;</td>
+          </tr>
+        </table>
+      `;
+
+      const result = parseRitOfficialPage(complexHtml);
+      assert.equal(result.success, true);
+      assert.equal(result.data.registerNumber, '2117250020107');
+    });
+
+    test('handles separate elements (spans, divs)', () => {
+      const separateElementsHtml = `
+        <div>
+          <span>Register Number</span>
+          <span>:</span>
+          <span>2117250020107</span>
+        </div>
+      `;
+
+      const result = parseRitOfficialPage(separateElementsHtml);
+      assert.equal(result.success, true);
+      assert.equal(result.data.registerNumber, '2117250020107');
+    });
+
+    test('rejects missing register number with proper error message', () => {
+      const missingRegHtml = `
+        <table>
+          <tr><td>Student Name</td><td>:</td><td>TEST STUDENT</td></tr>
+          <tr><td>Course</td><td>:</td><td>B.E. CSE</td></tr>
+          <tr><td>Batch</td><td>:</td><td>2025-2029</td></tr>
+        </table>
+      `;
+
+      const result = parseRitOfficialPage(missingRegHtml);
+      assert.equal(result.success, false);
+      assert.equal(result.errorCode, 'INVALID_RIT_PAGE');
+      assert.ok(result.missingFields.includes('Register Number'));
+    });
+
+    test('rejects invalid empty or colon-only register number', () => {
+      const colonOnlyHtml = `
+        <table>
+          <tr><td>Register Number</td><td>:</td><td>:</td></tr>
+        </table>
+      `;
+
+      const result = parseRitOfficialPage(colonOnlyHtml);
+      assert.equal(result.success, false);
+      assert.equal(result.errorCode, 'INVALID_RIT_PAGE');
+    });
+
+    test('rejects generic placeholder values like student or sample', () => {
+      const placeholderHtml = `
+        <table>
+          <tr><td>Register Number</td><td>:</td><td>SAMPLE</td></tr>
+        </table>
+      `;
+
+      const result = parseRitOfficialPage(placeholderHtml);
+      assert.equal(result.success, false);
+      assert.equal(result.errorCode, 'INVALID_RIT_PAGE');
     });
   });
 });
