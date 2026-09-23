@@ -18,16 +18,21 @@
 
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { ApiResponse, ParsedCollegeQrResult } from '../types';
+import { validateRitQrUrl } from './qrParser';
 
 export interface CollegeIdentityVerificationResult {
   collegeIdentityId: string;
   identityHashPreview: string;
   verifiedAt: string;
   isMockData: boolean;
+  name?: string;
+  registerNumber?: string;
+  course?: string;
   department?: string;
   batch?: string;
   alreadyLinkedToSelf?: boolean;
   message?: string;
+  officialHost?: string;
 }
 
 export interface CollegeIdentityUnlinkResult {
@@ -40,6 +45,162 @@ const localDevClaimRegistry = new Map<string, { userId: string; unlinkedAt?: str
 
 export class VerificationService {
   private lastScanTime: number = 0;
+
+  /**
+   * Verifies an official RIT student ID QR URL via the secure server-side Edge Function.
+   * Fetches official webpage, parses Student Name/Register Number/Course/Batch,
+   * generates deterministic identity hash from Register Number, and links in database.
+   */
+  async verifyRitQrUrl(
+    qrUrl: string
+  ): Promise<ApiResponse<CollegeIdentityVerificationResult>> {
+    try {
+      // 0. Rate limiting check: enforce minimum 1.5s between scan attempts
+      const now = Date.now();
+      if (now - this.lastScanTime < 1500) {
+        return {
+          success: false,
+          data: null,
+          error: {
+            code: 'RATE_LIMITED',
+            message: 'Too many QR scan attempts. Please wait a moment before trying again.',
+          },
+        };
+      }
+      this.lastScanTime = now;
+
+      // 1. Local URL & Domain validation (fail-fast before network)
+      const urlValidation = validateRitQrUrl(qrUrl);
+      if (!urlValidation.isValid) {
+        return {
+          success: false,
+          data: null,
+          error: {
+            code: urlValidation.errorCode || 'INVALID_QR',
+            message: urlValidation.errorMessage || 'This QR is not a recognized RIT student ID.',
+          },
+        };
+      }
+
+      // 2. Session verification: Caller must have an active authenticated session
+      const { data: sessionData } = await supabase.auth.getSession();
+      const currentUserId = sessionData?.session?.user?.id;
+
+      if (!currentUserId) {
+        return {
+          success: false,
+          data: null,
+          error: {
+            code: 'UNAUTHENTICATED',
+            message: 'You must be signed in with your personal account to link a college identity.',
+          },
+        };
+      }
+
+      // 3. Call secure Supabase Edge Function: verify-rit-id
+      const { data, error } = await supabase.functions.invoke('verify-rit-id', {
+        body: { qrUrl },
+      });
+
+      if (error) {
+        console.warn('[VerificationService] Edge function invoke error:', error);
+
+        // Attempt to extract response data if returned by edge function
+        let edgeErrorData: any = null;
+        if (error && typeof error === 'object' && 'context' in error) {
+          try {
+            const ctx = (error as any).context;
+            if (typeof ctx?.json === 'function') {
+              edgeErrorData = await ctx.json();
+            }
+          } catch {
+            // Ignore context parsing failure
+          }
+        }
+
+        const errorCode = edgeErrorData?.error || (error as any)?.code || 'VERIFICATION_FAILED';
+        let userMessage = edgeErrorData?.message || error.message || 'College ID verification failed.';
+
+        if (errorCode === 'CARD_ALREADY_LINKED' || userMessage.includes('already linked')) {
+          userMessage = 'This college identity is already linked to another account.';
+        } else if (errorCode === 'UNSUPPORTED_DOMAIN') {
+          userMessage = 'This QR does not point to the official RIT verification service.';
+        } else if (errorCode === 'RIT_PAGE_UNAVAILABLE') {
+          userMessage = "We couldn't verify the ID right now. Please try again.";
+        } else if (errorCode === 'INVALID_RIT_PAGE') {
+          userMessage = 'The RIT verification page did not contain the expected student information.';
+        } else if (errorCode === 'INVALID_QR') {
+          userMessage = 'This QR is not a recognized RIT student ID.';
+        }
+
+        return {
+          success: false,
+          data: null,
+          error: {
+            code: errorCode,
+            message: userMessage,
+          },
+        };
+      }
+
+      const response = data as {
+        valid?: boolean;
+        success?: boolean;
+        error?: string;
+        message?: string;
+        source?: string;
+        name?: string;
+        registerNumber?: string;
+        course?: string;
+        department?: string;
+        batch?: string;
+        officialHost?: string;
+        collegeIdentityId?: string;
+        identityHashPreview?: string;
+        alreadyLinkedToSelf?: boolean;
+        verifiedAt?: string;
+      } | null;
+
+      if (!response || response.success === false) {
+        const isDuplicate = response?.error === 'CARD_ALREADY_LINKED';
+        return {
+          success: false,
+          data: null,
+          error: {
+            code: response?.error || 'VERIFICATION_FAILED',
+            message: isDuplicate
+              ? 'This college identity is already linked to another account.'
+              : response?.message || 'Verification could not be completed.',
+          },
+        };
+      }
+
+      return {
+        success: true,
+        data: {
+          collegeIdentityId: response.collegeIdentityId || 'verified',
+          identityHashPreview: response.identityHashPreview || 'sha256...',
+          verifiedAt: response.verifiedAt || new Date().toISOString(),
+          isMockData: false,
+          name: response.name,
+          registerNumber: response.registerNumber,
+          course: response.course,
+          department: response.department,
+          batch: response.batch,
+          alreadyLinkedToSelf: Boolean(response.alreadyLinkedToSelf),
+          officialHost: response.officialHost || 'ims.ritchennai.edu.in',
+          message: response.message,
+        },
+        error: null,
+      };
+    } catch (err: unknown) {
+      return {
+        success: false,
+        data: null,
+        error: { code: 'NETWORK_ERROR', message: 'Verification service is temporarily unavailable.' },
+      };
+    }
+  }
 
   /**
    * Links a verified college ID QR payload to the current authenticated account.

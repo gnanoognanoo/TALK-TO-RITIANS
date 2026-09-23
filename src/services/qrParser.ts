@@ -1,20 +1,119 @@
 /**
  * ============================================================================
- * TALK TO RITIANS - College ID QR Parser Abstraction
+ * TALK TO RITIANS - College ID QR Parser & URL Validation
  * ============================================================================
- * IMPORTANT:
- * We do NOT yet know the exact real-world QR format on Rajalakshmi Institute of
- * Technology student ID cards. This parser abstraction decouples the scanning
- * interface from the payload format, supporting multiple format strategies.
+ * Supports the REAL Rajalakshmi Institute of Technology student ID QR flow:
+ * Physical QR -> Official RIT URL (ims.ritchennai.edu.in) -> Secure Backend Verification.
  *
- * It provides a development-only mock format for local testing, explicitly
- * marked with `isMockData: true`.
+ * Strictly prevents SSRF, domain spoofing, and insecure protocols.
+ * Retains development mock format support strictly for local testing.
  */
 
 import { ParsedCollegeQrResult, DetectedQrFormat, ExtractedStudentFields } from '../types';
 
+export const APPROVED_RIT_DOMAIN = 'ims.ritchennai.edu.in';
+
+export interface RitQrUrlValidationResult {
+  isValid: boolean;
+  url?: URL;
+  errorCode?: 'INVALID_URL' | 'INSECURE_PROTOCOL' | 'UNSUPPORTED_DOMAIN' | 'INVALID_QR';
+  errorMessage?: string;
+}
+
 /**
- * Normalizes keys into canonical student field names.
+ * Validates whether a raw string is a secure, official RIT student ID verification URL.
+ * Strictly prevents SSRF, domain spoofing, and malicious redirections.
+ */
+export function validateRitQrUrl(rawValue: string): RitQrUrlValidationResult {
+  if (!rawValue || typeof rawValue !== 'string') {
+    return {
+      isValid: false,
+      errorCode: 'INVALID_QR',
+      errorMessage: 'This QR is not a recognized RIT student ID.',
+    };
+  }
+
+  const trimmed = rawValue.trim();
+
+  // Quick reject non-URL formats
+  if (!trimmed.includes('://')) {
+    return {
+      isValid: false,
+      errorCode: 'INVALID_QR',
+      errorMessage: 'This QR is not a recognized RIT student ID.',
+    };
+  }
+
+  let parsed: URL;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    return {
+      isValid: false,
+      errorCode: 'INVALID_QR',
+      errorMessage: 'This QR is not a recognized RIT student ID.',
+    };
+  }
+
+  // 1. Enforce HTTPS only (reject http, file, ftp, javascript, data, etc.)
+  if (parsed.protocol !== 'https:') {
+    return {
+      isValid: false,
+      errorCode: 'INSECURE_PROTOCOL',
+      errorMessage: 'Official RIT verification requires a secure HTTPS link.',
+    };
+  }
+
+  // 2. Reject embedded user credentials (e.g. https://user:pass@host)
+  if (parsed.username || parsed.password) {
+    return {
+      isValid: false,
+      errorCode: 'INVALID_QR',
+      errorMessage: 'This QR contains invalid credentials in URL.',
+    };
+  }
+
+  // 3. Reject non-standard ports (must be default/443)
+  if (parsed.port && parsed.port !== '443') {
+    return {
+      isValid: false,
+      errorCode: 'INVALID_QR',
+      errorMessage: 'This QR points to an unapproved network port.',
+    };
+  }
+
+  const hostname = parsed.hostname.toLowerCase();
+
+  // 4. Reject localhost, IP literals, loopback, private IP ranges
+  const isIpv4 = /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname);
+  const isIpv6 = hostname.startsWith('[') || hostname.includes(':');
+  const isLocal = hostname === 'localhost' || hostname.endsWith('.localhost') || hostname.endsWith('.local');
+  if (isIpv4 || isIpv6 || isLocal) {
+    return {
+      isValid: false,
+      errorCode: 'UNSUPPORTED_DOMAIN',
+      errorMessage: 'This QR does not point to the official RIT verification service.',
+    };
+  }
+
+  // 5. Strict approved domain check: MUST be exactly 'ims.ritchennai.edu.in'
+  // Reject: 'ritchennai.edu.in.attacker.com', 'ims.ritchennai.edu.in.attacker.com', 'google.com'
+  if (hostname !== APPROVED_RIT_DOMAIN) {
+    return {
+      isValid: false,
+      errorCode: 'UNSUPPORTED_DOMAIN',
+      errorMessage: 'This QR does not point to the official RIT verification service.',
+    };
+  }
+
+  return {
+    isValid: true,
+    url: parsed,
+  };
+}
+
+/**
+ * Normalizes keys into canonical student field names for dev mock parsing.
  */
 function normalizeFieldKey(key: string): keyof ExtractedStudentFields | string {
   const clean = key.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -29,7 +128,7 @@ function normalizeFieldKey(key: string): keyof ExtractedStudentFields | string {
 }
 
 /**
- * Strategy 1: JSON Parser (handles both development mock JSON and standard JSON payloads).
+ * Strategy 1: JSON Parser (handles development mock JSON payloads).
  */
 function tryParseJson(rawValue: string): ParsedCollegeQrResult | null {
   try {
@@ -92,7 +191,6 @@ function tryParseJson(rawValue: string): ParsedCollegeQrResult | null {
  */
 function tryParseDelimited(rawValue: string): ParsedCollegeQrResult | null {
   const trimmed = rawValue.trim();
-  // Check if it contains common delimiters: pipe, newline, or semicolon
   const hasDelimiter = ['|', '\n', ';'].some((delim) => trimmed.includes(delim));
   if (!hasDelimiter && !trimmed.includes(':') && !trimmed.includes('=')) {
     return null;
@@ -144,49 +242,8 @@ function tryParseDelimited(rawValue: string): ParsedCollegeQrResult | null {
 }
 
 /**
- * Strategy 3: URL Reference / Token Parser.
- */
-function tryParseUrl(rawValue: string): ParsedCollegeQrResult | null {
-  try {
-    const trimmed = rawValue.trim();
-    if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
-      return null;
-    }
-
-    const url = new URL(trimmed);
-    const fields: ExtractedStudentFields = {
-      rawAttributes: {},
-    };
-
-    url.searchParams.forEach((val, key) => {
-      const normalizedKey = normalizeFieldKey(key);
-      fields[normalizedKey] = val;
-      if (fields.rawAttributes) {
-        fields.rawAttributes[key] = val;
-      }
-    });
-
-    const validationErrors: string[] = [];
-    if (!fields.name) validationErrors.push('Missing student name in URL parameters.');
-    if (!fields.department) validationErrors.push('Missing department in URL parameters.');
-    if (!fields.batch) validationErrors.push('Missing batch in URL parameters.');
-
-    return {
-      rawValue,
-      formatDetected: 'url_reference',
-      fields,
-      validStructure: validationErrors.length === 0,
-      isMockData: url.hostname.includes('test') || url.hostname.includes('mock'),
-      validationErrors,
-    };
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Master parser: Evaluates candidate formats in sequence without assuming
- * an official RIT QR specification.
+ * Master parser: Evaluates candidate formats with primary support for the
+ * REAL official RIT student ID QR (https://ims.ritchennai.edu.in).
  */
 export function parseCollegeQr(rawValue: string): ParsedCollegeQrResult {
   if (!rawValue || rawValue.trim().length === 0) {
@@ -202,17 +259,44 @@ export function parseCollegeQr(rawValue: string): ParsedCollegeQrResult {
 
   const trimmed = rawValue.trim();
 
-  // Try Strategy 1: JSON
+  // Strategy 1: Real Official RIT URL
+  if (trimmed.includes('://')) {
+    const urlValidation = validateRitQrUrl(trimmed);
+    if (urlValidation.isValid) {
+      return {
+        rawValue: trimmed,
+        formatDetected: 'rit_official_url',
+        fields: {
+          rawAttributes: {
+            qrUrl: trimmed,
+            officialHost: APPROVED_RIT_DOMAIN,
+          },
+        },
+        validStructure: true,
+        isMockData: false,
+        validationErrors: [],
+      };
+    }
+
+    return {
+      rawValue: trimmed,
+      formatDetected: 'url_reference',
+      fields: {
+        rawAttributes: { unparsedText: trimmed },
+      },
+      validStructure: false,
+      isMockData: false,
+      validationErrors: [urlValidation.errorMessage || 'This QR is not a recognized RIT student ID.'],
+    };
+  }
+
+  // Strategy 2: JSON (e.g. dev mock JSON)
   const jsonResult = tryParseJson(trimmed);
   if (jsonResult) return jsonResult;
 
-  // Try Strategy 2: Delimited Key-Value
+  // Strategy 3: Delimited Key-Value (dev mock)
   const delimitedResult = tryParseDelimited(trimmed);
   if (delimitedResult) return delimitedResult;
-
-  // Try Strategy 3: URL
-  const urlResult = tryParseUrl(trimmed);
-  if (urlResult) return urlResult;
 
   // Strategy 4: Fallback / Unknown format
   return {
@@ -224,7 +308,7 @@ export function parseCollegeQr(rawValue: string): ParsedCollegeQrResult {
     validStructure: false,
     isMockData: false,
     validationErrors: [
-      'Unrecognized QR format. The scanned code does not contain recognizable student attributes (name, department, batch).',
+      'Unrecognized QR format. Please scan the official QR code on your RIT student ID card.',
     ],
   };
 }
@@ -234,9 +318,6 @@ export function parseCollegeQr(rawValue: string): ParsedCollegeQrResult {
  * NEVER present mock validation as actual RIT institutional verification.
  */
 export const MOCK_COLLEGE_QR_SAMPLES = {
-  /**
-   * Standard valid mock student from Computer Science & Engineering.
-   */
   validMockCSE: JSON.stringify({
     name: 'Sample Student',
     department: 'CSE',
@@ -244,10 +325,6 @@ export const MOCK_COLLEGE_QR_SAMPLES = {
     studentReference: 'TEST123',
     mock: true,
   }),
-
-  /**
-   * Second valid mock student from Electronics & Communication Engineering.
-   */
   validMockECE: JSON.stringify({
     name: 'Priya Raman',
     department: 'ECE',
@@ -255,28 +332,12 @@ export const MOCK_COLLEGE_QR_SAMPLES = {
     studentReference: 'TEST456',
     mock: true,
   }),
-
-  /**
-   * Pipe-delimited sample format.
-   */
   delimitedSample: 'NAME: Alex Chen | DEPT: AI & DS | BATCH: 2023-2027 | ID: TEST789',
-
-  /**
-   * Malformed mock student (missing department).
-   */
   malformedMock: JSON.stringify({
     name: 'Incomplete Student',
     studentReference: 'TEST000',
   }),
-
-  /**
-   * Arbitrary non-card string.
-   */
   invalidQr: 'https://example.com/arbitrary-external-qr-code',
-
-  /**
-   * Blank QR string.
-   */
   emptyQr: '',
 };
 

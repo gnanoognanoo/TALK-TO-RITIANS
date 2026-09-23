@@ -92,34 +92,57 @@ export const BATCH_REGEX = /^\d{4}-\d{4}$/;
 export function normalizeDepartment(raw?: string | null): string | null {
   if (!raw || typeof raw !== 'string') return null;
 
-  const clean = raw.trim().toUpperCase().replace(/&/g, 'AND');
+  const clean = raw
+    .trim()
+    .toUpperCase()
+    .replace(/&/g, 'AND')
+    .replace(/\./g, '')
+    .replace(/[-_/]/g, ' ');
 
-  if (clean.includes('COMPUTER SCIENCE') || clean === 'CSE' || clean === 'CS') {
-    if (clean.includes('BUSINESS') || clean === 'CSBS') return 'CSBS';
-    return 'CSE';
+  // 1. Computer Science and Business Systems
+  if (clean.includes('BUSINESS') || clean.includes('CSBS') || /\bCSBS\b/.test(clean)) {
+    return 'CSBS';
   }
-  if (clean.includes('INFORMATION') || clean === 'IT') {
-    return 'IT';
-  }
-  if (clean.includes('DATA SCIENCE') || clean === 'AI/DS' || clean === 'AIDS') {
+
+  // 2. Artificial Intelligence & Data Science
+  if (clean.includes('DATA SCIENCE') || /\b(AI\s*DS|AIDS|AI\s*AND\s*DS)\b/.test(clean)) {
     return 'AI/DS';
   }
-  if (clean.includes('MACHINE LEARNING') || clean === 'AI/ML' || clean === 'AIML') {
+
+  // 3. Artificial Intelligence & Machine Learning
+  if (clean.includes('MACHINE LEARNING') || /\b(AI\s*ML|AIML|AI\s*AND\s*ML)\b/.test(clean)) {
     return 'AI/ML';
   }
-  if (clean.includes('ELECTRONICS') && clean.includes('COMMUNICATION') || clean === 'ECE') {
+
+  // 4. Computer Science & Engineering
+  if (clean.includes('COMPUTER SCIENCE') || /\bCSE\b/.test(clean) || clean === 'CS') {
+    return 'CSE';
+  }
+
+  // 5. Information Technology
+  if (clean.includes('INFORMATION TECHNOLOGY') || clean.includes('INFORMATION') || /\bIT\b/.test(clean)) {
+    return 'IT';
+  }
+
+  // 6. Electronics & Communication Engineering
+  if ((clean.includes('ELECTRONICS') && clean.includes('COMMUNICATION')) || /\bECE\b/.test(clean)) {
     return 'ECE';
   }
-  if (clean.includes('ELECTRICAL') || clean === 'EEE') {
+
+  // 7. Electrical & Electronics Engineering
+  if (clean.includes('ELECTRICAL') || /\bEEE\b/.test(clean)) {
     return 'EEE';
   }
-  if (clean.includes('MECHANICAL') || clean === 'MECH') {
+
+  // 8. Mechanical Engineering
+  if (clean.includes('MECHANICAL') || /\bMECH\b/.test(clean)) {
     return 'MECH';
   }
 
   // Check direct code match
+  const rawClean = raw.trim().toUpperCase();
   const exact = INSTITUTIONAL_DEPARTMENTS.find(
-    (d) => d.code.toUpperCase() === clean || d.name.toUpperCase() === clean
+    (d) => d.code.toUpperCase() === rawClean || d.name.toUpperCase() === rawClean
   );
   return exact ? exact.code : null;
 }
@@ -130,7 +153,11 @@ export function normalizeDepartment(raw?: string | null): string | null {
 export function normalizeBatch(raw?: string | null): string | null {
   if (!raw || typeof raw !== 'string') return null;
 
-  const clean = raw.trim();
+  const clean = raw
+    .trim()
+    .replace(/[\u2013\u2014–—]/g, '-')
+    .replace(/\s*-\s*/g, '-');
+
   if (BATCH_REGEX.test(clean)) return clean;
 
   // Handle 2-digit end year like 2023-27

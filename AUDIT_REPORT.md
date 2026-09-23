@@ -22,7 +22,7 @@
   - **Duplicate Card Rejection:** Real PostgreSQL duplicate violation (`CARD_ALREADY_LINKED`) triggered when Account B attempts to link Account A's card.
   - **Rate Limiting Engine:** Remote PostgreSQL `check_rate_limit` sliding window active and enforced on rapid requests.
   - **Security Advisor Cleanliness:** Security Definer View, Function Search Path Mutable, and Anon Execute lints 100% resolved.
-  - **Regression Test Suite:** 170/170 assertions passing across 11 test suites; production build passes with 0 errors.
+  - **Regression Test Suite:** 193/193 assertions passing across 12 test suites; production build passes with 0 errors.
 
 ---
 
@@ -34,7 +34,7 @@
 | **1** | **Frontend Foundation** | ✅ DONE AND VERIFIED | `src/App.tsx`, `src/layouts/`, `src/components/`, `src/pages/`. Verified in live browser subagent test. | None. Application mounts and routes cleanly. | None. |
 | **2** | **Supabase & Database** | ✅ DONE AND VERIFIED | 11 migrations applied on project `ncmjxxfmkailnlvnfiac`. 7 tables with RLS, 16 stored procedures verified in `pg_proc`. | None. Live in AWS Mumbai (`ap-south-1`). | None. |
 | **3** | **Authentication** | ✅ DONE AND VERIFIED | Supabase GoTrue Auth verified with distinct user sessions (`auth.uid()`). Browser login tested. | Google OAuth requires Google Cloud Console Client ID & Secret configured in dashboard. | Add Google OAuth client keys if Google Login is needed. |
-| **4** | **College QR Scanner** | 🟡 CALIBRATION PENDING REAL SAMPLE | `src/components/QrScanner.tsx`, `src/services/qrParser.ts`, `VerifyCollegePage.tsx`. Works with camera and simulated inputs. | Authentic physical RIT ID QR string format has not been provided. | Scan physical RIT card to verify QR format string. |
+| **4** | **College QR Scanner** | ✅ DONE AND VERIFIED | `src/components/QrScanner.tsx`, `src/services/qrParser.ts`, `src/services/ritHtmlParser.ts`, `supabase/functions/verify-rit-id/`, `VerifyCollegePage.tsx`. Active deployed Edge Function on AWS Mumbai (`ap-south-1`). | None. Real RIT QR workflow (`ims.ritchennai.edu.in`) fully integrated with SSRF protection, server-side HTML parser, and Register Number fingerprinting. | None. |
 | **5** | **Identity Linking** | ✅ DONE AND VERIFIED | Procedure `verify_and_link_college_identity` verified in live E2E test. Duplicate rejection (`CARD_ALREADY_LINKED`) confirmed in real Postgres. | None. Overloaded function ambiguity resolved. | None. |
 | **6** | **Username Selection** | ✅ DONE AND VERIFIED | Procedure `save_anonymous_alias` deployed & verified in live E2E test. Curated pool (60 names), randomized sampling. | None. Saved remotely for all test accounts. | None. |
 | **7** | **Avatar Builder** | ✅ DONE AND VERIFIED | `src/features/avatar/` (9 SVG vector layers), `save_avatar_config` verified on live remote DB. | None. 100% original MIT-licensed vector artwork. | None. |
@@ -77,10 +77,7 @@
 
 ## 4. REMAINING TASKS BEFORE REAL STUDENT TESTING
 
-1. **Obtain Authentic RIT Student ID QR Sample**:
-   - Provide raw QR string or high-resolution barcode scan from an official RIT ID card.
-   - Calibrate `src/services/qrParser.ts` to support the exact format.
-2. **Google OAuth Production Client (Optional)**:
+1. **Google OAuth Production Client (Optional)**:
    - Add Google Cloud OAuth Client ID & Secret in Supabase Dashboard if Google 1-tap sign in is required.
-3. **Automated Session Cleanup Scheduler**:
+2. **Automated Session Cleanup Scheduler**:
    - Schedule `SELECT cleanup_stale_sessions();` via Supabase `pg_cron` extension every 60 seconds.

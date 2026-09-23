@@ -22,6 +22,7 @@ export type CameraStatus =
  * Supported or recognized format signatures for ID QR codes.
  */
 export type DetectedQrFormat =
+  | 'rit_official_url'
   | 'mock_json'
   | 'json'
   | 'delimited_kv'

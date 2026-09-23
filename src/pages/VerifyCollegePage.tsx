@@ -69,7 +69,7 @@ export const VerifyCollegePage: React.FC = () => {
   /**
    * Called when QrScanner captures a QR string.
    */
-  const handleQrCaptured = (decodedText: string) => {
+  const handleQrCaptured = async (decodedText: string) => {
     setScanError(null);
     setLinkError(null);
 
@@ -83,6 +83,36 @@ export const VerifyCollegePage: React.FC = () => {
       return;
     }
 
+    // REAL FLOW: When official RIT QR URL is detected, immediately verify with backend
+    if (result.formatDetected === 'rit_official_url') {
+      setIsLinking(true);
+      const res = await verificationService.verifyRitQrUrl(decodedText);
+      setIsLinking(false);
+
+      if (!res.success || !res.data) {
+        setScanError(
+          res.error?.message ||
+            'Failed to verify student ID with the official RIT portal. Please try again.'
+        );
+        return;
+      }
+
+      setVerifiedData(res.data);
+      setParsedResult({
+        ...result,
+        fields: {
+          name: res.data.name,
+          studentReference: res.data.registerNumber,
+          department: res.data.department,
+          batch: res.data.batch,
+        },
+      });
+      await refreshProfile();
+      setViewState('success');
+      return;
+    }
+
+    // Dev mock flow: Show review state before manual confirmation
     setParsedResult(result);
     setViewState('review');
   };
@@ -199,13 +229,28 @@ export const VerifyCollegePage: React.FC = () => {
               ========================================================================= */}
           {viewState === 'scanning' && (
             <div className="space-y-5">
+              {/* Verifying Status Indicator */}
+              {isLinking && (
+                <div className="p-4 rounded-xl bg-brand-50 border border-brand-200 text-center space-y-2 animate-in fade-in">
+                  <RefreshCw className="h-6 w-6 text-brand-600 animate-spin mx-auto" />
+                  <h4 className="text-xs font-bold text-gray-900">Verifying with Official RIT Portal</h4>
+                  <p className="text-[11px] text-gray-600">
+                    Connecting to ims.ritchennai.edu.in to securely confirm your student credentials...
+                  </p>
+                </div>
+              )}
+
               {/* Live Camera Scanner with subtle corner brackets */}
-              <QrScanner onScan={handleQrCaptured} onError={(err) => setScanError(err)} />
+              <QrScanner
+                onScan={handleQrCaptured}
+                onError={(err) => setScanError(err)}
+                disabled={isLinking}
+              />
 
               {/* Scan Error Message */}
               {scanError && (
                 <ErrorMessage
-                  title="Invalid or Unreadable QR"
+                  title="Verification Error"
                   message={scanError}
                   onDismiss={() => setScanError(null)}
                 />

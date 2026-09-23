@@ -310,46 +310,48 @@ export const QrScanner: React.FC<QrScannerProps> = ({ onScan, onError, disabled 
         </div>
       )}
 
-      {/* Development Mock Simulation Toolbar */}
-      <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200 space-y-2">
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-brand-700">
-          <Sparkles className="h-3.5 w-3.5 text-brand-600" />
-          <span>Development Testing Tools (Mock QR Inputs)</span>
+      {/* Development Mock Simulation Toolbar - Visible ONLY in development mode */}
+      {import.meta.env.DEV && (
+        <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200 space-y-2">
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-brand-700">
+            <Sparkles className="h-3.5 w-3.5 text-brand-600" />
+            <span>Development Testing Tools (Mock QR Inputs)</span>
+          </div>
+          <p className="text-[11px] text-gray-500 leading-relaxed">
+            Don't have a physical student card handy? Test the scanner with pre-configured mock payloads:
+          </p>
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => handleSimulateMock(MOCK_COLLEGE_QR_SAMPLES.validMockCSE)}
+              className="px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 hover:border-brand-300 hover:bg-brand-50/50 text-left text-[11px] text-gray-700 transition-all font-medium shadow-sm"
+            >
+              🎓 Mock CSE Student
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSimulateMock(MOCK_COLLEGE_QR_SAMPLES.validMockECE)}
+              className="px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 hover:border-brand-300 hover:bg-brand-50/50 text-left text-[11px] text-gray-700 transition-all font-medium shadow-sm"
+            >
+              ⚡ Mock ECE Student
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSimulateMock(MOCK_COLLEGE_QR_SAMPLES.delimitedSample)}
+              className="px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 hover:border-amber-300 hover:bg-amber-50/50 text-left text-[11px] text-gray-700 transition-all font-medium shadow-sm"
+            >
+              📋 Delimited Key-Value
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSimulateMock(MOCK_COLLEGE_QR_SAMPLES.invalidQr)}
+              className="px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 hover:border-rose-300 hover:bg-rose-50/50 text-left text-[11px] text-gray-700 transition-all font-medium shadow-sm"
+            >
+              ❌ Invalid External QR
+            </button>
+          </div>
         </div>
-        <p className="text-[11px] text-gray-500 leading-relaxed">
-          Don't have a physical student card handy? Test the scanner with pre-configured mock payloads:
-        </p>
-        <div className="grid grid-cols-2 gap-2 pt-1">
-          <button
-            type="button"
-            onClick={() => handleSimulateMock(MOCK_COLLEGE_QR_SAMPLES.validMockCSE)}
-            className="px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 hover:border-brand-300 hover:bg-brand-50/50 text-left text-[11px] text-gray-700 transition-all font-medium shadow-sm"
-          >
-            🎓 Mock CSE Student
-          </button>
-          <button
-            type="button"
-            onClick={() => handleSimulateMock(MOCK_COLLEGE_QR_SAMPLES.validMockECE)}
-            className="px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 hover:border-brand-300 hover:bg-brand-50/50 text-left text-[11px] text-gray-700 transition-all font-medium shadow-sm"
-          >
-            ⚡ Mock ECE Student
-          </button>
-          <button
-            type="button"
-            onClick={() => handleSimulateMock(MOCK_COLLEGE_QR_SAMPLES.delimitedSample)}
-            className="px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 hover:border-amber-300 hover:bg-amber-50/50 text-left text-[11px] text-gray-700 transition-all font-medium shadow-sm"
-          >
-            📋 Delimited Key-Value
-          </button>
-          <button
-            type="button"
-            onClick={() => handleSimulateMock(MOCK_COLLEGE_QR_SAMPLES.invalidQr)}
-            className="px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 hover:border-rose-300 hover:bg-rose-50/50 text-left text-[11px] text-gray-700 transition-all font-medium shadow-sm"
-          >
-            ❌ Invalid External QR
-          </button>
-        </div>
-      </div>
+      )}
     </div>
   );
 };
