@@ -9,7 +9,7 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { ApiResponse, Profile, AvatarConfig, isValidAvatarConfig, Json, ProfileSetupFormData } from '../types';
 import { isValidAliasFormat } from './aliasPool';
-import { validateProfileSetup } from '../config/profileConfig';
+import { validateProfileSetup, GENDER_OPTIONS } from '../config/profileConfig';
 
 export class ProfileService {
   /**
@@ -326,6 +326,83 @@ export class ProfileService {
       };
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown profile save error';
+      return {
+        success: false,
+        data: null,
+        error: { code: 'CLIENT_ERROR', message },
+      };
+    }
+  }
+
+  /**
+   * Saves the student's manually selected gender to their private profile.
+   * Enforces:
+   * - Must be explicitly selected by the user (never inferred or guessed)
+   * - Must match supported database values in GENDER_OPTIONS
+   * - Caller must have an authenticated session
+   */
+  async saveGender(gender: string): Promise<ApiResponse<{ gender: string }>> {
+    try {
+      const trimmed = gender?.trim();
+      if (!trimmed || !GENDER_OPTIONS.includes(trimmed as any)) {
+        return {
+          success: false,
+          data: null,
+          error: {
+            code: 'INVALID_GENDER',
+            message: 'Please select a valid gender option.',
+          },
+        };
+      }
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      const currentUserId = sessionData?.session?.user?.id;
+
+      if (!currentUserId) {
+        return {
+          success: false,
+          data: null,
+          error: {
+            code: 'UNAUTHENTICATED',
+            message: 'You must be signed in to save your gender.',
+          },
+        };
+      }
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          gender: trimmed,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', currentUserId);
+
+      if (error) {
+        console.warn('[ProfileService] saveGender update error:', error);
+        if (!isSupabaseConfigured) {
+          return {
+            success: true,
+            data: { gender: trimmed },
+            error: null,
+          };
+        }
+        return {
+          success: false,
+          data: null,
+          error: {
+            code: error.code || 'SAVE_FAILED',
+            message: error.message || 'Failed to save gender on server.',
+          },
+        };
+      }
+
+      return {
+        success: true,
+        data: { gender: trimmed },
+        error: null,
+      };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown gender save error';
       return {
         success: false,
         data: null,

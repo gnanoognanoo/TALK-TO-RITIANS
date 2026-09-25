@@ -155,14 +155,15 @@ function matchFieldType(rawLabel) {
 }
 
 function normalizeDepartment(raw) {
-  if (!raw || typeof raw !== 'string') return 'RIT';
+  if (!raw || typeof raw !== 'string') return null;
 
-  const clean = raw
-    .trim()
-    .toUpperCase()
+  const rawUpper = raw.trim().toUpperCase();
+  const clean = rawUpper
     .replace(/&/g, 'AND')
     .replace(/\./g, '')
-    .replace(/[-_/]/g, ' ');
+    .replace(/[-_/]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
   if (clean.includes('BUSINESS') || clean.includes('CSBS') || /\bCSBS\b/.test(clean)) return 'CSBS';
   if (clean.includes('DATA SCIENCE') || /\b(AI\s*DS|AIDS|AI\s*AND\s*DS)\b/.test(clean)) return 'AI/DS';
@@ -173,7 +174,10 @@ function normalizeDepartment(raw) {
   if (clean.includes('ELECTRICAL') || /\bEEE\b/.test(clean)) return 'EEE';
   if (clean.includes('MECHANICAL') || /\bMECH\b/.test(clean)) return 'MECH';
 
-  return 'RIT';
+  const validCodes = ['CSE', 'IT', 'AI/DS', 'ECE', 'EEE', 'AI/ML', 'CSBS', 'MECH'];
+  if (validCodes.includes(rawUpper)) return rawUpper;
+
+  return null;
 }
 
 function normalizeBatch(raw) {
@@ -394,9 +398,19 @@ function parseRitOfficialPage(htmlContent) {
 
   // Field Sanitization & Normalization with safe defaults - registerNumber remains STRICTLY string
   const cleanName = rawExtracted.name ? cleanFieldText(rawExtracted.name).replace(/\s+/g, ' ') : 'RIT Student';
-  const cleanCourse = rawExtracted.course ? cleanFieldText(rawExtracted.course).replace(/\s+/g, ' ') : 'Unknown';
+  const cleanCourse = rawExtracted.course ? cleanFieldText(rawExtracted.course).replace(/\s+/g, ' ') : '';
+  const canonicalDept = normalizeDepartment(cleanCourse);
+
+  if (!canonicalDept) {
+    return {
+      success: false,
+      errorCode: 'UNSUPPORTED_COURSE_FORMAT',
+      errorMessage: "We verified your RIT identity, but we couldn't recognize your course format yet. Please try again later.",
+      missingFields: ['Course'],
+    };
+  }
+
   const normBatch = normalizeBatch(rawExtracted.batch);
-  const canonicalDept = normalizeDepartment(cleanCourse) || 'RIT';
 
   return {
     success: true,
@@ -618,7 +632,7 @@ describe('Phase 4 - Real RIT Student ID QR Verification Architecture', () => {
       assert.equal(result.data.name, 'RIT Student');
     });
 
-    test('succeeds with fallback when Course is missing', () => {
+    test('fails with UNSUPPORTED_COURSE_FORMAT when Course is missing or unrecognized', () => {
       const noCourseHtml = `
         <table>
           <tr><th>Student Name</th><td>Synthetic Name</td></tr>
@@ -628,10 +642,9 @@ describe('Phase 4 - Real RIT Student ID QR Verification Architecture', () => {
       `;
 
       const result = parseRitOfficialPage(noCourseHtml);
-      assert.equal(result.success, true);
-      assert.equal(result.data.registerNumber, '210821104222');
-      assert.equal(result.data.course, 'Unknown');
-      assert.equal(result.data.department, 'RIT');
+      assert.equal(result.success, false);
+      assert.equal(result.errorCode, 'UNSUPPORTED_COURSE_FORMAT');
+      assert.equal(result.errorMessage, "We verified your RIT identity, but we couldn't recognize your course format yet. Please try again later.");
     });
 
     test('succeeds with fallback when Batch is missing', () => {
@@ -671,6 +684,10 @@ describe('Phase 4 - Real RIT Student ID QR Verification Architecture', () => {
       assert.equal(normalizeDepartment('B.Tech CSBS'), 'CSBS');
       assert.equal(normalizeDepartment('B.E. Mechanical Engineering'), 'MECH');
       assert.equal(normalizeDepartment('B.E. MECH'), 'MECH');
+      assert.equal(normalizeDepartment('Unknown Course'), null);
+      assert.equal(normalizeDepartment('Astronomy'), null);
+      assert.equal(normalizeDepartment(''), null);
+      assert.equal(normalizeDepartment(null), null);
     });
   });
 
@@ -757,6 +774,7 @@ describe('Phase 4 - Real RIT Student ID QR Verification Architecture', () => {
       assert.equal(peerPublicView.email, undefined);
       assert.equal(peerPublicView.department, undefined);
       assert.equal(peerPublicView.batch, undefined);
+      assert.equal(peerPublicView.gender, undefined);
     });
   });
 
@@ -860,8 +878,8 @@ describe('Phase 4 - Real RIT Student ID QR Verification Architecture', () => {
     });
   });
 
-  describe('10. Partial Field Extraction (Register Number Only)', () => {
-    test('succeeds with only register number extracted, uses safe defaults', () => {
+  describe('10. Partial Field Extraction', () => {
+    test('fails with UNSUPPORTED_COURSE_FORMAT when course is missing', () => {
       const minimalHtml = `
         <div>
           <span>Register Number</span>
@@ -870,10 +888,27 @@ describe('Phase 4 - Real RIT Student ID QR Verification Architecture', () => {
       `;
 
       const result = parseRitOfficialPage(minimalHtml);
+      assert.equal(result.success, false);
+      assert.equal(result.errorCode, 'UNSUPPORTED_COURSE_FORMAT');
+      assert.equal(
+        result.errorMessage,
+        "We verified your RIT identity, but we couldn't recognize your course format yet. Please try again later."
+      );
+    });
+
+    test('succeeds when register number and valid course are present with safe name default', () => {
+      const minimalHtml = `
+        <table>
+          <tr><td>Register Number:</td><td>210829912111</td></tr>
+          <tr><td>Course:</td><td>B.E. CSE</td></tr>
+        </table>
+      `;
+
+      const result = parseRitOfficialPage(minimalHtml);
       assert.equal(result.success, true);
       assert.equal(result.data.registerNumber, '210829912111');
       assert.equal(result.data.name, 'RIT Student');
-      assert.equal(result.data.course, 'Unknown');
+      assert.equal(result.data.department, 'CSE');
     });
 
     test('fails when register number is missing even if other fields present', () => {
@@ -1013,6 +1048,7 @@ describe('Phase 4 - Real RIT Student ID QR Verification Architecture', () => {
       const longNumHtml = `
         <table>
           <tr><td>Register Number:</td><td>2117250020107</td></tr>
+          <tr><td>Course:</td><td>B.E. CSE</td></tr>
         </table>
       `;
 
@@ -1028,6 +1064,7 @@ describe('Phase 4 - Real RIT Student ID QR Verification Architecture', () => {
       const variedWhitespaceHtml = `
         <table>
           <tr><td>Register Number   :   </td><td>   2117250020107   </td></tr>
+          <tr><td>Course   :   </td><td>   B.E. CSE   </td></tr>
         </table>
       `;
 
@@ -1044,6 +1081,11 @@ describe('Phase 4 - Real RIT Student ID QR Verification Architecture', () => {
             <td>&nbsp;:&nbsp;</td>
             <td>&nbsp;<br>2117250020107&nbsp;</td>
           </tr>
+          <tr>
+            <td>Course</td>
+            <td>:</td>
+            <td>B.E. CSE</td>
+          </tr>
         </table>
       `;
 
@@ -1058,6 +1100,9 @@ describe('Phase 4 - Real RIT Student ID QR Verification Architecture', () => {
           <span>Register Number</span>
           <span>:</span>
           <span>2117250020107</span>
+          <span>Course</span>
+          <span>:</span>
+          <span>B.E. CSE</span>
         </div>
       `;
 

@@ -133,11 +133,11 @@ export const QrScanner: React.FC<QrScannerProps> = ({ onScan, onError, disabled 
         setErrorMessage('No camera was found on your device.');
       } else {
         setStatus('scan_error');
-        setErrorMessage(`Camera initialization error: ${err instanceof Error ? err.message : 'Unable to start camera'}`);
+        setErrorMessage("We couldn't scan the QR. Try again or use the verification-link option.");
       }
 
       if (onError) {
-        onError(errorStr);
+        onError("We couldn't scan the QR. Try again or use the verification-link option.");
       }
     }
   }, [disabled, facingMode, onScan, onError, stopScanner]);

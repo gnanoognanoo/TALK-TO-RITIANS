@@ -79,3 +79,4 @@ export * from './aliasPool';
 export * from './profileService';
 export * from './matchmakingService';
 export * from './chatService';
+export * from './telemetryService';

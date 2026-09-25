@@ -21,13 +21,13 @@ import { ApiResponse, ParsedCollegeQrResult } from '../types';
 import { validateRitQrUrl } from './qrParser';
 
 export interface CollegeIdentityVerificationResult {
+  verified?: boolean;
+  identityLinked?: boolean;
   collegeIdentityId: string;
   identityHashPreview: string;
   verifiedAt: string;
   isMockData: boolean;
   name?: string;
-  registerNumber?: string;
-  course?: string;
   department?: string;
   batch?: string;
   alreadyLinkedToSelf?: boolean;
@@ -123,15 +123,17 @@ export class VerificationService {
 
         if (errorCode === 'CARD_ALREADY_LINKED' || userMessage.includes('already linked')) {
           userMessage = 'This college identity is already linked to another account.';
-        } else if (errorCode === 'UNSUPPORTED_DOMAIN') {
+        } else if (errorCode === 'UNSUPPORTED_COURSE_FORMAT') {
+          userMessage = "We verified your RIT identity, but we couldn't recognize your course format yet. Please try again later.";
+        } else if (errorCode === 'UNSUPPORTED_DOMAIN' || errorCode === 'INVALID_RIT_DOMAIN') {
           userMessage = 'This QR does not point to the official RIT verification service.';
-        } else if (errorCode === 'RIT_PAGE_UNAVAILABLE') {
-          userMessage = "We couldn't verify the ID right now. Please try again.";
-        } else if (errorCode === 'INVALID_RIT_PAGE') {
+        } else if (errorCode === 'RIT_PAGE_UNAVAILABLE' || errorCode === 'RIT_PAGE_FETCH_FAILED') {
+          userMessage = 'RIT verification is temporarily unavailable. Please try again.';
+        } else if (errorCode === 'INVALID_RIT_PAGE' || errorCode === 'RIT_PAGE_FORMAT_UNSUPPORTED') {
           userMessage = 'The RIT verification page did not contain the expected student information.';
         } else if (errorCode === 'INSUFFICIENT_IDENTITY_DATA') {
           userMessage = 'Could not extract a valid student identifier from the official RIT page. Please try scanning again.';
-        } else if (errorCode === 'INVALID_QR') {
+        } else if (errorCode === 'INVALID_QR' || errorCode === 'QR_DECODE_FAILED') {
           userMessage = 'This QR is not a recognized RIT student ID.';
         }
 
@@ -165,14 +167,19 @@ export class VerificationService {
 
       if (!response || response.success === false) {
         const isDuplicate = response?.error === 'CARD_ALREADY_LINKED';
+        const isUnsupportedCourse = response?.error === 'UNSUPPORTED_COURSE_FORMAT';
+        let errorMessage = response?.message || 'Verification could not be completed.';
+        if (isDuplicate) {
+          errorMessage = 'This college identity is already linked to another account.';
+        } else if (isUnsupportedCourse) {
+          errorMessage = "We verified your RIT identity, but we couldn't recognize your course format yet. Please try again later.";
+        }
         return {
           success: false,
           data: null,
           error: {
             code: response?.error || 'VERIFICATION_FAILED',
-            message: isDuplicate
-              ? 'This college identity is already linked to another account.'
-              : response?.message || 'Verification could not be completed.',
+            message: errorMessage,
           },
         };
       }
@@ -180,13 +187,13 @@ export class VerificationService {
       return {
         success: true,
         data: {
+          verified: true,
+          identityLinked: true,
           collegeIdentityId: response.collegeIdentityId || 'verified',
           identityHashPreview: response.identityHashPreview || 'sha256...',
           verifiedAt: response.verifiedAt || new Date().toISOString(),
           isMockData: false,
           name: response.name,
-          registerNumber: response.registerNumber,
-          course: response.course,
           department: response.department,
           batch: response.batch,
           alreadyLinkedToSelf: Boolean(response.alreadyLinkedToSelf),
@@ -370,10 +377,12 @@ export class VerificationService {
       } | null;
 
       if (response && response.success === false) {
-        // Enforce exact non-leaking message for duplicates
+        // Enforce exact non-leaking message for duplicates and unsupported courses
         const message =
           response.error === 'CARD_ALREADY_LINKED'
             ? 'This college identity is already linked to another account.'
+            : response.error === 'UNSUPPORTED_COURSE_FORMAT'
+            ? "We verified your RIT identity, but we couldn't recognize your course format yet. Please try again later."
             : response.message || 'Verification could not be completed.';
 
         return {
@@ -389,10 +398,13 @@ export class VerificationService {
       return {
         success: true,
         data: {
+          verified: true,
+          identityLinked: true,
           collegeIdentityId: response?.college_identity_id || 'verified',
           identityHashPreview: response?.identity_hash_preview || 'sha256...',
           verifiedAt: response?.verified_at || new Date().toISOString(),
           isMockData: qrResult.isMockData,
+          name,
           department,
           batch,
           alreadyLinkedToSelf: Boolean(response?.already_linked_to_self),

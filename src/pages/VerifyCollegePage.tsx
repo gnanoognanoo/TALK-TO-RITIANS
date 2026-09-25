@@ -29,7 +29,7 @@ import {
   Unlink,
   AlertTriangle,
   CreditCard,
-  Hash,
+  Users,
 } from 'lucide-react';
 import {
   Button,
@@ -46,6 +46,8 @@ import {
 } from '../components';
 import { parseCollegeQr } from '../services/qrParser';
 import { verificationService, CollegeIdentityVerificationResult } from '../services/verificationService';
+import { profileService } from '../services/profileService';
+import { GENDER_OPTIONS } from '../config/profileConfig';
 import { ParsedCollegeQrResult } from '../types';
 import { useAuth } from '../context';
 
@@ -65,6 +67,12 @@ export const VerifyCollegePage: React.FC = () => {
   const [showUnlinkModal, setShowUnlinkModal] = useState<boolean>(false);
   const [isUnlinking, setIsUnlinking] = useState<boolean>(false);
   const [unlinkError, setUnlinkError] = useState<string | null>(null);
+
+  // Manual Gender Setup State (Step after College Identity Verified)
+  // NEVER inferred from name, Google account, or department
+  const [selectedGender, setSelectedGender] = useState<string | null>(profile?.gender || null);
+  const [isSavingGender, setIsSavingGender] = useState<boolean>(false);
+  const [genderError, setGenderError] = useState<string | null>(null);
 
   /**
    * Called when QrScanner captures a QR string.
@@ -102,7 +110,6 @@ export const VerifyCollegePage: React.FC = () => {
         ...result,
         fields: {
           name: res.data.name,
-          studentReference: res.data.registerNumber,
           department: res.data.department,
           batch: res.data.batch,
         },
@@ -185,7 +192,7 @@ export const VerifyCollegePage: React.FC = () => {
           <CardTitle className="text-2xl font-bold text-gray-900">
             {viewState === 'scanning' && 'Verify Your College ID'}
             {viewState === 'review' && 'Review Detected Identity'}
-            {viewState === 'success' && 'College Identity Verified!'}
+            {viewState === 'success' && 'College Identity Verified'}
           </CardTitle>
           <CardDescription className="text-sm text-gray-500">
             {viewState === 'scanning' &&
@@ -193,7 +200,7 @@ export const VerifyCollegePage: React.FC = () => {
             {viewState === 'review' &&
               'Confirm the student information decoded from your card before choosing your anonymous handle.'}
             {viewState === 'success' &&
-              'Your college identity has been linked successfully.'}
+              'Your college identity has been verified. Please select your gender to continue.'}
           </CardDescription>
         </CardHeader>
 
@@ -395,53 +402,44 @@ export const VerifyCollegePage: React.FC = () => {
           {/* =========================================================================
               STATE 3: SUCCESS CONFIRMATION (Phase 5)
               ========================================================================= */}
+          {/* =========================================================================
+              STATE 3: SUCCESS CONFIRMATION & GENDER SELECTION
+              ========================================================================= */}
           {viewState === 'success' && (
             <div className="text-center space-y-5 animate-in fade-in">
-              {/* Large Soft Green Circular Check Icon */}
+              {/* Soft Green Circular Check Icon */}
               <div className="h-16 w-16 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 mx-auto flex items-center justify-center shadow-sm">
                 <CheckCircle2 className="h-8 w-8" />
               </div>
 
               <div className="space-y-1.5">
                 <h3 className="text-xl font-bold text-gray-900">
-                  {verifiedData?.alreadyLinkedToSelf ? 'Identity Confirmed!' : 'College Identity Verified!'}
+                  College Identity Verified
                 </h3>
                 <p className="text-xs text-gray-500 max-w-xs mx-auto leading-relaxed">
-                  Your college identity has been linked successfully.
+                  Your physical student identity has been verified successfully.
                 </p>
               </div>
 
-              {/* Clean Information Card (Name, Department, Batch) */}
+              {/* Clean Information Card (ONLY Name, Department, Batch) */}
               <div className="rounded-xl bg-gray-50 border border-gray-200 p-4 text-left text-xs space-y-2.5 shadow-sm">
                 <div className="flex items-center justify-between pb-2 border-b border-gray-200">
                   <span className="font-semibold text-gray-500 uppercase tracking-wider text-[11px]">
                     Verified Student Credentials
                   </span>
                   <Badge variant="success" size="sm" withDot>
-                    Linked
+                    Verified
                   </Badge>
                 </div>
 
-                {Boolean(parsedResult?.fields?.name || verifiedData) && (
+                {Boolean(parsedResult?.fields?.name || verifiedData?.name) && (
                   <div className="flex items-center justify-between">
                     <span className="text-gray-500 flex items-center gap-1.5">
                       <User className="h-3.5 w-3.5 text-gray-400" />
                       Name:
                     </span>
                     <span className="font-semibold text-gray-900">
-                      {String(parsedResult?.fields?.name || 'Verified Student')}
-                    </span>
-                  </div>
-                )}
-
-                {Boolean(parsedResult?.fields?.studentReference || (parsedResult?.fields as any)?.rollNumber) && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-500 flex items-center gap-1.5">
-                      <Hash className="h-3.5 w-3.5 text-gray-400" />
-                      Roll / ID:
-                    </span>
-                    <span className="font-mono font-semibold text-gray-800">
-                      {String(parsedResult?.fields?.studentReference || (parsedResult?.fields as any)?.rollNumber)}
+                      {String(parsedResult?.fields?.name || verifiedData?.name || 'Verified Student')}
                     </span>
                   </div>
                 )}
@@ -453,7 +451,7 @@ export const VerifyCollegePage: React.FC = () => {
                       Department:
                     </span>
                     <span className="font-semibold text-brand-600">
-                      {String(verifiedData?.department || parsedResult?.fields?.department)}
+                      {String(verifiedData?.department || parsedResult?.fields?.department || 'RIT')}
                     </span>
                   </div>
                 )}
@@ -465,9 +463,47 @@ export const VerifyCollegePage: React.FC = () => {
                       Batch:
                     </span>
                     <span className="font-mono font-semibold text-gray-800">
-                      {String(verifiedData?.batch || parsedResult?.fields?.batch)}
+                      {String(verifiedData?.batch || parsedResult?.fields?.batch || '2024-2028')}
                     </span>
                   </div>
+                )}
+              </div>
+
+              {/* Step 2: Manual Gender Selection (Never inferred or auto-detected) */}
+              <div className="rounded-xl bg-gray-50 border border-gray-200 p-4 text-left text-xs space-y-3 shadow-sm">
+                <div className="flex items-center justify-between pb-1.5 border-b border-gray-200">
+                  <span className="font-semibold text-gray-700 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                    <Users className="h-3.5 w-3.5 text-brand-600" />
+                    Select Your Gender
+                  </span>
+                  <Badge variant="brand" size="sm">
+                    Required
+                  </Badge>
+                </div>
+                <p className="text-[11px] text-gray-500 leading-relaxed">
+                  Please select your gender manually. We never infer or guess this from your name, account, or department.
+                </p>
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  {GENDER_OPTIONS.map((gOption) => (
+                    <button
+                      key={gOption}
+                      type="button"
+                      onClick={() => {
+                        setSelectedGender(gOption);
+                        setGenderError(null);
+                      }}
+                      className={`p-2.5 rounded-lg border text-xs font-semibold text-center transition-all ${
+                        selectedGender === gOption
+                          ? 'bg-brand-50 border-brand-600 text-brand-700 shadow-sm ring-1 ring-brand-500'
+                          : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      {gOption}
+                    </button>
+                  ))}
+                </div>
+                {genderError && (
+                  <p className="text-[11px] text-rose-600 font-medium">{genderError}</p>
                 )}
               </div>
 
@@ -486,11 +522,28 @@ export const VerifyCollegePage: React.FC = () => {
                 type="button"
                 variant="primary"
                 fullWidth
-                onClick={() => navigate('/username')}
+                isLoading={isSavingGender}
+                loadingText="Saving profile..."
+                onClick={async () => {
+                  if (!selectedGender) {
+                    setGenderError('Please select your gender before continuing.');
+                    return;
+                  }
+                  setIsSavingGender(true);
+                  setGenderError(null);
+                  const res = await profileService.saveGender(selectedGender);
+                  setIsSavingGender(false);
+                  if (!res.success) {
+                    setGenderError(res.error?.message || 'Failed to save gender. Please try again.');
+                    return;
+                  }
+                  await refreshProfile();
+                  navigate('/username');
+                }}
                 rightIcon={<ArrowRight className="h-4 w-4" />}
                 className="py-2.5 font-semibold shadow-sm"
               >
-                Continue
+                Continue to Anonymous Setup
               </Button>
             </div>
           )}

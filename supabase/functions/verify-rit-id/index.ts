@@ -188,18 +188,133 @@ function matchFieldType(rawLabel: string): "name" | "registerNumber" | "course" 
 }
 
 /**
+ * Centralized mapping for official and known RIT course names from ims.ritchennai.edu.in
+ * to our canonical department representations.
+ */
+const KNOWN_RIT_COURSE_MAPPINGS: Readonly<Record<string, string>> = Object.freeze({
+  // Computer Science & Engineering -> CSE
+  'B.E. CSE': 'CSE',
+  'B.E CSE': 'CSE',
+  'BE CSE': 'CSE',
+  'B.E. COMPUTER SCIENCE AND ENGINEERING': 'CSE',
+  'B.E. COMPUTER SCIENCE & ENGINEERING': 'CSE',
+  'B.E - COMPUTER SCIENCE AND ENGINEERING': 'CSE',
+  'COMPUTER SCIENCE AND ENGINEERING': 'CSE',
+  'COMPUTER SCIENCE & ENGINEERING': 'CSE',
+  'CSE': 'CSE',
+  'CS': 'CSE',
+
+  // Information Technology -> IT
+  'B.TECH IT': 'IT',
+  'B.TECH. IT': 'IT',
+  'BTECH IT': 'IT',
+  'B.TECH INFORMATION TECHNOLOGY': 'IT',
+  'B.TECH. INFORMATION TECHNOLOGY': 'IT',
+  'B.TECH - INFORMATION TECHNOLOGY': 'IT',
+  'INFORMATION TECHNOLOGY': 'IT',
+  'IT': 'IT',
+
+  // Artificial Intelligence & Data Science -> AI/DS
+  'B.TECH AI & DS': 'AI/DS',
+  'B.TECH AI/DS': 'AI/DS',
+  'B.TECH AIDS': 'AI/DS',
+  'BTECH AIDS': 'AI/DS',
+  'B.TECH. AI & DS': 'AI/DS',
+  'B.TECH ARTIFICIAL INTELLIGENCE AND DATA SCIENCE': 'AI/DS',
+  'B.TECH. ARTIFICIAL INTELLIGENCE AND DATA SCIENCE': 'AI/DS',
+  'B.TECH - ARTIFICIAL INTELLIGENCE AND DATA SCIENCE': 'AI/DS',
+  'ARTIFICIAL INTELLIGENCE AND DATA SCIENCE': 'AI/DS',
+  'ARTIFICIAL INTELLIGENCE & DATA SCIENCE': 'AI/DS',
+  'AI & DS': 'AI/DS',
+  'AI/DS': 'AI/DS',
+  'AIDS': 'AI/DS',
+
+  // Electronics & Communication Engineering -> ECE
+  'B.E. ECE': 'ECE',
+  'B.E ECE': 'ECE',
+  'BE ECE': 'ECE',
+  'B.E. ELECTRONICS AND COMMUNICATION ENGINEERING': 'ECE',
+  'B.E. ELECTRONICS & COMMUNICATION ENGINEERING': 'ECE',
+  'B.E - ELECTRONICS AND COMMUNICATION ENGINEERING': 'ECE',
+  'ELECTRONICS AND COMMUNICATION ENGINEERING': 'ECE',
+  'ELECTRONICS & COMMUNICATION ENGINEERING': 'ECE',
+  'ECE': 'ECE',
+
+  // Electrical & Electronics Engineering -> EEE
+  'B.E. EEE': 'EEE',
+  'B.E EEE': 'EEE',
+  'BE EEE': 'EEE',
+  'B.E. ELECTRICAL AND ELECTRONICS ENGINEERING': 'EEE',
+  'B.E. ELECTRICAL & ELECTRONICS ENGINEERING': 'EEE',
+  'B.E - ELECTRICAL AND ELECTRONICS ENGINEERING': 'EEE',
+  'ELECTRICAL AND ELECTRONICS ENGINEERING': 'EEE',
+  'ELECTRICAL & ELECTRONICS ENGINEERING': 'EEE',
+  'EEE': 'EEE',
+
+  // Artificial Intelligence & Machine Learning -> AI/ML
+  'B.TECH AI & ML': 'AI/ML',
+  'B.TECH AI/ML': 'AI/ML',
+  'B.TECH AIML': 'AI/ML',
+  'B.E. AI & ML': 'AI/ML',
+  'B.E. AI/ML': 'AI/ML',
+  'B.E. AIML': 'AI/ML',
+  'B.TECH ARTIFICIAL INTELLIGENCE AND MACHINE LEARNING': 'AI/ML',
+  'B.E. ARTIFICIAL INTELLIGENCE AND MACHINE LEARNING': 'AI/ML',
+  'ARTIFICIAL INTELLIGENCE AND MACHINE LEARNING': 'AI/ML',
+  'ARTIFICIAL INTELLIGENCE & MACHINE LEARNING': 'AI/ML',
+  'AI & ML': 'AI/ML',
+  'AI/ML': 'AI/ML',
+  'AIML': 'AI/ML',
+
+  // Computer Science & Business Systems -> CSBS
+  'B.TECH CSBS': 'CSBS',
+  'BTECH CSBS': 'CSBS',
+  'B.TECH. CSBS': 'CSBS',
+  'B.TECH COMPUTER SCIENCE AND BUSINESS SYSTEMS': 'CSBS',
+  'B.TECH - COMPUTER SCIENCE AND BUSINESS SYSTEMS': 'CSBS',
+  'COMPUTER SCIENCE AND BUSINESS SYSTEMS': 'CSBS',
+  'CSBS': 'CSBS',
+
+  // Mechanical Engineering -> MECH
+  'B.E. MECH': 'MECH',
+  'B.E MECH': 'MECH',
+  'BE MECH': 'MECH',
+  'B.E. MECHANICAL ENGINEERING': 'MECH',
+  'B.E - MECHANICAL ENGINEERING': 'MECH',
+  'MECHANICAL ENGINEERING': 'MECH',
+  'MECH': 'MECH',
+});
+
+/**
  * Normalizes course string to canonical department code.
  */
-function normalizeDepartment(raw?: string | null): string {
-  if (!raw || typeof raw !== "string") return "RIT";
+function normalizeDepartment(raw?: string | null): string | null {
+  if (!raw || typeof raw !== "string") return null;
 
-  const clean = raw
-    .trim()
-    .toUpperCase()
+  const rawUpper = raw.trim().toUpperCase();
+
+  // 1. Direct match in centralized known course mapping
+  if (KNOWN_RIT_COURSE_MAPPINGS[rawUpper]) {
+    return KNOWN_RIT_COURSE_MAPPINGS[rawUpper];
+  }
+
+  // 2. Normalized string matching in known course mapping
+  const normalizedKey = rawUpper
+    .replace(/\s+/g, ' ')
+    .replace(/\./g, '')
+    .trim();
+  if (KNOWN_RIT_COURSE_MAPPINGS[normalizedKey]) {
+    return KNOWN_RIT_COURSE_MAPPINGS[normalizedKey];
+  }
+
+  const clean = rawUpper
     .replace(/&/g, "AND")
     .replace(/\./g, "")
-    .replace(/[-_/]/g, " ");
+    .replace(/[-_/]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
+  // 3. Keyword matching
   if (clean.includes("BUSINESS") || clean.includes("CSBS") || /\bCSBS\b/.test(clean)) return "CSBS";
   if (clean.includes("DATA SCIENCE") || /\b(AI\s*DS|AIDS|AI\s*AND\s*DS)\b/.test(clean)) return "AI/DS";
   if (clean.includes("MACHINE LEARNING") || /\b(AI\s*ML|AIML|AI\s*AND\s*ML)\b/.test(clean)) return "AI/ML";
@@ -209,7 +324,11 @@ function normalizeDepartment(raw?: string | null): string {
   if (clean.includes("ELECTRICAL") || /\bEEE\b/.test(clean)) return "EEE";
   if (clean.includes("MECHANICAL") || /\bMECH\b/.test(clean)) return "MECH";
 
-  return "RIT";
+  // Check direct department code match
+  const validCodes = ["CSE", "IT", "AI/DS", "ECE", "EEE", "AI/ML", "CSBS", "MECH"];
+  if (validCodes.includes(rawUpper)) return rawUpper;
+
+  return null;
 }
 
 /**
@@ -670,6 +789,18 @@ serve(async (req: Request) => {
     const { name, registerNumber, course, batch } = parseResult.data;
     const departmentCode = normalizeDepartment(course);
 
+    if (!departmentCode) {
+      console.warn("[verify-rit-id] Unrecognized course format:", { courseRawLength: course ? course.length : 0 });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "UNSUPPORTED_COURSE_FORMAT",
+          message: "We verified your RIT identity, but we couldn't recognize your course format yet. Please try again later.",
+        }),
+        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // 6. Invoke atomic PostgreSQL RPC to link identity & enforce 1-to-1 uniqueness
     const { data: linkData, error: linkError } = await userClient.rpc("verify_and_link_college_identity", {
       p_student_ref: registerNumber,
@@ -721,17 +852,16 @@ serve(async (req: Request) => {
       );
     }
 
-    // 7. Success: Return minimal verified result to caller
+    // 7. Success: Return minimal verified result to caller (NO raw registerNumber!)
     return new Response(
       JSON.stringify({
-        valid: true,
+        verified: true,
         success: true,
-        source: "RIT_OFFICIAL_PAGE",
+        identityLinked: true,
         name,
-        registerNumber,
-        course,
         department: departmentCode,
         batch,
+        source: "RIT_OFFICIAL_PAGE",
         officialHost: APPROVED_RIT_DOMAIN,
         collegeIdentityId: rpcResponse?.college_identity_id,
         identityHashPreview: rpcResponse?.identity_hash_preview,

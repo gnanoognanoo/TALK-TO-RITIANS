@@ -32,9 +32,37 @@ export interface ExtractedRitStudentInfo {
 export interface ParseRitPageResult {
   success: boolean;
   data?: ExtractedRitStudentInfo;
-  errorCode?: 'INVALID_RIT_PAGE' | 'EMPTY_PAGE';
+  errorCode?: 'INVALID_RIT_PAGE' | 'EMPTY_PAGE' | 'UNSUPPORTED_COURSE_FORMAT';
   errorMessage?: string;
   missingFields?: string[];
+}
+
+/**
+ * Clean normalized verification result returned to the frontend.
+ * Strictly guarantees that the raw register number is NOT exposed to browser consumers.
+ */
+export interface NormalizedRitVerificationResult {
+  verified: boolean;
+  name: string;
+  department: string;
+  batch: string;
+  identityLinked: boolean;
+  alreadyLinkedToSelf?: boolean;
+}
+
+export function toNormalizedVerificationResult(
+  info: ExtractedRitStudentInfo,
+  identityLinked: boolean = true,
+  alreadyLinkedToSelf: boolean = false
+): NormalizedRitVerificationResult {
+  return {
+    verified: true,
+    name: info.name,
+    department: info.department,
+    batch: info.batch,
+    identityLinked,
+    alreadyLinkedToSelf,
+  };
 }
 
 /**
@@ -376,9 +404,19 @@ export function parseRitOfficialPage(htmlContent: string): ParseRitPageResult {
 
   // Field Sanitization & Normalization with safe defaults - registerNumber remains STRICTLY string
   const cleanName = rawExtracted.name ? cleanFieldText(rawExtracted.name).replace(/\s+/g, ' ') : 'RIT Student';
-  const cleanCourse = rawExtracted.course ? cleanFieldText(rawExtracted.course).replace(/\s+/g, ' ') : 'Unknown';
+  const cleanCourse = rawExtracted.course ? cleanFieldText(rawExtracted.course).replace(/\s+/g, ' ') : '';
+  const canonicalDept = normalizeDepartment(cleanCourse);
+
+  if (!canonicalDept) {
+    return {
+      success: false,
+      errorCode: 'UNSUPPORTED_COURSE_FORMAT',
+      errorMessage: "We verified your RIT identity, but we couldn't recognize your course format yet. Please try again later.",
+      missingFields: ['Course'],
+    };
+  }
+
   const normBatch = normalizeBatch(rawExtracted.batch!) || rawExtracted.batch?.trim() || '2024-2028';
-  const canonicalDept = normalizeDepartment(cleanCourse) || 'RIT';
 
   return {
     success: true,

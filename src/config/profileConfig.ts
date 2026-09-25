@@ -87,62 +87,170 @@ export const SECTION_REGEX = /^[A-Z0-9]{1,3}$/;
 export const BATCH_REGEX = /^\d{4}-\d{4}$/;
 
 /**
- * Normalizes an arbitrary department string (e.g. from QR scan) into a canonical department code.
+ * Centralized mapping for official and known RIT course names from ims.ritchennai.edu.in
+ * to our canonical department representations.
+ * Do not scatter course mappings throughout components.
+ */
+export const KNOWN_RIT_COURSE_MAPPINGS: Readonly<Record<string, string>> = Object.freeze({
+  // Computer Science & Engineering -> CSE
+  'B.E. CSE': 'CSE',
+  'B.E CSE': 'CSE',
+  'BE CSE': 'CSE',
+  'B.E. COMPUTER SCIENCE AND ENGINEERING': 'CSE',
+  'B.E. COMPUTER SCIENCE & ENGINEERING': 'CSE',
+  'B.E - COMPUTER SCIENCE AND ENGINEERING': 'CSE',
+  'COMPUTER SCIENCE AND ENGINEERING': 'CSE',
+  'COMPUTER SCIENCE & ENGINEERING': 'CSE',
+  'CSE': 'CSE',
+  'CS': 'CSE',
+
+  // Information Technology -> IT
+  'B.TECH IT': 'IT',
+  'B.TECH. IT': 'IT',
+  'BTECH IT': 'IT',
+  'B.TECH INFORMATION TECHNOLOGY': 'IT',
+  'B.TECH. INFORMATION TECHNOLOGY': 'IT',
+  'B.TECH - INFORMATION TECHNOLOGY': 'IT',
+  'INFORMATION TECHNOLOGY': 'IT',
+  'IT': 'IT',
+
+  // Artificial Intelligence & Data Science -> AI/DS
+  'B.TECH AI & DS': 'AI/DS',
+  'B.TECH AI/DS': 'AI/DS',
+  'B.TECH AIDS': 'AI/DS',
+  'BTECH AIDS': 'AI/DS',
+  'B.TECH. AI & DS': 'AI/DS',
+  'B.TECH ARTIFICIAL INTELLIGENCE AND DATA SCIENCE': 'AI/DS',
+  'B.TECH. ARTIFICIAL INTELLIGENCE AND DATA SCIENCE': 'AI/DS',
+  'B.TECH - ARTIFICIAL INTELLIGENCE AND DATA SCIENCE': 'AI/DS',
+  'ARTIFICIAL INTELLIGENCE AND DATA SCIENCE': 'AI/DS',
+  'ARTIFICIAL INTELLIGENCE & DATA SCIENCE': 'AI/DS',
+  'AI & DS': 'AI/DS',
+  'AI/DS': 'AI/DS',
+  'AIDS': 'AI/DS',
+
+  // Electronics & Communication Engineering -> ECE
+  'B.E. ECE': 'ECE',
+  'B.E ECE': 'ECE',
+  'BE ECE': 'ECE',
+  'B.E. ELECTRONICS AND COMMUNICATION ENGINEERING': 'ECE',
+  'B.E. ELECTRONICS & COMMUNICATION ENGINEERING': 'ECE',
+  'B.E - ELECTRONICS AND COMMUNICATION ENGINEERING': 'ECE',
+  'ELECTRONICS AND COMMUNICATION ENGINEERING': 'ECE',
+  'ELECTRONICS & COMMUNICATION ENGINEERING': 'ECE',
+  'ECE': 'ECE',
+
+  // Electrical & Electronics Engineering -> EEE
+  'B.E. EEE': 'EEE',
+  'B.E EEE': 'EEE',
+  'BE EEE': 'EEE',
+  'B.E. ELECTRICAL AND ELECTRONICS ENGINEERING': 'EEE',
+  'B.E. ELECTRICAL & ELECTRONICS ENGINEERING': 'EEE',
+  'B.E - ELECTRICAL AND ELECTRONICS ENGINEERING': 'EEE',
+  'ELECTRICAL AND ELECTRONICS ENGINEERING': 'EEE',
+  'ELECTRICAL & ELECTRONICS ENGINEERING': 'EEE',
+  'EEE': 'EEE',
+
+  // Artificial Intelligence & Machine Learning -> AI/ML
+  'B.TECH AI & ML': 'AI/ML',
+  'B.TECH AI/ML': 'AI/ML',
+  'B.TECH AIML': 'AI/ML',
+  'B.E. AI & ML': 'AI/ML',
+  'B.E. AI/ML': 'AI/ML',
+  'B.E. AIML': 'AI/ML',
+  'B.TECH ARTIFICIAL INTELLIGENCE AND MACHINE LEARNING': 'AI/ML',
+  'B.E. ARTIFICIAL INTELLIGENCE AND MACHINE LEARNING': 'AI/ML',
+  'ARTIFICIAL INTELLIGENCE AND MACHINE LEARNING': 'AI/ML',
+  'ARTIFICIAL INTELLIGENCE & MACHINE LEARNING': 'AI/ML',
+  'AI & ML': 'AI/ML',
+  'AI/ML': 'AI/ML',
+  'AIML': 'AI/ML',
+
+  // Computer Science & Business Systems -> CSBS
+  'B.TECH CSBS': 'CSBS',
+  'BTECH CSBS': 'CSBS',
+  'B.TECH. CSBS': 'CSBS',
+  'B.TECH COMPUTER SCIENCE AND BUSINESS SYSTEMS': 'CSBS',
+  'B.TECH - COMPUTER SCIENCE AND BUSINESS SYSTEMS': 'CSBS',
+  'COMPUTER SCIENCE AND BUSINESS SYSTEMS': 'CSBS',
+  'CSBS': 'CSBS',
+
+  // Mechanical Engineering -> MECH
+  'B.E. MECH': 'MECH',
+  'B.E MECH': 'MECH',
+  'BE MECH': 'MECH',
+  'B.E. MECHANICAL ENGINEERING': 'MECH',
+  'B.E - MECHANICAL ENGINEERING': 'MECH',
+  'MECHANICAL ENGINEERING': 'MECH',
+  'MECH': 'MECH',
+});
+
+/**
+ * Normalizes an arbitrary course or department string into our canonical department code.
+ * Uses centralized KNOWN_RIT_COURSE_MAPPINGS first, then keyword fallback.
  */
 export function normalizeDepartment(raw?: string | null): string | null {
   if (!raw || typeof raw !== 'string') return null;
 
-  const clean = raw
-    .trim()
-    .toUpperCase()
+  const rawUpper = raw.trim().toUpperCase();
+
+  // 1. Direct match in centralized known RIT course mapping
+  if (KNOWN_RIT_COURSE_MAPPINGS[rawUpper]) {
+    return KNOWN_RIT_COURSE_MAPPINGS[rawUpper];
+  }
+
+  // 2. Normalized string matching in known course mapping
+  const normalizedKey = rawUpper
+    .replace(/\s+/g, ' ')
+    .replace(/\./g, '')
+    .trim();
+  if (KNOWN_RIT_COURSE_MAPPINGS[normalizedKey]) {
+    return KNOWN_RIT_COURSE_MAPPINGS[normalizedKey];
+  }
+
+  const clean = rawUpper
     .replace(/&/g, 'AND')
     .replace(/\./g, '')
-    .replace(/[-_/]/g, ' ');
+    .replace(/[-_/]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
-  // 1. Computer Science and Business Systems
+  // 3. Keyword-based matching
   if (clean.includes('BUSINESS') || clean.includes('CSBS') || /\bCSBS\b/.test(clean)) {
     return 'CSBS';
   }
 
-  // 2. Artificial Intelligence & Data Science
   if (clean.includes('DATA SCIENCE') || /\b(AI\s*DS|AIDS|AI\s*AND\s*DS)\b/.test(clean)) {
     return 'AI/DS';
   }
 
-  // 3. Artificial Intelligence & Machine Learning
   if (clean.includes('MACHINE LEARNING') || /\b(AI\s*ML|AIML|AI\s*AND\s*ML)\b/.test(clean)) {
     return 'AI/ML';
   }
 
-  // 4. Computer Science & Engineering
   if (clean.includes('COMPUTER SCIENCE') || /\bCSE\b/.test(clean) || clean === 'CS') {
     return 'CSE';
   }
 
-  // 5. Information Technology
   if (clean.includes('INFORMATION TECHNOLOGY') || clean.includes('INFORMATION') || /\bIT\b/.test(clean)) {
     return 'IT';
   }
 
-  // 6. Electronics & Communication Engineering
   if ((clean.includes('ELECTRONICS') && clean.includes('COMMUNICATION')) || /\bECE\b/.test(clean)) {
     return 'ECE';
   }
 
-  // 7. Electrical & Electronics Engineering
   if (clean.includes('ELECTRICAL') || /\bEEE\b/.test(clean)) {
     return 'EEE';
   }
 
-  // 8. Mechanical Engineering
   if (clean.includes('MECHANICAL') || /\bMECH\b/.test(clean)) {
     return 'MECH';
   }
 
-  // Check direct code match
-  const rawClean = raw.trim().toUpperCase();
+  // 4. Exact code or name match from INSTITUTIONAL_DEPARTMENTS
   const exact = INSTITUTIONAL_DEPARTMENTS.find(
-    (d) => d.code.toUpperCase() === rawClean || d.name.toUpperCase() === rawClean
+    (d) => d.code.toUpperCase() === rawUpper || d.name.toUpperCase() === rawUpper
   );
   return exact ? exact.code : null;
 }
