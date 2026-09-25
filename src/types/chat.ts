@@ -40,7 +40,7 @@ export type ChatConnectionStatus =
  */
 export type ChatMessageType = 'text' | 'system';
 
-export type ChatEndReason = 'skip' | 'leave' | 'disconnect' | 'timeout';
+export type ChatEndReason = 'skip' | 'leave' | 'disconnect' | 'timeout' | 'time_limit';
 
 /**
  * Chat room representation.
@@ -52,6 +52,7 @@ export interface ChatRoom {
   user2: string;                  // User UUID
   status: ChatRoomStatus;         // Current room state
   createdAt: string;              // ISO 8601 creation timestamp
+  expiresAt?: string;             // ISO 8601 7-minute expiration timestamp
   endedAt?: string | null;        // ISO 8601 completion timestamp
   endReason?: ChatEndReason | string | null;
 }
@@ -82,5 +83,9 @@ export interface ChatStranger {
 export interface GetRoomPeerResult {
   roomId: string;
   roomStatus: ChatRoomStatus;
+  createdAt?: string;
+  expiresAt?: string;
+  endReason?: ChatEndReason | string | null;
   peer: MatchedPeerPersona;
 }
+

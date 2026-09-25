@@ -24,6 +24,7 @@ import {
   ShieldCheck,
   Unlink,
   AlertCircle,
+  Clock,
 } from 'lucide-react';
 import {
   Button,
@@ -62,8 +63,11 @@ export const ChatPage: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Peer Persona (retrieved from route navigation state or loaded securely from DB)
-  const initialPeer = (location.state as { peer?: MatchedPeerPersona } | null)?.peer;
+  // Peer Persona and Authoritative Expiration (from route state or DB)
+  const navState = location.state as { peer?: MatchedPeerPersona; expiresAt?: string } | null;
+  const initialPeer = navState?.peer;
+  const initialExpiresAt = navState?.expiresAt;
+
   const [peer, setPeer] = useState<MatchedPeerPersona>(
     initialPeer || {
       anonymousUsername: 'Anonymous RITian',
@@ -82,6 +86,46 @@ export const ChatPage: React.FC = () => {
       },
     }
   );
+
+  const [expiresAt, setExpiresAt] = useState<string | null>(initialExpiresAt || null);
+  const [endReason, setEndReason] = useState<string | null>(null);
+
+  const [remainingSeconds, setRemainingSeconds] = useState<number | null>(() => {
+    if (!initialExpiresAt) return 420;
+    const diff = Math.floor((new Date(initialExpiresAt).getTime() - Date.now()) / 1000);
+    return Math.max(0, diff);
+  });
+
+  /**
+   * Helper to format seconds as MM:SS
+   */
+  const formatTimer = (seconds: number | null): string => {
+    if (seconds === null || isNaN(seconds)) return '07:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  /**
+   * 7-Minute Countdown Timer & Expiration Trigger
+   */
+  useEffect(() => {
+    if (!expiresAt || roomStatus !== 'active') return;
+
+    const tick = () => {
+      const remaining = Math.max(0, Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000));
+      setRemainingSeconds(remaining);
+      if (remaining <= 0) {
+        setRoomStatus('ended');
+        setEndReason('time_limit');
+        setConnectionStatus('stranger disconnected');
+      }
+    };
+
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [expiresAt, roomStatus]);
 
   /**
    * Auto-scroll when messages update
@@ -110,6 +154,20 @@ export const ChatPage: React.FC = () => {
       if (res.success && res.data) {
         if (res.data.peer) {
           setPeer(res.data.peer);
+        }
+        if (res.data.expiresAt) {
+          setExpiresAt(res.data.expiresAt);
+          const diff = Math.floor((new Date(res.data.expiresAt).getTime() - Date.now()) / 1000);
+          setRemainingSeconds(Math.max(0, diff));
+          if (diff <= 0) {
+            setRoomStatus('ended');
+            setEndReason('time_limit');
+            setConnectionStatus('stranger disconnected');
+            return;
+          }
+        }
+        if (res.data.endReason) {
+          setEndReason(res.data.endReason);
         }
         setMessages(res.data.messages);
         setRoomStatus(res.data.status);
@@ -178,8 +236,14 @@ export const ChatPage: React.FC = () => {
           (payload) => {
             if (!isMounted) return;
             const updatedRoom = payload.new as any;
+            if (updatedRoom.expires_at) {
+              setExpiresAt(updatedRoom.expires_at);
+            }
             if (updatedRoom.status === 'ended' || updatedRoom.status === 'skipped') {
               setRoomStatus(updatedRoom.status);
+              if (updatedRoom.end_reason) {
+                setEndReason(updatedRoom.end_reason);
+              }
               setConnectionStatus('stranger disconnected');
             }
           }
@@ -237,6 +301,20 @@ export const ChatPage: React.FC = () => {
 
       const syncRes = await chatService.reconnectRoom(roomId);
       if (syncRes.success && syncRes.data) {
+        if (syncRes.data.expiresAt) {
+          setExpiresAt(syncRes.data.expiresAt);
+          const diff = Math.floor((new Date(syncRes.data.expiresAt).getTime() - Date.now()) / 1000);
+          setRemainingSeconds(Math.max(0, diff));
+          if (diff <= 0) {
+            setRoomStatus('ended');
+            setEndReason('time_limit');
+            setConnectionStatus('stranger disconnected');
+            return;
+          }
+        }
+        if (syncRes.data.endReason) {
+          setEndReason(syncRes.data.endReason);
+        }
         if (syncRes.data.status === 'active') {
           setRoomStatus('active');
           setConnectionStatus('connected');
@@ -262,8 +340,32 @@ export const ChatPage: React.FC = () => {
 
     const handleVisibilityChange = async () => {
       if (document.visibilityState === 'visible' && roomStatus === 'active') {
+        if (expiresAt) {
+          const diff = Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000);
+          setRemainingSeconds(Math.max(0, diff));
+          if (diff <= 0) {
+            setRoomStatus('ended');
+            setEndReason('time_limit');
+            setConnectionStatus('stranger disconnected');
+            return;
+          }
+        }
         const syncRes = await chatService.reconnectRoom(roomId);
         if (syncRes.success && syncRes.data) {
+          if (syncRes.data.expiresAt) {
+            setExpiresAt(syncRes.data.expiresAt);
+            const diff = Math.floor((new Date(syncRes.data.expiresAt).getTime() - Date.now()) / 1000);
+            setRemainingSeconds(Math.max(0, diff));
+            if (diff <= 0) {
+              setRoomStatus('ended');
+              setEndReason('time_limit');
+              setConnectionStatus('stranger disconnected');
+              return;
+            }
+          }
+          if (syncRes.data.endReason) {
+            setEndReason(syncRes.data.endReason);
+          }
           if (syncRes.data.status === 'active') {
             setConnectionStatus('connected');
             setMessages(syncRes.data.messages);
@@ -333,6 +435,10 @@ export const ChatPage: React.FC = () => {
           if (prev.some((m) => m.id === newMsg.id)) return prev;
           return [...prev, newMsg];
         });
+      } else if (res.error?.code === 'ROOM_EXPIRED') {
+        setRoomStatus('ended');
+        setEndReason('time_limit');
+        setConnectionStatus('stranger disconnected');
       }
     } catch (err) {
       console.error('[ChatPage] Message send error:', err);
@@ -434,8 +540,25 @@ export const ChatPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Header Action: Leave */}
-        <div className="flex items-center gap-2">
+        {/* Right Header Action: Timer and Leave */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {roomStatus === 'active' && (
+            <div
+              id="chat-header-timer"
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold tabular-nums tracking-wide transition-colors ${
+                (remainingSeconds ?? 420) <= 10
+                  ? 'bg-red-50 text-red-700 border-red-200 font-bold'
+                  : (remainingSeconds ?? 420) <= 60
+                  ? 'bg-amber-50 text-amber-700 border-amber-200'
+                  : 'bg-purple-50 text-purple-700 border-purple-200'
+              }`}
+              title="7-minute chat session timer"
+            >
+              <Clock className="h-3.5 w-3.5" />
+              <span>{formatTimer(remainingSeconds)}</span>
+            </div>
+          )}
+
           <Button
             type="button"
             variant="danger"
@@ -461,48 +584,92 @@ export const ChatPage: React.FC = () => {
           MAIN CHAT BODY OR DISCONNECTED SCREEN (Phase 12)
           ========================================================================= */}
       {isDisconnected ? (
-        /* Phase 12 - Disconnected Page / State */
-        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-gray-50/50">
-          <div className="max-w-sm w-full bg-white border border-gray-200 rounded-2xl p-8 shadow-card space-y-6">
-            {/* Broken Link Icon */}
-            <div className="h-16 w-16 mx-auto rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
-              <Unlink className="h-8 w-8 stroke-[1.75]" />
-            </div>
+        endReason === 'time_limit' ? (
+          /* Time-Limit End Screen (Requirement 8) */
+          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-gray-50/50">
+            <div className="max-w-sm w-full bg-white border border-gray-200 rounded-2xl p-8 shadow-card space-y-6">
+              <div className="h-16 w-16 mx-auto rounded-full bg-purple-50 flex items-center justify-center text-[#6C4CF5]">
+                <Clock className="h-8 w-8 stroke-[1.75]" />
+              </div>
 
-            <div className="space-y-1">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
-                Chat Ended
-              </h2>
-              <p className="text-sm text-gray-500">
-                The other user has disconnected.
-              </p>
-            </div>
+              <div className="space-y-1">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+                  Time's up!
+                </h2>
+                <p className="text-sm text-gray-500">
+                  Your 7-minute conversation has ended.
+                </p>
+              </div>
 
-            {/* Action Buttons */}
-            <div className="space-y-2.5 pt-2">
-              <Button
-                variant="primary"
-                size="md"
-                fullWidth
-                onClick={() => navigate('/matching', { replace: true })}
-                className="font-bold"
-              >
-                Find a New Chat
-              </Button>
-              <Button
-                variant="secondary"
-                size="md"
-                fullWidth
-                onClick={async () => {
-                  await matchmakingService.leaveMatchmaking();
-                  navigate('/home', { replace: true });
-                }}
-              >
-                Back to Home
-              </Button>
+              {/* Action Buttons */}
+              <div className="space-y-2.5 pt-2">
+                <Button
+                  variant="primary"
+                  size="md"
+                  fullWidth
+                  onClick={() => navigate('/matching', { replace: true })}
+                  className="font-bold"
+                >
+                  Find Another RITian
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="md"
+                  fullWidth
+                  onClick={async () => {
+                    await matchmakingService.leaveMatchmaking();
+                    navigate('/home', { replace: true });
+                  }}
+                >
+                  Leave
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          /* Phase 12 - Disconnected Page / State */
+          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-gray-50/50">
+            <div className="max-w-sm w-full bg-white border border-gray-200 rounded-2xl p-8 shadow-card space-y-6">
+              {/* Broken Link Icon */}
+              <div className="h-16 w-16 mx-auto rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
+                <Unlink className="h-8 w-8 stroke-[1.75]" />
+              </div>
+
+              <div className="space-y-1">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+                  Chat Ended
+                </h2>
+                <p className="text-sm text-gray-500">
+                  The other user has disconnected.
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="space-y-2.5 pt-2">
+                <Button
+                  variant="primary"
+                  size="md"
+                  fullWidth
+                  onClick={() => navigate('/matching', { replace: true })}
+                  className="font-bold"
+                >
+                  Find a New Chat
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="md"
+                  fullWidth
+                  onClick={async () => {
+                    await matchmakingService.leaveMatchmaking();
+                    navigate('/home', { replace: true });
+                  }}
+                >
+                  Back to Home
+                </Button>
+              </div>
+            </div>
+          </div>
+        )
       ) : (
         /* Phase 10 - Message Stream */
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 bg-[#FAFAFC]">

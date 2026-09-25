@@ -30,7 +30,7 @@ interface LocalDevQueueItem {
 }
 
 const localDevQueue: LocalDevQueueItem[] = [];
-const localDevMatchedRooms = new Map<string, { roomId: string; peer: MatchedPeerPersona }>();
+const localDevMatchedRooms = new Map<string, { roomId: string; peer: MatchedPeerPersona; expiresAt?: string }>();
 
 export class MatchmakingService {
   private lastJoinTime: number = 0;
@@ -99,6 +99,8 @@ export class MatchmakingService {
         status?: string;
         room_id?: string;
         queue_id?: string;
+        created_at?: string;
+        expires_at?: string;
         peer?: {
           anonymous_username?: string;
           avatar_config?: AvatarConfig;
@@ -123,6 +125,8 @@ export class MatchmakingService {
             status: 'matched',
             roomId: res.room_id,
             queueId: res.queue_id,
+            createdAt: res.created_at,
+            expiresAt: res.expires_at,
             peer: {
               anonymousUsername: res.peer?.anonymous_username || 'Anonymous RITian',
               avatarConfig: res.peer?.avatar_config || ({} as AvatarConfig),
@@ -193,6 +197,8 @@ export class MatchmakingService {
         status?: string;
         room_id?: string;
         queue_id?: string;
+        created_at?: string;
+        expires_at?: string;
         peer?: {
           anonymous_username?: string;
           avatar_config?: AvatarConfig;
@@ -206,6 +212,8 @@ export class MatchmakingService {
             status: 'matched',
             roomId: res.room_id,
             queueId: res.queue_id,
+            createdAt: res.created_at,
+            expiresAt: res.expires_at,
             peer: {
               anonymousUsername: res.peer?.anonymous_username || 'Anonymous RITian',
               avatarConfig: res.peer?.avatar_config || ({} as AvatarConfig),
@@ -310,8 +318,9 @@ export class MatchmakingService {
         },
       };
 
-      localDevMatchedRooms.set(userId, { roomId, peer: partnerPeer });
-      localDevMatchedRooms.set(partner.userId, { roomId, peer: myPeer });
+      const expiresAt = new Date(now + 7 * 60 * 1000).toISOString();
+      localDevMatchedRooms.set(userId, { roomId, peer: partnerPeer, expiresAt });
+      localDevMatchedRooms.set(partner.userId, { roomId, peer: myPeer, expiresAt });
 
       // Remove current user from queue
       const myIdx = localDevQueue.findIndex((i) => i.userId === userId);
@@ -322,6 +331,7 @@ export class MatchmakingService {
         data: {
           status: 'matched',
           roomId,
+          expiresAt,
           peer: partnerPeer,
         },
         error: null,
@@ -372,6 +382,7 @@ export class MatchmakingService {
         data: {
           status: 'matched',
           roomId: match.roomId,
+          expiresAt: match.expiresAt,
           peer: match.peer,
         },
         error: null,

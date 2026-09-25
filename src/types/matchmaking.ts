@@ -53,6 +53,7 @@ export interface MatchedPeerPersona {
 export interface MatchResult {
   roomId: string;
   matchedAt: string;
+  expiresAt?: string;
   peer: MatchedPeerPersona;
 }
 
@@ -63,6 +64,9 @@ export interface MatchmakingResponse {
   status: MatchmakingStatus;
   roomId?: string;
   queueId?: string;
+  createdAt?: string;
+  expiresAt?: string;
   peer?: MatchedPeerPersona;
   message?: string;
 }
+

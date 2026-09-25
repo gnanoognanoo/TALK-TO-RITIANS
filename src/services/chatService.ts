@@ -34,6 +34,8 @@ interface LocalRoomState {
   endReason?: ChatEndReason | null;
   messages: ChatMessage[];
   peerPersonas: Map<string, MatchedPeerPersona>;
+  createdAt?: string;
+  expiresAt?: string;
   user1HeartbeatAt?: number;
   user2HeartbeatAt?: number;
 }
@@ -158,11 +160,19 @@ export class ChatService {
             background: 'indigo',
           },
         };
+        if (local?.status === 'active' && local?.expiresAt && Date.now() >= new Date(local.expiresAt).getTime()) {
+          local.status = 'ended';
+          local.endReason = 'time_limit';
+        }
+
         return {
           success: true,
           data: {
             roomId,
             roomStatus: local?.status || 'active',
+            createdAt: local?.createdAt,
+            expiresAt: local?.expiresAt,
+            endReason: local?.endReason,
             peer,
           },
           error: null,
@@ -205,6 +215,9 @@ export class ChatService {
         data: {
           roomId: res.room_id || roomId,
           roomStatus: res.room_status || 'active',
+          createdAt: res.created_at,
+          expiresAt: res.expires_at,
+          endReason: res.end_reason,
           peer: {
             anonymousUsername: res.peer?.anonymous_username || 'Anonymous RITian',
             avatarConfig: res.peer?.avatar_config || {},
@@ -281,23 +294,39 @@ export class ChatService {
       if (!isSupabaseConfigured) {
         const local = localDevRooms.get(roomId);
 
-        if (local && local.status !== 'active') {
-          return {
-            success: false,
-            data: null,
-            error: {
-              code: 'ROOM_INACTIVE',
-              message: 'This conversation has ended and is closed to new messages.',
-            },
-          };
+        if (local) {
+          if (local.status !== 'active') {
+            return {
+              success: false,
+              data: null,
+              error: {
+                code: 'ROOM_INACTIVE',
+                message: 'This conversation has ended and is closed to new messages.',
+              },
+            };
+          }
+
+          if (local.expiresAt && Date.now() >= new Date(local.expiresAt).getTime()) {
+            local.status = 'ended';
+            local.endReason = 'time_limit';
+            return {
+              success: false,
+              data: null,
+              error: {
+                code: 'ROOM_EXPIRED',
+                message: 'This 7-minute conversation has expired.',
+              },
+            };
+          }
         }
 
+        const nowIso = new Date().toISOString();
         const newMsg: ChatMessage = {
           id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
           roomId,
           senderId: currentUserId,
           content: trimmed,
-          createdAt: new Date().toISOString(),
+          createdAt: nowIso,
           messageType: 'text',
           isSystem: false,
         };
@@ -310,6 +339,8 @@ export class ChatService {
             user1: currentUserId,
             user2: 'peer-simulated',
             status: 'active',
+            createdAt: nowIso,
+            expiresAt: new Date(Date.now() + 7 * 60 * 1000).toISOString(),
             messages: [newMsg],
             peerPersonas: new Map(),
           });
@@ -462,6 +493,21 @@ export class ChatService {
         }
 
         const now = Date.now();
+
+        if (local.expiresAt && now >= new Date(local.expiresAt).getTime() && local.status === 'active') {
+          local.status = 'ended';
+          local.endReason = 'time_limit';
+          return {
+            success: true,
+            data: {
+              status: 'ended',
+              isActive: false,
+              peerDisconnected: false,
+            },
+            error: null,
+          };
+        }
+
         if (local.user1 === currentUserId) {
           local.user1HeartbeatAt = now;
         } else {
@@ -530,7 +576,14 @@ export class ChatService {
    */
   async reconnectRoom(
     roomId: string
-  ): Promise<ApiResponse<{ status: ChatRoomStatus; messages: ChatMessage[]; peer: MatchedPeerPersona | null }>> {
+  ): Promise<ApiResponse<{
+    status: ChatRoomStatus;
+    messages: ChatMessage[];
+    peer: MatchedPeerPersona | null;
+    createdAt?: string;
+    expiresAt?: string;
+    endReason?: ChatEndReason | string | null;
+  }>> {
     try {
       const [peerRes, msgRes] = await Promise.all([
         this.getRoomPeer(roomId),
@@ -551,6 +604,9 @@ export class ChatService {
           status: peerRes.data.roomStatus,
           messages: msgRes.success && msgRes.data ? msgRes.data : [],
           peer: peerRes.data.peer,
+          createdAt: peerRes.data.createdAt,
+          expiresAt: peerRes.data.expiresAt,
+          endReason: peerRes.data.endReason,
         },
         error: null,
       };
@@ -567,11 +623,20 @@ export class ChatService {
   /**
    * Helper for tests or local dev to pre-seed room state.
    */
-  seedLocalRoom(roomId: string, user1: string, user2: string, peerA: MatchedPeerPersona, peerB: MatchedPeerPersona) {
+  seedLocalRoom(
+    roomId: string,
+    user1: string,
+    user2: string,
+    peerA: MatchedPeerPersona,
+    peerB: MatchedPeerPersona,
+    expiresAt?: string,
+    createdAt?: string
+  ) {
     const peers = new Map<string, MatchedPeerPersona>();
     peers.set(user1, peerB);
     peers.set(user2, peerA);
 
+    const now = new Date();
     localDevRooms.set(roomId, {
       roomId,
       user1,
@@ -579,6 +644,8 @@ export class ChatService {
       status: 'active',
       messages: [],
       peerPersonas: peers,
+      createdAt: createdAt || now.toISOString(),
+      expiresAt: expiresAt || new Date(now.getTime() + 7 * 60 * 1000).toISOString(),
     });
   }
 }

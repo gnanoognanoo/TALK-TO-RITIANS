@@ -39,7 +39,7 @@ export const MatchingPage: React.FC = () => {
    * Transition to chat room with sanitized anonymous peer data.
    */
   const handleMatchSuccess = useCallback(
-    (roomId: string, peer?: MatchedPeerPersona) => {
+    (roomId: string, peer?: MatchedPeerPersona, expiresAt?: string) => {
       if (isResolvedRef.current) return;
       isResolvedRef.current = true;
       setIsMatchingResolved(true);
@@ -48,9 +48,9 @@ export const MatchingPage: React.FC = () => {
       if (heartbeatTimerRef.current) clearInterval(heartbeatTimerRef.current);
       if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
 
-      // Navigate to chat room passing sanitized peer details
+      // Navigate to chat room passing sanitized peer details and expiration
       navigate(`/chat/${roomId}`, {
-        state: { peer },
+        state: { peer, expiresAt },
         replace: true,
       });
     },
@@ -102,7 +102,7 @@ export const MatchingPage: React.FC = () => {
 
       // Check if immediately matched
       if (res.data?.status === 'matched' && res.data.roomId) {
-        handleMatchSuccess(res.data.roomId, res.data.peer);
+        handleMatchSuccess(res.data.roomId, res.data.peer, res.data.expiresAt);
         return;
       }
 
@@ -114,7 +114,7 @@ export const MatchingPage: React.FC = () => {
         if (!isMounted || isResolvedRef.current) return;
 
         if (hbRes.success && hbRes.data?.status === 'matched' && hbRes.data.roomId) {
-          handleMatchSuccess(hbRes.data.roomId, hbRes.data.peer);
+          handleMatchSuccess(hbRes.data.roomId, hbRes.data.peer, hbRes.data.expiresAt);
         }
       }, 3500);
     };
@@ -141,7 +141,7 @@ export const MatchingPage: React.FC = () => {
             if (newRow.status === 'matched' && newRow.matched_room_id) {
               const hbRes = await matchmakingService.sendHeartbeat();
               if (hbRes.success && hbRes.data?.roomId) {
-                handleMatchSuccess(hbRes.data.roomId, hbRes.data.peer);
+                handleMatchSuccess(hbRes.data.roomId, hbRes.data.peer, hbRes.data.expiresAt);
               } else {
                 handleMatchSuccess(newRow.matched_room_id);
               }
