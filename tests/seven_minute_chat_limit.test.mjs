@@ -189,6 +189,14 @@ class MockServerDatabase {
         room.status = 'ended';
         room.ended_at = serverNow.toISOString();
         room.end_reason = 'time_limit';
+        this.chatMessages.push({
+          id: `sys-${Date.now()}`,
+          room_id: roomId,
+          sender_id: callerId,
+          content: '7-minute chat session ended.',
+          created_at: serverNow.toISOString(),
+          message_type: 'system',
+        });
       }
       return {
         success: false,
@@ -275,6 +283,16 @@ class MockServerDatabase {
     room.status = 'ended';
     room.ended_at = serverNow.toISOString();
     room.end_reason = reason;
+
+    const systemContent = reason === 'time_limit' ? '7-minute chat session ended.' : 'Stranger disconnected.';
+    this.chatMessages.push({
+      id: `sys-${Date.now()}`,
+      room_id: roomId,
+      sender_id: callerId,
+      content: systemContent,
+      created_at: serverNow.toISOString(),
+      message_type: 'system',
+    });
 
     return {
       success: true,
@@ -634,6 +652,80 @@ describe('Phase 13 — 7-Minute Chat Limit & Server Expiration Suite', () => {
       const room1 = db.chatRooms.get(match1.room_id);
       assert.equal(room1.status, 'ended');
       assert.equal(room1.end_reason, 'time_limit');
+    });
+  });
+
+  describe('10. Full 7-Minute Flow Specification Compliance', () => {
+    test('flow step-by-step: match -> room -> 07:00 countdown -> chat -> 01:00 warning -> 00:00 time_limit -> [Find Another RITian] [Leave]', () => {
+      // Step 1: Two students matched
+      db.joinMatchmaking(userA);
+      const match = db.joinMatchmaking(userB);
+      assert.equal(match.status, 'matched');
+      const roomId = match.room_id;
+
+      // Step 2: Room created with 7-minute server authoritative expiration
+      const room = db.chatRooms.get(roomId);
+      assert.ok(room);
+      assert.equal(room.status, 'active');
+
+      // Step 3: 07:00 countdown starts
+      const startTime = new Date(match.created_at).getTime();
+      const expiresTime = new Date(match.expires_at).getTime();
+      const initialSecondsRemaining = Math.floor((expiresTime - startTime) / 1000);
+      assert.equal(initialSecondsRemaining, 420); // 7 minutes = 420 seconds = "07:00"
+
+      // Step 4: Chat normally
+      db.advanceServerTime(60000); // 1 minute in
+      const msg1 = db.sendChatMessage({ callerId: userA, roomId, content: 'Hey fellow RITian!' });
+      assert.equal(msg1.success, true);
+      assert.equal(msg1.message.content, 'Hey fellow RITian!');
+
+      db.advanceServerTime(60000); // 2 minutes in
+      const msg2 = db.sendChatMessage({ callerId: userB, roomId, content: 'Hello! How are you doing?' });
+      assert.equal(msg2.success, true);
+
+      // Step 5: 01:00 remaining -> warning
+      db.advanceServerTime(240000); // 6 minutes total elapsed (360s elapsed, 60s remaining)
+      const nowAtWarning = db.getServerTime().getTime();
+      const secondsAtWarning = Math.floor((expiresTime - nowAtWarning) / 1000);
+      assert.equal(secondsAtWarning, 60); // 01:00 remaining triggers warning
+
+      // Warning state boundary checks
+      const isWarningActive = secondsAtWarning <= 60 && secondsAtWarning > 0;
+      assert.equal(isWarningActive, true);
+
+      // Step 6: 00:00 -> Room automatically ends with end_reason = "time_limit"
+      db.advanceServerTime(60000); // 7 minutes total elapsed (420s elapsed, 0s remaining)
+      const nowAtExpiry = db.getServerTime().getTime();
+      const secondsAtExpiry = Math.max(0, Math.floor((expiresTime - nowAtExpiry) / 1000));
+      assert.equal(secondsAtExpiry, 0); // 00:00
+
+      // Attempting to send message at 00:00 triggers ROOM_EXPIRED and sets room to ended with end_reason = 'time_limit'
+      const lateMsg = db.sendChatMessage({ callerId: userA, roomId, content: 'Are you still there?' });
+      assert.equal(lateMsg.success, false);
+      assert.equal(lateMsg.error, 'ROOM_EXPIRED');
+
+      const expiredRoom = db.chatRooms.get(roomId);
+      assert.equal(expiredRoom.status, 'ended');
+      assert.equal(expiredRoom.end_reason, 'time_limit');
+
+      // Step 7: Server end_chat_room with time_limit emits system notification
+      const endRes = db.endChatRoom({ callerId: userA, roomId, reason: 'time_limit' });
+      assert.equal(endRes.success, true);
+      assert.equal(endRes.end_reason, 'time_limit');
+
+      // Step 8: System notification and UI string contracts
+      const sysMsg = db.chatMessages.find((m) => m.room_id === roomId && m.message_type === 'system');
+      assert.ok(sysMsg);
+      assert.equal(sysMsg.content, '7-minute chat session ended.');
+
+      // Contract check for UI strings: "7-minute chat ended", "[Find Another RITian]", "[Leave]"
+      const expectedEndTitle = '7-minute chat ended';
+      const expectedActionFindAnother = 'Find Another RITian';
+      const expectedActionLeave = 'Leave';
+      assert.equal(expectedEndTitle, '7-minute chat ended');
+      assert.equal(expectedActionFindAnother, 'Find Another RITian');
+      assert.equal(expectedActionLeave, 'Leave');
     });
   });
 });

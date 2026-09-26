@@ -448,7 +448,7 @@ export class ChatService {
           id: `sys-${Date.now()}`,
           roomId,
           senderId: currentUserId,
-          content: 'Stranger disconnected.',
+          content: reason === 'time_limit' ? '7-minute chat session ended.' : 'Stranger disconnected.',
           createdAt: new Date().toISOString(),
           messageType: 'system',
           isSystem: true,

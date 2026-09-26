@@ -62,6 +62,12 @@ export const ChatPage: React.FC = () => {
   const heartbeatTimerRef = useRef<NodeJS.Timeout | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const hasWarnedOneMinuteRef = useRef<boolean>(false);
+
+  // Reset 1-minute warning flag on room change
+  useEffect(() => {
+    hasWarnedOneMinuteRef.current = false;
+  }, [roomId]);
 
   // Peer Persona and Authoritative Expiration (from route state or DB)
   const navState = location.state as { peer?: MatchedPeerPersona; expiresAt?: string } | null;
@@ -108,6 +114,7 @@ export const ChatPage: React.FC = () => {
 
   /**
    * 7-Minute Countdown Timer & Expiration Trigger
+   * Starts at 07:00, warns at 01:00 remaining, and automatically ends at 00:00.
    */
   useEffect(() => {
     if (!expiresAt || roomStatus !== 'active') return;
@@ -115,17 +122,42 @@ export const ChatPage: React.FC = () => {
     const tick = () => {
       const remaining = Math.max(0, Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000));
       setRemainingSeconds(remaining);
+
+      // 01:00 remaining warning trigger (shown once in message stream)
+      if (remaining <= 60 && remaining > 0 && !hasWarnedOneMinuteRef.current) {
+        hasWarnedOneMinuteRef.current = true;
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === `sys-warning-1m-${roomId}`)) return prev;
+          return [
+            ...prev,
+            {
+              id: `sys-warning-1m-${roomId}`,
+              roomId: roomId || '',
+              senderId: 'system',
+              content: '⏳ 1 minute remaining — chat ends at 00:00.',
+              createdAt: new Date().toISOString(),
+              messageType: 'system',
+              isSystem: true,
+            },
+          ];
+        });
+      }
+
+      // 00:00 expiration: room automatically ends with end_reason = 'time_limit'
       if (remaining <= 0) {
         setRoomStatus('ended');
         setEndReason('time_limit');
         setConnectionStatus('stranger disconnected');
+        if (roomId) {
+          chatService.endRoom(roomId, 'time_limit').catch(() => {});
+        }
       }
     };
 
     tick();
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, [expiresAt, roomStatus]);
+  }, [expiresAt, roomStatus, roomId]);
 
   /**
    * Auto-scroll when messages update
@@ -547,9 +579,9 @@ export const ChatPage: React.FC = () => {
               id="chat-header-timer"
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold tabular-nums tracking-wide transition-colors ${
                 (remainingSeconds ?? 420) <= 10
-                  ? 'bg-red-50 text-red-700 border-red-200 font-bold'
+                  ? 'bg-red-50 text-red-700 border-red-300 font-bold ring-2 ring-red-400/30 animate-pulse'
                   : (remainingSeconds ?? 420) <= 60
-                  ? 'bg-amber-50 text-amber-700 border-amber-200'
+                  ? 'bg-amber-50 text-amber-700 border-amber-300 font-bold ring-2 ring-amber-400/30 animate-pulse'
                   : 'bg-purple-50 text-purple-700 border-purple-200'
               }`}
               title="7-minute chat session timer"
@@ -572,6 +604,26 @@ export const ChatPage: React.FC = () => {
         </div>
       </header>
 
+      {/* 01:00 Remaining Warning Banner */}
+      {roomStatus === 'active' && remainingSeconds !== null && remainingSeconds <= 60 && remainingSeconds > 0 && (
+        <div
+          id="chat-time-warning-banner"
+          role="alert"
+          aria-live="polite"
+          className="px-4 py-2.5 bg-amber-50 border-b border-amber-200 text-amber-900 text-xs font-medium flex items-center justify-between gap-3"
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <Clock className="h-4 w-4 shrink-0 text-amber-600 animate-pulse" />
+            <span className="truncate">
+              <strong className="font-semibold text-amber-950">1 minute remaining</strong> — Wrap up your chat! Room automatically ends at 00:00.
+            </span>
+          </div>
+          <span className="shrink-0 tabular-nums font-bold text-amber-800 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full text-xs">
+            {formatTimer(remainingSeconds)}
+          </span>
+        </div>
+      )}
+
       {/* Duplicate Tab Warning */}
       {duplicateTabWarning && (
         <div className="px-4 py-2 bg-amber-50 border-b border-amber-200 text-amber-800 text-xs flex items-center gap-2">
@@ -585,7 +637,7 @@ export const ChatPage: React.FC = () => {
           ========================================================================= */}
       {isDisconnected ? (
         endReason === 'time_limit' ? (
-          /* Time-Limit End Screen (Requirement 8) */
+          /* Time-Limit End Screen: "7-minute chat ended" */
           <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-gray-50/50">
             <div className="max-w-sm w-full bg-white border border-gray-200 rounded-2xl p-8 shadow-card space-y-6">
               <div className="h-16 w-16 mx-auto rounded-full bg-purple-50 flex items-center justify-center text-[#6C4CF5]">
@@ -601,9 +653,10 @@ export const ChatPage: React.FC = () => {
                 </p>
               </div>
 
-              {/* Action Buttons */}
+              {/* Action Buttons: [Find Another RITian] [Leave] */}
               <div className="space-y-2.5 pt-2">
                 <Button
+                  id="chat-find-another-button"
                   variant="primary"
                   size="md"
                   fullWidth
@@ -613,6 +666,7 @@ export const ChatPage: React.FC = () => {
                   Find Another RITian
                 </Button>
                 <Button
+                  id="chat-leave-button"
                   variant="secondary"
                   size="md"
                   fullWidth
