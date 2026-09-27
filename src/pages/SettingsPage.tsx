@@ -9,7 +9,7 @@
  * D. Account & Logout
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   ShieldCheck,
@@ -24,6 +24,7 @@ import {
   Unlink,
   AlertTriangle,
   Edit2,
+  RefreshCw,
 } from 'lucide-react';
 import {
   Button,
@@ -40,6 +41,7 @@ import {
 import { useAuth, useTheme } from '../context';
 import { GENDER_OPTIONS } from '../config/profileConfig';
 import { profileService } from '../services/profileService';
+import { getRandomShortAlias } from '../services/aliasPool';
 
 export const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -48,6 +50,53 @@ export const SettingsPage: React.FC = () => {
 
   const isVerified = Boolean(profile?.college_identity_linked);
   const displayUsername = profile?.display_username || 'Unknown User';
+
+  // Short random alias reroll state (Change 4: No manual text entry, unlimited rerolls)
+  const [aliasCandidate, setAliasCandidate] = useState<string>(() => {
+    if (profile?.display_username && !profile.display_username.startsWith('Unknown User')) {
+      return profile.display_username;
+    }
+    return getRandomShortAlias();
+  });
+  const [isSavingAlias, setIsSavingAlias] = useState<boolean>(false);
+  const [aliasSuccessMessage, setAliasSuccessMessage] = useState<string | null>(null);
+  const [aliasError, setAliasError] = useState<string | null>(null);
+
+  // Sync candidate when profile changes
+  useEffect(() => {
+    if (profile?.display_username && !profile.display_username.startsWith('Unknown User')) {
+      setAliasCandidate(profile.display_username);
+    }
+  }, [profile?.display_username]);
+
+  const handleRefreshAlias = () => {
+    const nextAlias = getRandomShortAlias(aliasCandidate);
+    setAliasCandidate(nextAlias);
+    setAliasError(null);
+    setAliasSuccessMessage(null);
+  };
+
+  const handleSaveAlias = async () => {
+    if (!isVerified) {
+      setAliasError('You must verify your RIT ID before saving an alias.');
+      return;
+    }
+    setIsSavingAlias(true);
+    setAliasError(null);
+    setAliasSuccessMessage(null);
+
+    const res = await profileService.saveAnonymousAlias(aliasCandidate);
+    setIsSavingAlias(false);
+
+    if (!res.success) {
+      setAliasError(res.error?.message || 'Failed to save alias. Please try again.');
+      return;
+    }
+
+    await refreshProfile();
+    setAliasSuccessMessage('Alias saved!');
+    setTimeout(() => setAliasSuccessMessage(null), 3000);
+  };
 
   // Gender selection state
   const [selectedGender, setSelectedGender] = useState<string | null>(profile?.gender || null);
@@ -186,32 +235,67 @@ export const SettingsPage: React.FC = () => {
           ) : (
             /* VERIFIED UNLOCKED STATE */
             <div className="space-y-6 divide-y divide-gray-100 dark:divide-slate-800">
-              {/* Anonymous Username */}
-              <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <span className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">
-                    Anonymous Handle
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-base font-bold text-gray-900 dark:text-white">
-                      {displayUsername}
+              {/* Anonymous Username (Change 4: Curated short random alias only, no free-text input) */}
+              <div className="pt-2 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <span className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider block">
+                      Anonymous Username
                     </span>
-                    <Badge variant="brand" size="sm">
-                      Active Alias
-                    </Badge>
+                    <p className="text-[11px] text-gray-500 dark:text-slate-400">
+                      Short random alias for 7-minute chats. Your real identity is never exposed.
+                    </p>
                   </div>
-                  <p className="text-[11px] text-gray-500 dark:text-slate-400">
-                    Your real identity and registration number are permanently sealed.
-                  </p>
+                  {aliasSuccessMessage && (
+                    <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                      ✓ {aliasSuccessMessage}
+                    </span>
+                  )}
                 </div>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => navigate('/username')}
-                  leftIcon={<Edit2 className="h-3.5 w-3.5" />}
-                >
-                  Change Handle
-                </Button>
+
+                <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-brand-50 dark:bg-brand-950/50 border border-brand-200 dark:border-brand-800 flex items-center justify-center text-brand-600 dark:text-brand-400 font-bold text-sm">
+                      {aliasCandidate.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span id="alias-candidate-display" className="text-xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+                          {aliasCandidate}
+                        </span>
+                        <button
+                          type="button"
+                          id="alias-refresh-button"
+                          onClick={handleRefreshAlias}
+                          title="Generate another alias"
+                          className="p-1.5 rounded-lg text-gray-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                        >
+                          <RefreshCw className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <span className="text-[11px] text-gray-500 dark:text-slate-400">
+                        {aliasCandidate === displayUsername ? 'Currently active in chats' : 'Candidate preview — click Use to save'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <Button
+                    type="button"
+                    id="alias-save-button"
+                    variant="primary"
+                    size="sm"
+                    disabled={isSavingAlias || aliasCandidate === displayUsername}
+                    isLoading={isSavingAlias}
+                    loadingText="Saving..."
+                    onClick={handleSaveAlias}
+                    className="shrink-0 font-semibold"
+                  >
+                    {aliasCandidate === displayUsername ? 'Active' : `Use ${aliasCandidate}`}
+                  </Button>
+                </div>
+                {aliasError && (
+                  <p className="text-xs text-red-600 dark:text-red-400">{aliasError}</p>
+                )}
               </div>
 
               {/* Avatar Customization */}

@@ -143,6 +143,8 @@ export interface Database {
           created_at: string;
           ended_at: string | null;
           end_reason: string | null;
+          expires_at?: string | null;
+          persona_updated_at?: string | null;
           user_1_heartbeat_at?: string | null;
           user_2_heartbeat_at?: string | null;
         };
@@ -154,6 +156,8 @@ export interface Database {
           created_at?: string;
           ended_at?: string | null;
           end_reason?: string | null;
+          expires_at?: string | null;
+          persona_updated_at?: string | null;
           user_1_heartbeat_at?: string | null;
           user_2_heartbeat_at?: string | null;
         };
@@ -165,6 +169,8 @@ export interface Database {
           created_at?: string;
           ended_at?: string | null;
           end_reason?: string | null;
+          expires_at?: string | null;
+          persona_updated_at?: string | null;
           user_1_heartbeat_at?: string | null;
           user_2_heartbeat_at?: string | null;
         };

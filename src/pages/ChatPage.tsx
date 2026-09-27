@@ -335,11 +335,23 @@ export const ChatPage: React.FC = () => {
             table: 'chat_rooms',
             filter: `id=eq.${roomId}`,
           },
-          (payload) => {
+          async (payload) => {
             if (!isMounted) return;
             const updatedRoom = payload.new as any;
             if (updatedRoom.expires_at) {
               setExpiresAt(updatedRoom.expires_at);
+            }
+            if (updatedRoom.persona_updated_at) {
+              // Peer or own persona was updated (e.g. unlink or relink identity)
+              // Fetch authoritative effective peer persona immediately without requiring refresh
+              try {
+                const peerRes = await chatService.getRoomPeer(roomId);
+                if (peerRes.success && peerRes.data?.peer && isMounted) {
+                  setPeer(peerRes.data.peer);
+                }
+              } catch (err) {
+                console.warn('[Realtime:RoomStatus] Failed to refresh peer persona:', err);
+              }
             }
             if (updatedRoom.status === 'ended' || updatedRoom.status === 'skipped') {
               setRoomStatus(updatedRoom.status);
@@ -605,57 +617,67 @@ export const ChatPage: React.FC = () => {
   const isDisconnected = roomStatus !== 'active' || connectionStatus === 'stranger disconnected';
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-65px)] max-w-4xl mx-auto w-full bg-white sm:border-x sm:border-gray-200">
-      {/* =========================================================================
-          TOP BAR (Phase 10)
-          Left: Avatar, anonymous username, online / connected status.
-          Right: Leave button (clean red outline / subtle action).
-          CRITICAL: NO department, roll number, email, or real names.
-          CRITICAL: NO visible Block or Report buttons.
-          ========================================================================= */}
-      <header className="px-4 sm:px-6 py-3 border-b border-gray-200 bg-white flex items-center justify-between gap-3 shrink-0">
-        <div className="flex items-center gap-3 min-w-0">
-          <Avatar
-            size="md"
-            avatarConfig={peer.avatarConfig as any}
-            initials={peerInitials}
-            presence={
-              connectionStatus === 'connected'
-                ? 'online'
-                : isDisconnected
-                ? 'offline'
-                : 'matching'
-            }
-          />
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-400 font-normal">Chatting with</span>
-              <h1 className="font-bold text-sm sm:text-base text-gray-900 truncate">
+    <div
+      id="chat-page-root"
+      className="h-[100dvh] max-h-[100dvh] w-full flex flex-col overflow-hidden bg-gray-50 dark:bg-slate-950"
+    >
+      <div
+        id="chat-page-container"
+        className="flex-1 flex flex-col h-full max-w-4xl mx-auto w-full bg-white dark:bg-slate-900 sm:border-x sm:border-gray-200 dark:border-slate-800 overflow-hidden"
+      >
+        {/* =========================================================================
+            TOP BAR (Fixed Header: flex-shrink: 0)
+            Left: Avatar, peer username, online / connected status.
+            Right: Timer and Leave button.
+            CRITICAL: Peer label prefix removed per Change 2.
+            CRITICAL: Header is shrink-0 and remains visible at all times.
+            ========================================================================= */}
+        <header
+          id="chat-header"
+          className="px-4 sm:px-6 py-3 border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between gap-3 shrink-0"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <Avatar
+              size="md"
+              avatarConfig={peer.avatarConfig as any}
+              initials={peerInitials}
+              presence={
+                connectionStatus === 'connected'
+                  ? 'online'
+                  : isDisconnected
+                  ? 'offline'
+                  : 'matching'
+              }
+            />
+            <div className="min-w-0">
+              <h1
+                id="chat-peer-username"
+                className="font-bold text-sm sm:text-base text-gray-900 dark:text-white truncate"
+              >
                 {peer.anonymousUsername}
               </h1>
-            </div>
-            <div className="flex items-center gap-1.5 text-xs">
-              <span
-                className={`h-2 w-2 rounded-full ${
-                  connectionStatus === 'connected'
-                    ? 'bg-emerald-500 animate-pulse'
+              <div className="flex items-center gap-1.5 text-xs">
+                <span
+                  className={`h-2 w-2 rounded-full ${
+                    connectionStatus === 'connected'
+                      ? 'bg-emerald-500 animate-pulse'
+                      : isDisconnected
+                      ? 'bg-gray-400'
+                      : 'bg-amber-400 animate-pulse'
+                  }`}
+                />
+                <span className="text-gray-500 dark:text-slate-400 text-[11px] font-medium">
+                  {connectionStatus === 'connected'
+                    ? 'Online'
                     : isDisconnected
-                    ? 'bg-gray-400'
-                    : 'bg-amber-400 animate-pulse'
-                }`}
-              />
-              <span className="text-gray-500 text-[11px] font-medium">
-                {connectionStatus === 'connected'
-                  ? 'Online'
-                  : isDisconnected
-                  ? 'Disconnected'
-                  : connectionStatus === 'reconnecting'
-                  ? 'Reconnecting...'
-                  : 'Connecting...'}
-              </span>
+                    ? 'Disconnected'
+                    : connectionStatus === 'reconnecting'
+                    ? 'Reconnecting...'
+                    : 'Connecting...'}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
 
         {/* Right Header Action: Timer and Leave */}
         <div className="flex items-center gap-2 sm:gap-3">
@@ -810,14 +832,17 @@ export const ChatPage: React.FC = () => {
           </div>
         )
       ) : (
-        /* Phase 10 - Message Stream */
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 bg-[#FAFAFC]">
+        /* Phase 10 - Message Stream (ONLY this area scrolls: flex: 1, min-height: 0, overflow-y: auto) */
+        <div
+          id="chat-messages-container"
+          className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-3 bg-[#FAFAFC] dark:bg-slate-950/40"
+        >
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center py-16 text-gray-400 space-y-2">
-              <div className="h-12 w-12 rounded-full bg-[#F5F3FF] flex items-center justify-center text-[#6C4CF5]">
+              <div className="h-12 w-12 rounded-full bg-[#F5F3FF] dark:bg-slate-850 flex items-center justify-center text-[#6C4CF5]">
                 <ShieldCheck className="h-6 w-6" />
               </div>
-              <p className="text-sm font-semibold text-gray-700">
+              <p className="text-sm font-semibold text-gray-700 dark:text-slate-300">
                 You're connected with a fellow RITian!
               </p>
               <p className="text-xs text-gray-400 max-w-xs">
@@ -829,7 +854,7 @@ export const ChatPage: React.FC = () => {
               if (msg.isSystem) {
                 return (
                   <div key={msg.id} className="text-center py-1">
-                    <span className="inline-block px-3 py-1 rounded-full text-xs bg-gray-100 text-gray-500 font-medium">
+                    <span className="inline-block px-3 py-1 rounded-full text-xs bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 font-medium">
                       {msg.content}
                     </span>
                   </div>
@@ -853,7 +878,7 @@ export const ChatPage: React.FC = () => {
                       ${
                         isMe
                           ? 'bg-[#6C4CF5] text-white rounded-2xl rounded-br-none shadow-sm'
-                          : 'bg-gray-100 text-gray-900 rounded-2xl rounded-bl-none'
+                          : 'bg-gray-100 dark:bg-slate-800 text-gray-900 dark:text-slate-100 rounded-2xl rounded-bl-none'
                       }
                     `}
                   >
@@ -877,14 +902,17 @@ export const ChatPage: React.FC = () => {
       )}
 
       {/* =========================================================================
-          BOTTOM CONTROLS BAR (Phase 10)
+          BOTTOM CONTROLS BAR (Fixed Composer: flex-shrink: 0 / shrink-0)
           Skip (secondary purple action)
           Rounded input field
           Send button (solid purple)
           Zero visible Block or Report buttons
           ========================================================================= */}
       {!isDisconnected && (
-        <div className="p-3 sm:p-4 border-t border-gray-200 bg-white shrink-0">
+        <div
+          id="chat-composer-container"
+          className="p-3 sm:p-4 border-t border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0"
+        >
           <form onSubmit={handleSendMessage} className="flex items-center gap-2">
             {/* Skip Button: Secondary Purple Action */}
             <Button
@@ -909,7 +937,7 @@ export const ChatPage: React.FC = () => {
               disabled={roomStatus !== 'active'}
               onChange={(e) => setInputMessage(e.target.value)}
               placeholder="Type a message..."
-              className="flex-1 bg-white text-gray-900 placeholder-gray-400 rounded-full border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:border-[#6C4CF5] focus:ring-2 focus:ring-[#6C4CF5]/10 transition-colors disabled:opacity-50"
+              className="flex-1 bg-white dark:bg-slate-800 text-gray-900 dark:text-white placeholder-gray-400 rounded-full border border-gray-300 dark:border-slate-700 px-4 py-2.5 text-sm focus:outline-none focus:border-[#6C4CF5] focus:ring-2 focus:ring-[#6C4CF5]/10 transition-colors disabled:opacity-50"
               autoComplete="off"
             />
 
@@ -927,6 +955,9 @@ export const ChatPage: React.FC = () => {
           </form>
         </div>
       )}
+
+      {/* Close chat-page-container */}
+      </div>
 
       {/* =========================================================================
           LEAVE CHAT CONFIRMATION MODAL (Phase 11)

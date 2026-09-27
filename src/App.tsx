@@ -42,11 +42,13 @@ export const App: React.FC = () => {
 
             {/* Protected Routes — Require Authenticated Student Session */}
             <Route element={<ProtectedRoute />}>
+              {/* Standalone Chat Experience — 100dvh viewport, fixed header and composer */}
+              <Route path="/chat/:roomId" element={<ChatPage />} />
+
               {/* Campus Dashboard, Realtime Rooms & Settings */}
               <Route element={<AppLayout />}>
                 <Route path="/home" element={<HomePage />} />
                 <Route path="/matching" element={<MatchingPage />} />
-                <Route path="/chat/:roomId" element={<ChatPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
               </Route>
 
