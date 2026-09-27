@@ -53,6 +53,8 @@ export const ChatPage: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState<string>('');
   const [isSending, setIsSending] = useState<boolean>(false);
+  const [isSkipping, setIsSkipping] = useState<boolean>(false);
+  const [isLeavingRoom, setIsLeavingRoom] = useState<boolean>(false);
   const [roomStatus, setRoomStatus] = useState<ChatRoomStatus>('active');
   const [connectionStatus, setConnectionStatus] = useState<ChatConnectionStatus>('connecting');
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState<boolean>(false);
@@ -548,33 +550,49 @@ export const ChatPage: React.FC = () => {
   };
 
   /**
-   * Fast Skip: Immediate skip without blocking confirmation
+   * Fast Skip: Awaits room termination transaction before navigating to matching
    */
   const handleSkip = async () => {
-    if (roomId && roomStatus === 'active') {
-      try {
-        await chatService.endRoom(roomId, 'skip');
-      } catch (err) {
-        console.warn('[ChatPage] Skip error:', err);
+    if (isSkipping || !roomId) return;
+    setIsSkipping(true);
+    try {
+      if (roomStatus === 'active') {
+        const res = await chatService.endRoom(roomId, 'skip');
+        if (!res.success && res.error?.code === 'RATE_LIMITED') {
+          console.warn('[ChatPage] Skip rate limited:', res.error?.message);
+          setIsSkipping(false);
+          return;
+        }
       }
+      navigate('/matching', { replace: true });
+    } catch (err) {
+      console.warn('[ChatPage] Skip error:', err);
+      navigate('/matching', { replace: true });
+    } finally {
+      setIsSkipping(false);
     }
-    navigate('/matching', { replace: true });
   };
 
   /**
    * Confirm Leave: End room, leave queue, navigate to home
    */
   const confirmLeave = async () => {
-    setIsLeaveModalOpen(false);
-    if (roomId && roomStatus === 'active') {
-      try {
+    if (isLeavingRoom) return;
+    setIsLeavingRoom(true);
+    try {
+      if (roomId && roomStatus === 'active') {
         await chatService.endRoom(roomId, 'leave');
-      } catch (err) {
-        console.warn('[ChatPage] Leave error:', err);
       }
+      await matchmakingService.leaveMatchmaking();
+      setIsLeaveModalOpen(false);
+      navigate('/home', { replace: true });
+    } catch (err) {
+      console.warn('[ChatPage] Leave error:', err);
+      setIsLeaveModalOpen(false);
+      navigate('/home', { replace: true });
+    } finally {
+      setIsLeavingRoom(false);
     }
-    await matchmakingService.leaveMatchmaking();
-    navigate('/home', { replace: true });
   };
 
   const peerInitials = peer.anonymousUsername

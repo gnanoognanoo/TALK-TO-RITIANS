@@ -10,12 +10,13 @@
  * - Safe exit / cancellation on leave
  * - Multiple-tab safety
  * - Strict Privacy Invariant: Receives ONLY roomId, anonymous username, and avatar.
+ * - Existing-room detection: Shows Resume/Leave dialog when user has an active session.
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, X, Lightbulb } from 'lucide-react';
-import { Button, Card, ErrorMessage } from '../components';
+import { User, X, Lightbulb, RefreshCw } from 'lucide-react';
+import { Button, Card, ErrorMessage, Modal } from '../components';
 import { useAuth } from '../context';
 import { matchmakingService } from '../services/matchmakingService';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
@@ -30,10 +31,18 @@ export const MatchingPage: React.FC = () => {
   const [isMatchingResolved, setIsMatchingResolved] = useState<boolean>(false);
   const [isLeaving, setIsLeaving] = useState<boolean>(false);
 
+  // Existing room dialog state
+  const [existingRoomId, setExistingRoomId] = useState<string | null>(null);
+  const [existingRoomPeer, setExistingRoomPeer] = useState<MatchedPeerPersona | undefined>(undefined);
+  const [existingRoomExpiresAt, setExistingRoomExpiresAt] = useState<string | undefined>(undefined);
+  const [isForceLeaving, setIsForceLeaving] = useState<boolean>(false);
+
   // Keep references to intervals and state to prevent race conditions during unmount
   const heartbeatTimerRef = useRef<NodeJS.Timeout | null>(null);
   const elapsedTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isResolvedRef = useRef<boolean>(false);
+  // Guard to prevent double-init after force-leave re-join
+  const initCalledRef = useRef<boolean>(false);
 
   /**
    * Transition to chat room with sanitized anonymous peer data.
@@ -77,6 +86,49 @@ export const MatchingPage: React.FC = () => {
   }, [navigate]);
 
   /**
+   * Resume existing active room (user chose to go back).
+   */
+  const handleResumeExistingRoom = useCallback(() => {
+    if (!existingRoomId) return;
+    handleMatchSuccess(existingRoomId, existingRoomPeer, existingRoomExpiresAt);
+  }, [existingRoomId, existingRoomPeer, existingRoomExpiresAt, handleMatchSuccess]);
+
+  /**
+   * Force-leave old room and immediately re-join matchmaking.
+   */
+  const handleForceLeaveAndRematch = useCallback(async () => {
+    setIsForceLeaving(true);
+    setExistingRoomId(null);
+
+    try {
+      await matchmakingService.forceLeaveActiveRoom();
+    } catch (err) {
+      console.warn('[MatchingPage] forceLeaveActiveRoom error:', err);
+    }
+
+    // Reset state and re-trigger matchmaking
+    isResolvedRef.current = false;
+    initCalledRef.current = false;
+    setMatchingError(null);
+    setIsForceLeaving(false);
+    setSecondsElapsed(0);
+    setIsMatchingResolved(false);
+
+    // Re-join after a brief delay to let the DB update propagate
+    setTimeout(async () => {
+      const res = await matchmakingService.joinMatchmaking();
+      if (!res.success) {
+        setMatchingError(res.error?.message || 'Failed to enter campus matchmaking pool.');
+        return;
+      }
+      if ((res.data?.status === 'matched' || res.data?.status === 'existing_room') && res.data.roomId) {
+        handleMatchSuccess(res.data.roomId, res.data.peer, res.data.expiresAt);
+      }
+      // If still 'searching', the heartbeat timer (already running) will pick up the match
+    }, 800);
+  }, [handleMatchSuccess]);
+
+  /**
    * Main Matchmaking Lifecycle
    */
   useEffect(() => {
@@ -90,6 +142,8 @@ export const MatchingPage: React.FC = () => {
 
     // 2. Initial Join Queue
     const initMatchmaking = async () => {
+      if (initCalledRef.current) return;
+      initCalledRef.current = true;
       setMatchingError(null);
 
       const res = await matchmakingService.joinMatchmaking();
@@ -100,9 +154,17 @@ export const MatchingPage: React.FC = () => {
         return;
       }
 
-      // Check if immediately matched
+      // Immediately matched or found new room
       if (res.data?.status === 'matched' && res.data.roomId) {
         handleMatchSuccess(res.data.roomId, res.data.peer, res.data.expiresAt);
+        return;
+      }
+
+      // Existing active room found — show the resume/leave dialog
+      if (res.data?.status === 'existing_room' && res.data.roomId) {
+        setExistingRoomId(res.data.roomId);
+        setExistingRoomPeer(res.data.peer);
+        setExistingRoomExpiresAt(res.data.expiresAt);
         return;
       }
 
@@ -228,7 +290,7 @@ export const MatchingPage: React.FC = () => {
             variant="secondary"
             size="md"
             onClick={handleCancel}
-            disabled={isLeaving || isMatchingResolved}
+            disabled={isLeaving || isMatchingResolved || isForceLeaving}
             leftIcon={<X className="h-4 w-4" />}
             className="px-6"
           >
@@ -238,11 +300,53 @@ export const MatchingPage: React.FC = () => {
 
         {/* Subtitle / elapsed timer counter */}
         <p className="text-xs text-gray-400">
-          Searching for {secondsElapsed}s &bull; Safe & Anonymous
+          Searching for {secondsElapsed}s &bull; Safe &amp; Anonymous
         </p>
       </div>
+
+      {/* ================================================================
+          Existing Active Room Dialog
+          Shown when the user already has a live active chat session.
+          Lets them Resume it or cleanly abandon it to start fresh.
+          ================================================================ */}
+      <Modal
+        isOpen={Boolean(existingRoomId)}
+        onClose={handleResumeExistingRoom}
+        title="You have an active conversation"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            You're already connected to a chat room that is still active. Would you like to return to
+            it, or leave it and find a new match?
+          </p>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button
+              type="button"
+              variant="primary"
+              size="md"
+              onClick={handleResumeExistingRoom}
+              className="flex-1"
+            >
+              Resume Conversation
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="md"
+              onClick={handleForceLeaveAndRematch}
+              disabled={isForceLeaving}
+              leftIcon={<RefreshCw className="h-4 w-4" />}
+              className="flex-1"
+            >
+              {isForceLeaving ? 'Leaving...' : 'Leave & Find New Match'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
 
 export default MatchingPage;
+
+

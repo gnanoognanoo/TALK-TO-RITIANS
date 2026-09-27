@@ -456,10 +456,31 @@ export class ChatService {
       }
 
       if (isSupabaseConfigured) {
-        await supabase.rpc('end_chat_room', {
+        const { data, error } = await supabase.rpc('end_chat_room', {
           p_room_id: roomId,
           p_reason: reason,
         });
+
+        if (error) {
+          console.warn('[ChatService] end_chat_room RPC error:', error);
+          return {
+            success: false,
+            data: null,
+            error: { code: error.code || 'END_ROOM_FAILED', message: error.message },
+          };
+        }
+
+        const res = data as any;
+        if (res && res.success === false) {
+          return {
+            success: false,
+            data: null,
+            error: {
+              code: res.error || 'END_ROOM_FAILED',
+              message: res.message || 'Failed to terminate conversation.',
+            },
+          };
+        }
       }
 
       return {
@@ -468,8 +489,13 @@ export class ChatService {
         error: null,
       };
     } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown endRoom error';
       console.warn('[ChatService] endRoom error:', err);
-      return { success: true, data: { status: 'ended', endReason: reason }, error: null };
+      return {
+        success: false,
+        data: null,
+        error: { code: 'CLIENT_ERROR', message },
+      };
     }
   }
 

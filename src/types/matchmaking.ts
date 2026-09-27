@@ -16,12 +16,13 @@ import { AvatarConfig } from './avatar';
  * Lifecycle state of a user waiting in the matchmaking pool.
  */
 export type MatchmakingStatus =
-  | 'idle'       // Not currently looking for a match
-  | 'searching'  // Waiting in queue for an available peer
-  | 'matched'    // Matched with a peer, room created
-  | 'failed'     // Matchmaking timed out or encountered an error
-  | 'cancelled'  // User manually exited the queue
-  | 'expired';   // Queue entry expired due to lost heartbeat
+  | 'idle'           // Not currently looking for a match
+  | 'searching'      // Waiting in queue for an available peer
+  | 'matched'        // Matched with a peer, room created
+  | 'existing_room'  // Existing live active room found and resumed
+  | 'failed'         // Matchmaking timed out or encountered an error
+  | 'cancelled'      // User manually exited the queue
+  | 'expired';       // Queue entry expired due to lost heartbeat
 
 /**
  * Representation of a user record waiting in the matchmaking pool.

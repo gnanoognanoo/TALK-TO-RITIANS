@@ -118,11 +118,11 @@ export class MatchmakingService {
         };
       }
 
-      if (res?.status === 'matched' && res.room_id) {
+      if ((res?.status === 'matched' || res?.status === 'existing_room') && res.room_id) {
         return {
           success: true,
           data: {
-            status: 'matched',
+            status: res.status as 'matched' | 'existing_room',
             roomId: res.room_id,
             queueId: res.queue_id,
             createdAt: res.created_at,
@@ -242,6 +242,37 @@ export class MatchmakingService {
   }
 
   /**
+   * Force-ends any currently active room for the authenticated user.
+   * Used as an escape hatch when a user is blocked by a stale active room
+   * and cannot re-enter matchmaking. Does NOT remove the one-active-room
+   * invariant — it simply lets the user cleanly exit a room they're stuck in.
+   */
+  async forceLeaveActiveRoom(): Promise<ApiResponse<void>> {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const currentUserId = sessionData?.session?.user?.id;
+
+      if (!currentUserId) {
+        return { success: true, data: undefined, error: null }; // Nothing to do
+      }
+
+      if (!isSupabaseConfigured) {
+        this.handleLocalDevLeave(currentUserId);
+        return { success: true, data: undefined, error: null };
+      }
+
+      const { error } = await supabase.rpc('force_leave_active_room');
+      if (error) {
+        console.warn('[MatchmakingService] forceLeaveActiveRoom error:', error);
+      }
+      return { success: true, data: undefined, error: null };
+    } catch (err: unknown) {
+      console.warn('[MatchmakingService] forceLeaveActiveRoom exception:', err);
+      return { success: true, data: undefined, error: null };
+    }
+  }
+
+  /**
    * Reliably cancels active queue presence when exiting the matching screen.
    */
   async leaveMatchmaking(): Promise<ApiResponse<void>> {
@@ -271,18 +302,23 @@ export class MatchmakingService {
   // Local Development Simulation Registry
   // =========================================================================
   private handleLocalDevJoin(userId: string): ApiResponse<MatchmakingResponse> {
-    // Check if already matched
+    // Check if already in an active room
     const existingMatch = localDevMatchedRooms.get(userId);
     if (existingMatch) {
-      return {
-        success: true,
-        data: {
-          status: 'matched',
-          roomId: existingMatch.roomId,
-          peer: existingMatch.peer,
-        },
-        error: null,
-      };
+      if (existingMatch.expiresAt && Date.now() >= new Date(existingMatch.expiresAt).getTime()) {
+        localDevMatchedRooms.delete(userId);
+      } else {
+        return {
+          success: true,
+          data: {
+            status: 'existing_room',
+            roomId: existingMatch.roomId,
+            expiresAt: existingMatch.expiresAt,
+            peer: existingMatch.peer,
+          },
+          error: null,
+        };
+      }
     }
 
     const now = Date.now();

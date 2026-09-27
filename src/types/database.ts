@@ -331,6 +331,10 @@ export interface Database {
         Args: Record<PropertyKey, never>;
         Returns: Json;
       };
+      force_leave_active_room: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
     };
   };
 }
