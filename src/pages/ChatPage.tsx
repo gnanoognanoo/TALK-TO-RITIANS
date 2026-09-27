@@ -280,13 +280,48 @@ export const ChatPage: React.FC = () => {
             }
           }
         )
-        .subscribe((status) => {
+        .subscribe(async (status: string) => {
           if (!isMounted) return;
+          console.debug('[Realtime]', roomId, status);
           if (status === 'SUBSCRIBED') {
             setConnectionStatus('connected');
+            // Catch-up fetch: cover any messages inserted between initial
+            // hydration and the moment the subscription became active.
+            try {
+              const catchUp = await chatService.getRoomMessages(roomId);
+              if (catchUp.success && catchUp.data && isMounted) {
+                setMessages((prev) => {
+                  const existingIds = new Set(prev.map((m) => m.id));
+                  const newMsgs = catchUp.data!.filter((m) => !existingIds.has(m.id));
+                  return newMsgs.length > 0 ? [...prev, ...newMsgs] : prev;
+                });
+              }
+            } catch {
+              // Non-fatal: subscription is now live, catch-up is best-effort
+            }
           } else if (status === 'CLOSED') {
+            console.debug('[Realtime] Channel closed for room', roomId);
             setConnectionStatus('stranger disconnected');
           } else if (status === 'CHANNEL_ERROR') {
+            console.debug('[Realtime] Channel error for room', roomId);
+            setConnectionStatus('reconnecting');
+            // Attempt a catch-up fetch on error to sync any missed messages
+            setTimeout(async () => {
+              if (!isMounted) return;
+              try {
+                const syncRes = await chatService.reconnectRoom(roomId);
+                if (syncRes.success && syncRes.data && isMounted) {
+                  if (syncRes.data.status === 'active') {
+                    setMessages(syncRes.data.messages);
+                    setConnectionStatus('connected');
+                  }
+                }
+              } catch {
+                // Will retry on next heartbeat or visibility change
+              }
+            }, 2000);
+          } else if (status === 'TIMED_OUT') {
+            console.debug('[Realtime] Channel timed out for room', roomId);
             setConnectionStatus('reconnecting');
           }
         });
@@ -296,7 +331,11 @@ export const ChatPage: React.FC = () => {
       isMounted = false;
       if (channel) supabase.removeChannel(channel);
     };
-  }, [roomId, initialPeer, scrollToBottom]);
+    // IMPORTANT: Only roomId should trigger re-subscription.
+    // initialPeer and scrollToBottom are stable references and must NOT
+    // cause the Realtime channel to be torn down and recreated.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomId]);
 
   /**
    * Room Heartbeat
