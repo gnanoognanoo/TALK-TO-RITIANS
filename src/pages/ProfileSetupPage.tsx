@@ -164,8 +164,8 @@ export const ProfileSetupPage: React.FC = () => {
       await refreshProfile();
 
       setIsSubmitting(false);
-      // Route to /home
-      navigate('/home');
+      // Route to /settings
+      navigate('/settings');
     } catch (err: unknown) {
       setIsSubmitting(false);
       const msg = err instanceof Error ? err.message : 'An unexpected error occurred.';
@@ -178,7 +178,7 @@ export const ProfileSetupPage: React.FC = () => {
       {/* Header & Step Badge */}
       <div className="text-center space-y-2">
         <Badge variant="brand" size="sm" withDot>
-          Step 4 &bull; Profile
+          Profile Customization &bull; Cohort Details
         </Badge>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
           Complete Your Profile
@@ -490,10 +490,10 @@ export const ProfileSetupPage: React.FC = () => {
                 type="button"
                 variant="secondary"
                 size="sm"
-                onClick={() => navigate('/avatar')}
+                onClick={() => navigate('/settings')}
                 leftIcon={<ArrowLeft className="h-4 w-4" />}
               >
-                Back to Avatar
+                Back to Settings
               </Button>
 
               <Button

@@ -65,7 +65,7 @@ export class MatchmakingService {
           data: null,
           error: {
             code: 'UNAUTHENTICATED',
-            message: 'You must be signed in with your verified campus account to join matchmaking.',
+            message: 'You must be signed in to join matchmaking.',
           },
         };
       }

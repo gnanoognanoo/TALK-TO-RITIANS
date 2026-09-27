@@ -96,15 +96,15 @@ export const UsernameSelectionPage: React.FC = () => {
     }
 
     await refreshProfile();
-    // Step 6: Route to /avatar
-    navigate('/avatar');
+    // Return to Settings upon saving
+    navigate('/settings');
   };
 
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
         <Badge variant="brand" size="sm" withDot>
-          Step 2 &bull; Anonymous Alias
+          Profile Customization &bull; Anonymous Handle
         </Badge>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
           Choose Your Anonymous Username
@@ -294,21 +294,21 @@ export const UsernameSelectionPage: React.FC = () => {
                 type="button"
                 variant="secondary"
                 size="sm"
-                onClick={() => navigate('/verify')}
+                onClick={() => navigate('/settings')}
                 leftIcon={<ArrowLeft className="h-4 w-4" />}
               >
-                Back to Verify
+                Back to Settings
               </Button>
 
               <Button
                 type="submit"
                 variant="primary"
                 isLoading={isSaving}
-                loadingText="Securing Alias..."
+                loadingText="Saving Handle..."
                 rightIcon={<ArrowRight className="h-4 w-4" />}
                 className="py-2.5 font-semibold shadow-sm"
               >
-                Continue
+                Save Handle
               </Button>
             </CardFooter>
           </form>

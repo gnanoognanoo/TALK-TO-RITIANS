@@ -186,7 +186,7 @@ export const VerifyCollegePage: React.FC = () => {
         <CardHeader className="text-center pb-3">
           <div className="mx-auto mb-2">
             <Badge variant="brand" size="sm" withDot>
-              Step 1 &bull; College Verification
+              College ID Verification
             </Badge>
           </div>
           <CardTitle className="text-2xl font-bold text-gray-900">
@@ -198,9 +198,9 @@ export const VerifyCollegePage: React.FC = () => {
             {viewState === 'scanning' &&
               'Scan the QR code on the back of your RIT ID card.'}
             {viewState === 'review' &&
-              'Confirm the student information decoded from your card before choosing your anonymous handle.'}
+              'Confirm the student information decoded from your card.'}
             {viewState === 'success' &&
-              'Your college identity has been verified. Please select your gender to continue.'}
+              'Your college identity has been verified successfully. Your academic credentials are sealed and private.'}
           </CardDescription>
         </CardHeader>
 
@@ -518,33 +518,65 @@ export const VerifyCollegePage: React.FC = () => {
                 </p>
               </div>
 
-              <Button
-                type="button"
-                variant="primary"
-                fullWidth
-                isLoading={isSavingGender}
-                loadingText="Saving profile..."
-                onClick={async () => {
-                  if (!selectedGender) {
-                    setGenderError('Please select your gender before continuing.');
-                    return;
-                  }
-                  setIsSavingGender(true);
-                  setGenderError(null);
-                  const res = await profileService.saveGender(selectedGender);
-                  setIsSavingGender(false);
-                  if (!res.success) {
-                    setGenderError(res.error?.message || 'Failed to save gender. Please try again.');
-                    return;
-                  }
-                  await refreshProfile();
-                  navigate('/username');
-                }}
-                rightIcon={<ArrowRight className="h-4 w-4" />}
-                className="py-2.5 font-semibold shadow-sm"
-              >
-                Continue to Anonymous Setup
-              </Button>
+              <div className="space-y-2.5 pt-1">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button
+                    type="button"
+                    variant="primary"
+                    fullWidth
+                    isLoading={isSavingGender}
+                    loadingText="Saving..."
+                    onClick={async () => {
+                      if (selectedGender) {
+                        setIsSavingGender(true);
+                        await profileService.saveGender(selectedGender);
+                        setIsSavingGender(false);
+                      }
+                      await refreshProfile();
+                      navigate('/settings');
+                    }}
+                    rightIcon={<ArrowRight className="h-4 w-4" />}
+                    className="py-2.5 font-semibold shadow-sm"
+                  >
+                    Go to Settings
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    fullWidth
+                    onClick={async () => {
+                      if (selectedGender) {
+                        setIsSavingGender(true);
+                        await profileService.saveGender(selectedGender);
+                        setIsSavingGender(false);
+                      }
+                      await refreshProfile();
+                      navigate('/home');
+                    }}
+                    className="py-2.5 font-semibold"
+                  >
+                    Back to Home
+                  </Button>
+                </div>
+
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (selectedGender) {
+                        await profileService.saveGender(selectedGender);
+                      }
+                      await refreshProfile();
+                      navigate('/username');
+                    }}
+                    className="text-xs text-brand-600 dark:text-brand-400 font-semibold hover:underline inline-flex items-center gap-1"
+                  >
+                    <span>Or customize your anonymous username now</span>
+                    <ArrowRight className="h-3 w-3" />
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </CardContent>
@@ -552,10 +584,10 @@ export const VerifyCollegePage: React.FC = () => {
         <CardFooter className="justify-center border-t border-gray-100 pt-4">
           <button
             type="button"
-            onClick={() => navigate('/username')}
+            onClick={() => navigate('/settings')}
             className="text-xs text-gray-400 hover:text-brand-600 underline underline-offset-4"
           >
-            Skip verification for UI preview &rarr;
+            &larr; Back to Settings
           </button>
         </CardFooter>
       </Card>

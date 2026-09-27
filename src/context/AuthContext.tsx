@@ -57,6 +57,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       if (data) {
+        if (!data.display_username) {
+          const tempUsername = generateTemporaryUsername();
+          const defaultAvatar = { emoji: '👤', theme: 'indigo' };
+          try {
+            await supabase
+              .from('profiles')
+              .update({ display_username: tempUsername, avatar_config: defaultAvatar })
+              .eq('id', userId);
+          } catch {
+            // Non-critical: continue with memory fallback
+          }
+          setProfile({ ...data, display_username: tempUsername, avatar_config: defaultAvatar });
+          return;
+        }
         setProfile(data);
         return;
       }

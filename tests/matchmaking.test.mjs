@@ -47,16 +47,10 @@ class MockDatabase {
   }
 
   joinMatchmaking(userId) {
-    // 1. Eligibility Check
+    // 1. Authenticated Session Gate
     const profile = this.profiles.get(userId);
     if (!profile) {
       return { success: false, error: 'UNAUTHENTICATED' };
-    }
-    if (!profile.college_identity_linked) {
-      return { success: false, error: 'VERIFICATION_REQUIRED' };
-    }
-    if (!profile.profile_completed) {
-      return { success: false, error: 'PROFILE_INCOMPLETE' };
     }
 
     // 2. Active Room Gate
@@ -127,8 +121,18 @@ class MockDatabase {
       myQueue.matched_room_id = roomId;
       myQueue.matched_user_id = candidate.user_id;
 
-      // Privacy: Resolve partner anonymous persona ONLY
-      const partnerPersona = this.anonymousIdentities.get(candidate.user_id);
+      // Privacy: Resolve partner anonymous persona (verified custom or unverified fallback)
+      const partnerProfile = this.profiles.get(candidate.user_id);
+      let peerUsername;
+      let peerAvatar;
+      if (partnerProfile?.college_identity_linked) {
+        const partnerPersona = this.anonymousIdentities.get(candidate.user_id);
+        peerUsername = partnerPersona?.anonymous_username || 'Anonymous RITian';
+        peerAvatar = partnerPersona?.avatar_config || {};
+      } else {
+        peerUsername = 'Unknown User 4821';
+        peerAvatar = { face: 'round', skin: '#FDDBB4', background: 'indigo' };
+      }
 
       return {
         success: true,
@@ -136,8 +140,8 @@ class MockDatabase {
         room_id: roomId,
         queue_id: myQueue.id,
         peer: {
-          anonymous_username: partnerPersona?.anonymous_username || 'Anonymous RITian',
-          avatar_config: partnerPersona?.avatar_config || {},
+          anonymous_username: peerUsername,
+          avatar_config: peerAvatar,
         },
       };
     }
@@ -158,14 +162,24 @@ class MockDatabase {
     q.heartbeat_at = Date.now();
 
     if (q.status === 'matched' && q.matched_room_id) {
-      const partnerPersona = this.anonymousIdentities.get(q.matched_user_id);
+      const partnerProfile = this.profiles.get(q.matched_user_id);
+      let peerUsername;
+      let peerAvatar;
+      if (partnerProfile?.college_identity_linked) {
+        const partnerPersona = this.anonymousIdentities.get(q.matched_user_id);
+        peerUsername = partnerPersona?.anonymous_username || 'Anonymous RITian';
+        peerAvatar = partnerPersona?.avatar_config || {};
+      } else {
+        peerUsername = 'Unknown User 4821';
+        peerAvatar = { face: 'round', skin: '#FDDBB4', background: 'indigo' };
+      }
       return {
         success: true,
         status: 'matched',
         room_id: q.matched_room_id,
         peer: {
-          anonymous_username: partnerPersona?.anonymous_username || 'Anonymous RITian',
-          avatar_config: partnerPersona?.avatar_config || {},
+          anonymous_username: peerUsername,
+          avatar_config: peerAvatar,
         },
       };
     }
@@ -199,20 +213,26 @@ describe('Phase 9 - Random 1-to-1 Matchmaking Architecture', () => {
   // 1. Eligibility Gate: Unverified & Incomplete Profiles
   // =========================================================================
   describe('1. Eligibility Gate', () => {
-    test('rejects unverified user from joining queue', () => {
+    test('rejects unauthenticated user without session', () => {
+      const res = db.joinMatchmaking('unauthenticated-user');
+      assert.equal(res.success, false);
+      assert.equal(res.error, 'UNAUTHENTICATED');
+    });
+
+    test('allows unverified user to join matchmaking queue', () => {
       db.seedUser({ id: 'user-unverified', isVerified: false, isProfileCompleted: false });
       const res = db.joinMatchmaking('user-unverified');
 
-      assert.equal(res.success, false);
-      assert.equal(res.error, 'VERIFICATION_REQUIRED');
+      assert.equal(res.success, true);
+      assert.equal(res.status, 'searching');
     });
 
-    test('rejects verified user who has not completed campus profile setup', () => {
+    test('allows verified user who has not completed campus profile setup to join queue', () => {
       db.seedUser({ id: 'user-incomplete', isVerified: true, isProfileCompleted: false });
       const res = db.joinMatchmaking('user-incomplete');
 
-      assert.equal(res.success, false);
-      assert.equal(res.error, 'PROFILE_INCOMPLETE');
+      assert.equal(res.success, true);
+      assert.equal(res.status, 'searching');
     });
 
     test('allows fully onboarded verified student to join matchmaking', () => {
@@ -221,6 +241,19 @@ describe('Phase 9 - Random 1-to-1 Matchmaking Architecture', () => {
 
       assert.equal(res.success, true);
       assert.equal(res.status, 'searching');
+    });
+
+    test('unverified user receives safe fallback Unknown User persona in match', () => {
+      db.seedUser({ id: 'user-anon', isVerified: false, isProfileCompleted: false });
+      db.seedUser({ id: 'user-v', isVerified: true, isProfileCompleted: true, username: 'VerifiedPeer' });
+
+      db.joinMatchmaking('user-anon');
+      const match = db.joinMatchmaking('user-v');
+
+      assert.equal(match.success, true);
+      assert.equal(match.status, 'matched');
+      // Partner sees fallback Unknown User for unverified account
+      assert.match(match.peer.anonymous_username, /^Unknown User/);
     });
   });
 

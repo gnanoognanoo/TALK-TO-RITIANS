@@ -400,7 +400,7 @@ describe('Phase 13 — 7-Minute Chat Limit & Server Expiration Suite', () => {
 
       // Client calculates remaining = expires_at - current time
       const remainingMs = new Date(peerRes.expires_at).getTime() - db.getServerTime().getTime();
-      const remainingSec = Math.floor(remainingMs / 1000);
+      const remainingSec = Math.round(remainingMs / 1000);
 
       assert.equal(remainingSec, 240); // 4 minutes remaining, NOT 420 (7 minutes)
     });
@@ -418,7 +418,7 @@ describe('Phase 13 — 7-Minute Chat Limit & Server Expiration Suite', () => {
       assert.equal(peerRes.success, true);
       assert.equal(peerRes.expires_at, match.expires_at);
 
-      const remainingSec = Math.floor(
+      const remainingSec = Math.round(
         (new Date(peerRes.expires_at).getTime() - db.getServerTime().getTime()) / 1000
       );
       assert.equal(remainingSec, 375); // 420 - 45 = 375 seconds

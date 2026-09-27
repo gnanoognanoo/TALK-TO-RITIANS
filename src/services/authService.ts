@@ -7,7 +7,7 @@
  */
 
 import { supabase } from '../lib/supabase';
-import { User, Profile, ApiResponse, isValidAvatarConfig } from '../types';
+import { User, Profile, ApiResponse } from '../types';
 import { IAuthService } from './index';
 import type { Session } from '@supabase/supabase-js';
 
@@ -17,26 +17,15 @@ export interface EnsureProfileResult {
 }
 
 /**
- * Determine the appropriate post-login route based on student onboarding state.
+ * Determine the appropriate post-login route.
+ * In the simplified workflow, all authenticated users land directly on /home.
  */
-export function getPostLoginRedirect(profile: {
+export function getPostLoginRedirect(_profile?: {
   college_identity_linked?: boolean | null;
   display_username?: string | null;
   avatar_config?: any;
   profile_completed?: boolean | null;
 } | null): string {
-  if (!profile || !profile.college_identity_linked) {
-    return '/verify';
-  }
-  if (!profile.display_username || profile.display_username.startsWith('Unknown User')) {
-    return '/username';
-  }
-  if (!isValidAvatarConfig(profile.avatar_config)) {
-    return '/avatar';
-  }
-  if (!profile.profile_completed) {
-    return '/profile/setup';
-  }
   return '/home';
 }
 

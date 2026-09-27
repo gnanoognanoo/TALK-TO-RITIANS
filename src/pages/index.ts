@@ -7,4 +7,5 @@ export * from './AvatarBuilderPage';
 export * from './HomePage';
 export * from './MatchingPage';
 export * from './ChatPage';
+export * from './SettingsPage';
 export * from './NotFoundPage';

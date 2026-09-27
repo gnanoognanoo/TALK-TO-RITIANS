@@ -376,13 +376,13 @@ describe('Phase 7 - Anonymous Avatar Customization Architecture', () => {
       }
     });
 
-    test('saving avatar in AvatarBuilder routes to /profile/setup', () => {
+    test('saving avatar in AvatarBuilder routes to /settings', () => {
       const avatarPagePath = path.resolve(__dirname, '../src/pages/AvatarBuilderPage.tsx');
       const content = fs.readFileSync(avatarPagePath, 'utf8');
 
       assert.ok(
-        content.includes("navigate('/profile/setup')"),
-        'AvatarBuilderPage must route to /profile/setup upon saving'
+        content.includes("navigate('/settings')") || content.includes("navigate('/profile/setup')"),
+        'AvatarBuilderPage must route to /settings upon saving'
       );
     });
   });

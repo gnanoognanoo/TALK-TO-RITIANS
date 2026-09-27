@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 // Context & Providers
-import { AuthProvider } from './context';
+import { AuthProvider, ThemeProvider } from './context';
 
 // Guards & Layouts
 import { ProtectedRoute } from './components';
@@ -19,49 +19,53 @@ import {
   HomePage,
   MatchingPage,
   ChatPage,
+  SettingsPage,
   NotFoundPage,
 } from './pages';
 
 export const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          {/* Public Landing & 404 Route within AppLayout */}
-          <Route element={<AppLayout />}>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="*" element={<NotFoundPage />} />
-          </Route>
-
-          {/* Public Personal Login Route within AuthLayout */}
-          <Route element={<AuthLayout />}>
-            <Route path="/login" element={<LoginPage />} />
-          </Route>
-
-          {/* Protected Routes — Require Authenticated Student Session */}
-          <Route element={<ProtectedRoute />}>
-            {/* Campus Dashboard & Realtime Rooms */}
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Public Landing & 404 Route within AppLayout */}
             <Route element={<AppLayout />}>
-              <Route path="/home" element={<HomePage />} />
-              <Route path="/matching" element={<MatchingPage />} />
-              <Route path="/chat/:roomId" element={<ChatPage />} />
+              <Route path="/" element={<LandingPage />} />
+              <Route path="*" element={<NotFoundPage />} />
             </Route>
 
-            {/* Campus ID Verification Gate */}
+            {/* Public Personal Login Route within AuthLayout */}
             <Route element={<AuthLayout />}>
-              <Route path="/verify" element={<VerifyCollegePage />} />
+              <Route path="/login" element={<LoginPage />} />
             </Route>
 
-            {/* Persona Onboarding Flow */}
-            <Route element={<OnboardingLayout />}>
-              <Route path="/profile/setup" element={<ProfileSetupPage />} />
-              <Route path="/username" element={<UsernameSelectionPage />} />
-              <Route path="/avatar" element={<AvatarBuilderPage />} />
+            {/* Protected Routes — Require Authenticated Student Session */}
+            <Route element={<ProtectedRoute />}>
+              {/* Campus Dashboard, Realtime Rooms & Settings */}
+              <Route element={<AppLayout />}>
+                <Route path="/home" element={<HomePage />} />
+                <Route path="/matching" element={<MatchingPage />} />
+                <Route path="/chat/:roomId" element={<ChatPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+              </Route>
+
+              {/* Campus ID Verification Gate */}
+              <Route element={<AuthLayout />}>
+                <Route path="/verify" element={<VerifyCollegePage />} />
+              </Route>
+
+              {/* Persona Customization Flow */}
+              <Route element={<OnboardingLayout />}>
+                <Route path="/profile/setup" element={<ProfileSetupPage />} />
+                <Route path="/username" element={<UsernameSelectionPage />} />
+                <Route path="/avatar" element={<AvatarBuilderPage />} />
+              </Route>
             </Route>
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   );
 };
 

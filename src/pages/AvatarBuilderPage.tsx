@@ -93,8 +93,8 @@ export const AvatarBuilderPage: React.FC = () => {
     }
 
     await refreshProfile();
-    // Step 7: Route to /profile/setup upon saving
-    navigate('/profile/setup');
+    // Return to Settings upon saving
+    navigate('/settings');
   };
 
   return (
@@ -102,7 +102,7 @@ export const AvatarBuilderPage: React.FC = () => {
       {/* Header section */}
       <div className="text-center space-y-2">
         <Badge variant="brand" size="sm" withDot>
-          Step 3 &bull; Avatar Builder
+          Profile Customization &bull; Modular Avatar
         </Badge>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
           Create Your Avatar
@@ -231,10 +231,10 @@ export const AvatarBuilderPage: React.FC = () => {
                 type="button"
                 variant="secondary"
                 size="sm"
-                onClick={() => navigate('/username')}
+                onClick={() => navigate('/settings')}
                 leftIcon={<ArrowLeft className="h-4 w-4" />}
               >
-                Back to Username
+                Back to Settings
               </Button>
 
               <Button
@@ -245,7 +245,7 @@ export const AvatarBuilderPage: React.FC = () => {
                 rightIcon={<ArrowRight className="h-4 w-4" />}
                 className="py-2.5 font-semibold shadow-sm"
               >
-                Continue
+                Save Avatar
               </Button>
             </CardFooter>
           </form>
