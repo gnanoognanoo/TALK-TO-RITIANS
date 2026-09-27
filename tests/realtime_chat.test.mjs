@@ -828,13 +828,15 @@ describe('Phase 10 - Realtime 1-to-1 Text Chat Suite', () => {
     });
 
     test('Subscription channel name includes roomId for uniqueness', () => {
-      const channelName = `room:${roomId}`;
-      assert.ok(channelName.includes(roomId));
-      assert.equal(channelName, `room:${roomId}`);
+      const messagesChannelName = `chat-messages-${roomId}`;
+      const roomStatusChannelName = `chat-room-status-${roomId}`;
+      assert.ok(messagesChannelName.includes(roomId));
+      assert.ok(roomStatusChannelName.includes(roomId));
+      assert.notEqual(messagesChannelName, roomStatusChannelName);
 
       // Different room produces different channel
-      const otherChannel = `room:room-other-123`;
-      assert.notEqual(channelName, otherChannel);
+      const otherChannel = `chat-messages-room-other-123`;
+      assert.notEqual(messagesChannelName, otherChannel);
     });
 
     test('Realtime status callback handles all four Supabase channel states', () => {

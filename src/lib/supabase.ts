@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '../types';
 
-const configuredUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const configuredAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const configuredUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim().replace(/\/+$/, '');
+const configuredAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
 
 export const isSupabaseConfigured = Boolean(
   configuredUrl &&
