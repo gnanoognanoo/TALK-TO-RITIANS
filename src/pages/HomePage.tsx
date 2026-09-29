@@ -178,11 +178,11 @@ export const HomePage: React.FC = () => {
             </div>
           </div>
 
-          <div className="md:col-span-5 h-48 sm:h-56 md:h-full min-h-[180px] relative overflow-hidden bg-gray-100 dark:bg-slate-800">
+          <div className="md:col-span-5 h-52 sm:h-60 md:h-full min-h-[200px] relative overflow-hidden bg-black">
             <img
-              src="/campus.jpg"
-              alt="RIT Campus Grounds"
-              className="w-full h-full object-cover object-center"
+              src="/heisenberg.jpg"
+              alt="Heisenberg"
+              className="w-full h-full object-cover object-[center_42%]"
             />
           </div>
         </div>
