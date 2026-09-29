@@ -26,7 +26,6 @@ import {
   Edit2,
   RefreshCw,
   CreditCard,
-  Mail,
 } from 'lucide-react';
 import {
   Button,
@@ -427,7 +426,7 @@ export const SettingsPage: React.FC = () => {
           <CardDescription className="text-xs sm:text-sm text-gray-500 dark:text-slate-400">
             {isVerified
               ? 'Your RIT identity is verified and locked to your account.'
-              : 'Choose either Physical ID or College Email to verify your RIT identity.'}
+              : 'Scan your physical RIT student ID to verify your identity.'}
           </CardDescription>
         </CardHeader>
 
@@ -444,40 +443,26 @@ export const SettingsPage: React.FC = () => {
                     Not Verified
                   </Badge>
                 </div>
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white pt-1">
+                  Verify your RIT identity
+                </h3>
                 <p className="text-xs text-gray-500 dark:text-slate-400">
                   Verification unlocks your anonymous profile customization. You can still chat without verification.
                 </p>
               </div>
 
-              <div className="pt-1 space-y-2">
-                <span className="text-xs font-semibold text-gray-700 dark:text-slate-300 block">
-                  Choose verification method:
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Button
-                    type="button"
-                    variant="primary"
-                    size="sm"
-                    onClick={() => navigate('/verify?method=physical')}
-                    leftIcon={<CreditCard className="h-4 w-4" />}
-                    rightIcon={<ArrowRight className="h-4 w-4" />}
-                    className="justify-between"
-                  >
-                    Scan Physical RIT ID
-                  </Button>
-
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => navigate('/verify?method=email')}
-                    leftIcon={<Mail className="h-4 w-4" />}
-                    rightIcon={<ArrowRight className="h-4 w-4" />}
-                    className="justify-between"
-                  >
-                    Verify with College Email
-                  </Button>
-                </div>
+              <div className="pt-1">
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  onClick={() => navigate('/verify')}
+                  leftIcon={<CreditCard className="h-4 w-4" />}
+                  rightIcon={<ArrowRight className="h-4 w-4" />}
+                  className="w-full sm:w-auto"
+                >
+                  Scan Physical RIT ID
+                </Button>
               </div>
             </div>
           ) : (
@@ -495,9 +480,7 @@ export const SettingsPage: React.FC = () => {
                     <p className="text-xs text-gray-600 dark:text-slate-300">
                       Method:{' '}
                       <span className="font-semibold text-emerald-700 dark:text-emerald-400">
-                        {profile?.verification_method === 'college_email'
-                          ? 'College Email'
-                          : 'Physical ID'}
+                        Physical RIT ID
                       </span>
                       {profile?.department && ` • ${profile.department}`}
                       {profile?.batch && ` • Batch: ${profile.batch}`}

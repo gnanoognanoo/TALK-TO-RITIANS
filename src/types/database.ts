@@ -278,27 +278,6 @@ export interface Database {
         };
         Returns: Json;
       };
-      request_college_email_otp: {
-        Args: {
-          p_email: string;
-          p_otp_hash: string;
-          p_expires_in_seconds?: number;
-        };
-        Returns: Json;
-      };
-      verify_college_email_otp: {
-        Args: {
-          p_email: string;
-          p_otp_hash: string;
-        };
-        Returns: Json;
-      };
-      invalidate_pending_college_email_otp: {
-        Args: {
-          p_otp_hash: string;
-        };
-        Returns: Json;
-      };
       unlink_college_identity: {
         Args: Record<PropertyKey, never>;
         Returns: Json;

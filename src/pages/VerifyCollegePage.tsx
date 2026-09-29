@@ -1,24 +1,19 @@
 /**
  * ============================================================================
- * TALK TO RITIANS - Dual College Verification Page
+ * TALK TO RITIANS - Physical RIT ID Verification Page
  * ============================================================================
- * Supports TWO primary verification methods:
- * 1. Physical RIT ID:
- *    - Newer cards: IMS URL (ims.ritchennai.edu.in) auto-detected & verified via portal.
- *    - Older/Senior cards: Numeric QR (e.g. 2117XXXXXXXXX) auto-detected -> prompts front scan
- *      -> on-device local OCR -> cross-checks QR vs printed Register Number.
- * 2. College Email:
- *    - Validates institutional domains (ALLOWED_RIT_EMAIL_DOMAINS).
- *    - 6-digit short-lived OTP (10 min expiry) stored securely hashed.
- *    - Unlocks profile customization without inferring real name/gender.
+ * Supports Physical RIT ID verification exclusively:
+ * 1. Newer cards: IMS URL (ims.ritchennai.edu.in) auto-detected & verified via portal.
+ * 2. Older/Senior cards: Numeric QR (e.g. 2117XXXXXXXXX) auto-detected -> prompts front scan
+ *    -> on-device local OCR -> cross-checks QR vs printed Register Number.
  *
  * PRIVACY INVARIANTS:
  * - Zero Image Persistence: Card images never leave device memory and are never uploaded.
  * - Personal Google account remains the primary login account.
- * - Raw register numbers and institutional emails are never exposed in anonymous chats.
+ * - Raw register numbers are never exposed in anonymous chats.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ShieldCheck,
@@ -32,8 +27,6 @@ import {
   AlertTriangle,
   CreditCard,
   Users,
-  Mail,
-  KeyRound,
   ChevronLeft,
 } from 'lucide-react';
 import {
@@ -49,7 +42,6 @@ import {
   QrScanner,
   IdFrontScanner,
   Modal,
-  Input,
 } from '../components';
 import { parseCollegeQr } from '../services/qrParser';
 import {
@@ -58,7 +50,6 @@ import {
 } from '../services/verificationService';
 import { profileService } from '../services/profileService';
 import { GENDER_OPTIONS } from '../config/profileConfig';
-import { validateCollegeEmailDomain } from '../config/collegeEmailConfig';
 import {
   isLegacyNumericRitQr,
   crossCheckLegacyCard,
@@ -68,13 +59,11 @@ import { ParsedCollegeQrResult } from '../types';
 import { useAuth } from '../context';
 
 type VerificationStep =
-  | 'method_selection'
+  | 'idle'
   | 'physical_qr'
   | 'legacy_prompt'
   | 'legacy_front_scan'
   | 'legacy_review'
-  | 'email_input'
-  | 'email_otp'
   | 'success';
 
 export const VerifyCollegePage: React.FC = () => {
@@ -82,12 +71,11 @@ export const VerifyCollegePage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { profile, refreshProfile, unlinkCollegeIdentity } = useAuth();
 
-  // Determine initial step based on query param or default to method selection
+  // Determine initial step based on query param or default to idle
   const initialMethod = searchParams.get('method');
   const [step, setStep] = useState<VerificationStep>(() => {
     if (initialMethod === 'physical') return 'physical_qr';
-    if (initialMethod === 'email') return 'email_input';
-    return 'method_selection';
+    return 'idle';
   });
 
   // Physical ID State
@@ -96,16 +84,6 @@ export const VerifyCollegePage: React.FC = () => {
   const [legacyQrValue, setLegacyQrValue] = useState<string>('');
   const [legacyExtractedFields, setLegacyExtractedFields] = useState<ExtractedLegacyCardFields | null>(null);
   const [parsedResult, setParsedResult] = useState<ParsedCollegeQrResult | null>(null);
-
-  // College Email State
-  const [collegeEmail, setCollegeEmail] = useState<string>('');
-  const [otpCode, setOtpCode] = useState<string>('');
-  const [isSendingOtp, setIsSendingOtp] = useState<boolean>(false);
-  const [isVerifyingOtp, setIsVerifyingOtp] = useState<boolean>(false);
-  const [emailError, setEmailError] = useState<string | null>(null);
-  const [otpSentMessage, setOtpSentMessage] = useState<string | null>(null);
-  const [otpExpiresAt, setOtpExpiresAt] = useState<Date | null>(null);
-  const [otpRemainingSeconds, setOtpRemainingSeconds] = useState<number>(600);
 
   // Success State & Gender setup
   const [verifiedData, setVerifiedData] = useState<CollegeIdentityVerificationResult | null>(null);
@@ -118,38 +96,16 @@ export const VerifyCollegePage: React.FC = () => {
   const [isUnlinking, setIsUnlinking] = useState<boolean>(false);
   const [unlinkError, setUnlinkError] = useState<string | null>(null);
 
-  // Countdown timer for OTP expiry
-  useEffect(() => {
-    if (step !== 'email_otp' || !otpExpiresAt) return;
-
-    const interval = setInterval(() => {
-      const diff = Math.max(0, Math.floor((otpExpiresAt.getTime() - Date.now()) / 1000));
-      setOtpRemainingSeconds(diff);
-      if (diff === 0) {
-        setEmailError('That code has expired. Request a new one.');
-        clearInterval(interval);
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [step, otpExpiresAt]);
-
   /**
    * Resets all verification states.
    */
-  const handleResetToSelection = () => {
+  const handleResetToIdle = () => {
     setPhysicalError(null);
-    setEmailError(null);
     setLegacyQrValue('');
     setLegacyExtractedFields(null);
     setParsedResult(null);
-    setOtpCode('');
-    setStep('method_selection');
+    setStep('idle');
   };
-
-  // ==========================================================================
-  // METHOD A: PHYSICAL RIT ID HANDLERS
-  // ==========================================================================
 
   /**
    * Handle QR code captured by camera scanner.
@@ -197,7 +153,7 @@ export const VerifyCollegePage: React.FC = () => {
 
     if (!result.validStructure) {
       setPhysicalError(
-        "We couldn't read the QR code. Try again or use College Email verification."
+        "We couldn't read the QR code. Please ensure good lighting and align the QR code clearly."
       );
       return;
     }
@@ -286,76 +242,6 @@ export const VerifyCollegePage: React.FC = () => {
     setStep('success');
   };
 
-  // ==========================================================================
-  // METHOD B: COLLEGE EMAIL HANDLERS
-  // ==========================================================================
-
-  /**
-   * Validates institutional email and sends 6-digit OTP code.
-   */
-  const handleSendEmailOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setEmailError(null);
-    setOtpSentMessage(null);
-
-    const cleanEmail = collegeEmail.trim().toLowerCase();
-
-    // Strict domain validation against ALLOWED_RIT_EMAIL_DOMAINS
-    const domainCheck = validateCollegeEmailDomain(cleanEmail);
-    if (!domainCheck.isValid) {
-      setEmailError(domainCheck.error || 'Enter a valid RIT institutional email address.');
-      return;
-    }
-
-    setIsSendingOtp(true);
-    const res = await verificationService.requestCollegeEmailOtp(cleanEmail);
-    setIsSendingOtp(false);
-
-    if (!res.success) {
-      setEmailError(
-        res.error?.message || 'Failed to send verification code. Please check your email and try again.'
-      );
-      return;
-    }
-
-    // Set expiry countdown (10 minutes)
-    setOtpExpiresAt(new Date(Date.now() + 10 * 60 * 1000));
-    setOtpRemainingSeconds(600);
-    setOtpSentMessage(`Verification code sent to ${cleanEmail}.`);
-    setStep('email_otp');
-  };
-
-  /**
-   * Verifies the 6-digit OTP and establishes unified verified state.
-   */
-  const handleVerifyEmailOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setEmailError(null);
-
-    const cleanOtp = otpCode.trim();
-    if (!cleanOtp || cleanOtp.length !== 6 || !/^\d{6}$/.test(cleanOtp)) {
-      setEmailError('Please enter a valid 6-digit verification code.');
-      return;
-    }
-
-    setIsVerifyingOtp(true);
-    const res = await verificationService.verifyCollegeEmailOtp(collegeEmail.trim(), cleanOtp);
-    setIsVerifyingOtp(false);
-
-    if (!res.success || !res.data) {
-      setEmailError(res.error?.message || 'That code is incorrect.');
-      return;
-    }
-
-    setVerifiedData(res.data);
-    await refreshProfile();
-    setStep('success');
-  };
-
-  // ==========================================================================
-  // UNLINK IDENTITY HANDLER
-  // ==========================================================================
-
   const handleUnlink = async () => {
     setIsUnlinking(true);
     setUnlinkError(null);
@@ -370,7 +256,7 @@ export const VerifyCollegePage: React.FC = () => {
 
     setShowUnlinkModal(false);
     setVerifiedData(null);
-    setStep('method_selection');
+    setStep('idle');
   };
 
   const isAlreadyLinked = Boolean(profile?.college_identity_linked);
@@ -381,24 +267,22 @@ export const VerifyCollegePage: React.FC = () => {
         <CardHeader className="text-center pb-3">
           <div className="mx-auto mb-2">
             <Badge variant="brand" size="sm" withDot>
-              Dual College Verification
+              Physical RIT ID Verification
             </Badge>
           </div>
 
           <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
-            {step === 'method_selection' && 'Verify your RIT identity'}
+            {step === 'idle' && 'Verify your RIT identity'}
             {step === 'physical_qr' && 'Scan Physical RIT ID'}
             {step === 'legacy_prompt' && 'Older RIT ID Detected'}
             {step === 'legacy_front_scan' && 'Scan Front of ID Card'}
             {step === 'legacy_review' && 'Confirm ID Details'}
-            {step === 'email_input' && 'Verify with College Email'}
-            {step === 'email_otp' && 'Enter Verification Code'}
             {step === 'success' && 'College Identity Verified'}
           </CardTitle>
 
           <CardDescription className="text-xs sm:text-sm text-gray-500 dark:text-slate-400 max-w-md mx-auto">
-            {step === 'method_selection' &&
-              'Choose your preferred verification method. Either option unlocks full profile customization while preserving anonymous chat privacy.'}
+            {step === 'idle' &&
+              'Verification unlocks your anonymous profile customization. You can still chat without verification.'}
             {step === 'physical_qr' &&
               'Scan the QR code on the back of your physical RIT student ID card.'}
             {step === 'legacy_prompt' &&
@@ -407,10 +291,6 @@ export const VerifyCollegePage: React.FC = () => {
               'Align the front of your ID card inside the frame to read the printed student number.'}
             {step === 'legacy_review' &&
               'Review the student details extracted from your physical card.'}
-            {step === 'email_input' &&
-              'College email verification sends a verification code to your institutional mailbox.'}
-            {step === 'email_otp' &&
-              `Enter the 6-digit code sent to ${collegeEmail}. Code expires in 10 minutes.`}
             {step === 'success' &&
               'Your RIT identity has been verified successfully. Your academic credentials remain sealed and private.'}
           </CardDescription>
@@ -418,7 +298,7 @@ export const VerifyCollegePage: React.FC = () => {
 
         <CardContent className="space-y-6 pt-2">
           {/* Active Verification Status Banner (If already linked) */}
-          {isAlreadyLinked && (step === 'method_selection' || step === 'physical_qr' || step === 'email_input') && (
+          {isAlreadyLinked && (step === 'idle' || step === 'physical_qr') && (
             <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
@@ -429,11 +309,10 @@ export const VerifyCollegePage: React.FC = () => {
                   <p className="text-[11px] text-gray-600 dark:text-slate-300">
                     Method:{' '}
                     <span className="font-semibold text-emerald-700 dark:text-emerald-400">
-                      {profile?.verification_method === 'college_email'
-                        ? 'College Email'
-                        : 'Physical ID'}
+                      Physical RIT ID
                     </span>
                     {profile?.department && ` • ${profile.department}`}
+                    {profile?.batch && ` • Batch: ${profile.batch}`}
                   </p>
                 </div>
               </div>
@@ -450,71 +329,42 @@ export const VerifyCollegePage: React.FC = () => {
             </div>
           )}
 
-          {/* =========================================================================
-              VIEW 1: METHOD SELECTION
-              ========================================================================= */}
-          {step === 'method_selection' && (
+          {/* VIEW 1: IDLE / ENTRY SCREEN */}
+          {step === 'idle' && (
             <div className="space-y-6">
-              <div className="text-center">
-                <p className="text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">
-                  Choose a verification method:
-                </p>
-              </div>
+              <div className="p-6 rounded-2xl border-2 border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-center space-y-4">
+                <div className="h-16 w-16 rounded-2xl bg-brand-50 dark:bg-brand-950/60 border border-brand-200 dark:border-brand-800 text-brand-600 dark:text-brand-400 flex items-center justify-center mx-auto">
+                  <CreditCard className="h-8 w-8" />
+                </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Method 1: Physical RIT ID */}
-                <button
-                  type="button"
-                  id="choose-physical-id-btn"
-                  onClick={() => setStep('physical_qr')}
-                  className="p-5 rounded-2xl border-2 border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-brand-500 dark:hover:border-brand-500 hover:shadow-md transition-all text-left flex flex-col justify-between gap-4 group"
-                >
-                  <div className="space-y-3">
-                    <div className="h-12 w-12 rounded-xl bg-brand-50 dark:bg-brand-950/60 border border-brand-200 dark:border-brand-800 text-brand-600 dark:text-brand-400 flex items-center justify-center group-hover:scale-105 transition-transform">
-                      <CreditCard className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <h4 className="text-base font-bold text-gray-900 dark:text-white flex items-center justify-between">
-                        <span>Scan Physical RIT ID</span>
-                        <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-brand-600 group-hover:translate-x-1 transition-all" />
-                      </h4>
-                      <p className="text-xs text-gray-500 dark:text-slate-400 mt-1 leading-relaxed">
-                        Scan newer IMS QR cards or older numeric ID cards with instant on-device cross-checking.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                    <ShieldCheck className="h-3.5 w-3.5" />
-                    <span>Zero image storage</span>
-                  </div>
-                </button>
+                <div className="space-y-1.5 max-w-sm mx-auto">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                    Scan your student ID card
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed">
+                    Supports newer IMS QR cards and older numeric ID cards with instant on-device cross-checking.
+                  </p>
+                </div>
 
-                {/* Method 2: College Email */}
-                <button
-                  type="button"
-                  id="choose-college-email-btn"
-                  onClick={() => setStep('email_input')}
-                  className="p-5 rounded-2xl border-2 border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-brand-500 dark:hover:border-brand-500 hover:shadow-md transition-all text-left flex flex-col justify-between gap-4 group"
-                >
-                  <div className="space-y-3">
-                    <div className="h-12 w-12 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 flex items-center justify-center group-hover:scale-105 transition-transform">
-                      <Mail className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <h4 className="text-base font-bold text-gray-900 dark:text-white flex items-center justify-between">
-                        <span>Verify with College Email</span>
-                        <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />
-                      </h4>
-                      <p className="text-xs text-gray-500 dark:text-slate-400 mt-1 leading-relaxed">
-                        Verify via 6-digit code sent to your official institutional mailbox (@ritchennai.edu.in).
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400">
-                    <KeyRound className="h-3.5 w-3.5" />
-                    <span>One-time 10-min code</span>
-                  </div>
-                </button>
+                <div className="pt-2 max-w-xs mx-auto">
+                  <Button
+                    type="button"
+                    variant="primary"
+                    fullWidth
+                    size="md"
+                    onClick={() => setStep('physical_qr')}
+                    leftIcon={<CreditCard className="h-4 w-4" />}
+                    rightIcon={<ArrowRight className="h-4 w-4" />}
+                    className="font-bold py-2.5"
+                  >
+                    Scan Physical RIT ID
+                  </Button>
+                </div>
+
+                <div className="flex items-center justify-center gap-1.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 pt-1">
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                  <span>Zero image persistence • Card images never leave your device</span>
+                </div>
               </div>
 
               {/* Supporting Text */}
@@ -529,22 +379,20 @@ export const VerifyCollegePage: React.FC = () => {
             </div>
           )}
 
-          {/* =========================================================================
-              VIEW 2: PHYSICAL RIT ID - QR SCANNER
-              ========================================================================= */}
+          {/* VIEW 2: PHYSICAL RIT ID - QR SCANNER */}
           {step === 'physical_qr' && (
             <div className="space-y-5">
               <div className="flex items-center justify-between">
                 <button
                   type="button"
-                  onClick={handleResetToSelection}
+                  onClick={handleResetToIdle}
                   className="text-xs font-semibold text-gray-500 hover:text-brand-600 flex items-center gap-1"
                 >
                   <ChevronLeft className="h-4 w-4" />
-                  <span>Choose Another Method</span>
+                  <span>Back</span>
                 </button>
                 <Badge variant="brand" size="sm">
-                  Physical ID
+                  QR Scanner
                 </Badge>
               </div>
 
@@ -588,9 +436,7 @@ export const VerifyCollegePage: React.FC = () => {
             </div>
           )}
 
-          {/* =========================================================================
-              VIEW 3: LEGACY CARD DETECTED - PROMPT FRONT SCAN
-              ========================================================================= */}
+          {/* VIEW 3: LEGACY CARD DETECTED - PROMPT FRONT SCAN */}
           {step === 'legacy_prompt' && (
             <div className="space-y-5 text-center animate-in fade-in">
               <div className="h-14 w-14 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto">
@@ -641,9 +487,7 @@ export const VerifyCollegePage: React.FC = () => {
             </div>
           )}
 
-          {/* =========================================================================
-              VIEW 4: LEGACY CARD FRONT OCR SCANNER
-              ========================================================================= */}
+          {/* VIEW 4: LEGACY CARD FRONT OCR SCANNER */}
           {step === 'legacy_front_scan' && (
             <div className="space-y-4 animate-in fade-in">
               <div className="flex items-center justify-between">
@@ -677,9 +521,7 @@ export const VerifyCollegePage: React.FC = () => {
             </div>
           )}
 
-          {/* =========================================================================
-              VIEW 5: LEGACY CARD CONFIRMATION REVIEW
-              ========================================================================= */}
+          {/* VIEW 5: LEGACY CARD CONFIRMATION REVIEW */}
           {step === 'legacy_review' && legacyExtractedFields && (
             <div className="space-y-5 animate-in fade-in">
               <div className="rounded-xl bg-gray-50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700 p-4 space-y-3">
@@ -777,188 +619,7 @@ export const VerifyCollegePage: React.FC = () => {
             </div>
           )}
 
-          {/* =========================================================================
-              VIEW 6: COLLEGE EMAIL INPUT
-              ========================================================================= */}
-          {step === 'email_input' && (
-            <form onSubmit={handleSendEmailOtp} className="space-y-5 animate-in fade-in">
-              <div className="flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={handleResetToSelection}
-                  className="text-xs font-semibold text-gray-500 hover:text-brand-600 flex items-center gap-1"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  <span>Choose Another Method</span>
-                </button>
-                <Badge variant="brand" size="sm">
-                  College Email
-                </Badge>
-              </div>
-
-              <div className="space-y-2">
-                <label
-                  htmlFor="college-email-input"
-                  className="block text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider"
-                >
-                  College Email
-                </label>
-                <Input
-                  id="college-email-input"
-                  type="email"
-                  placeholder="e.g. yourname.dept@cse.ritchennai.edu.in"
-                  value={collegeEmail}
-                  onChange={(e) => {
-                    setCollegeEmail(e.target.value);
-                    setEmailError(null);
-                  }}
-                  autoFocus
-                  required
-                  disabled={isSendingOtp}
-                />
-                <p className="text-[11px] text-gray-500 dark:text-slate-400">
-                  Must be an official institutional email (@ritchennai.edu.in or department subdomains).
-                </p>
-              </div>
-
-              {emailError && (
-                <ErrorMessage
-                  title="Email Verification Notice"
-                  message={emailError}
-                  onDismiss={() => setEmailError(null)}
-                />
-              )}
-
-              {/* Security & Privacy Notice */}
-              <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700 text-xs text-gray-600 dark:text-slate-300 space-y-1.5">
-                <div className="flex items-center gap-1.5 font-bold text-gray-900 dark:text-white">
-                  <ShieldCheck className="h-4 w-4 text-brand-600 shrink-0" />
-                  <span>No Passwords Required</span>
-                </div>
-                <p className="text-[11px] leading-relaxed text-gray-500 dark:text-slate-400">
-                  We will never ask for your email password, Google Workspace, or IMS password. Verification only requires reading a 6-digit code sent to your inbox.
-                </p>
-                <p className="text-[10px] text-gray-400 dark:text-slate-500 italic">
-                  Note: College email verification sends a verification code to your institutional mailbox.
-                </p>
-              </div>
-
-              <Button
-                type="submit"
-                variant="primary"
-                fullWidth
-                isLoading={isSendingOtp}
-                loadingText="Sending 6-digit code..."
-                disabled={!collegeEmail.trim() || isSendingOtp}
-                rightIcon={<ArrowRight className="h-4 w-4" />}
-                className="font-bold py-2.5"
-              >
-                Send Verification Code
-              </Button>
-            </form>
-          )}
-
-          {/* =========================================================================
-              VIEW 7: COLLEGE EMAIL - ENTER 6-DIGIT OTP
-              ========================================================================= */}
-          {step === 'email_otp' && (
-            <form onSubmit={handleVerifyEmailOtp} className="space-y-5 animate-in fade-in">
-              <div className="flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={() => setStep('email_input')}
-                  className="text-xs font-semibold text-gray-500 hover:text-brand-600 flex items-center gap-1"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  <span>Change Email</span>
-                </button>
-                <span className="text-xs font-mono font-bold text-brand-600 dark:text-brand-400">
-                  {Math.floor(otpRemainingSeconds / 60)}:
-                  {String(otpRemainingSeconds % 60).padStart(2, '0')}
-                </span>
-              </div>
-
-              {otpSentMessage && (
-                <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-                  <span>{otpSentMessage}</span>
-                </div>
-              )}
-
-              <div className="space-y-2 text-center">
-                <label
-                  htmlFor="otp-code-input"
-                  className="block text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider"
-                >
-                  Enter 6-Digit Code
-                </label>
-                <input
-                  id="otp-code-input"
-                  type="text"
-                  maxLength={6}
-                  placeholder="123456"
-                  value={otpCode}
-                  onChange={(e) => {
-                    setOtpCode(e.target.value.replace(/\D/g, ''));
-                    setEmailError(null);
-                  }}
-                  autoFocus
-                  required
-                  disabled={isVerifyingOtp}
-                  className="w-48 mx-auto text-center font-mono text-2xl tracking-[0.5em] px-4 py-3 rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
-                />
-                <p className="text-[11px] text-gray-500 dark:text-slate-400">
-                  Expires in 10 minutes. 5 verification attempts allowed.
-                </p>
-              </div>
-
-              {emailError && (
-                <ErrorMessage
-                  title="Verification Error"
-                  message={emailError}
-                  onDismiss={() => setEmailError(null)}
-                />
-              )}
-
-              <div className="space-y-2.5 pt-2">
-                <Button
-                  type="submit"
-                  variant="primary"
-                  fullWidth
-                  isLoading={isVerifyingOtp}
-                  loadingText="Verifying code..."
-                  disabled={otpCode.length !== 6 || isVerifyingOtp}
-                  rightIcon={<ArrowRight className="h-4 w-4" />}
-                  className="font-bold py-2.5"
-                >
-                  Verify Code
-                </Button>
-
-                <div className="flex justify-between items-center pt-2">
-                  <button
-                    type="button"
-                    onClick={handleSendEmailOtp}
-                    disabled={isSendingOtp || otpRemainingSeconds > 540}
-                    className="text-xs text-brand-600 dark:text-brand-400 font-semibold hover:underline disabled:text-gray-400 disabled:no-underline"
-                  >
-                    Resend Code
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setStep('email_input')}
-                    className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                  >
-                    Use different email
-                  </button>
-                </div>
-              </div>
-            </form>
-          )}
-
-          {/* =========================================================================
-              VIEW 8: SUCCESS CONFIRMATION & GENDER SELECTION
-              ========================================================================= */}
+          {/* VIEW 6: SUCCESS CONFIRMATION & GENDER SELECTION */}
           {step === 'success' && (
             <div className="text-center space-y-5 animate-in fade-in">
               <div className="h-16 w-16 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 mx-auto flex items-center justify-center shadow-sm">
@@ -1021,16 +682,13 @@ export const VerifyCollegePage: React.FC = () => {
                   </div>
                 )}
 
-                {/* Email verification notice when academic fields remain null */}
-                {!Boolean(verifiedData?.department || parsedResult?.fields?.department || legacyExtractedFields?.department) && (
-                  <div className="flex items-center justify-between text-emerald-700 dark:text-emerald-400">
-                    <span className="flex items-center gap-1.5">
-                      <Mail className="h-3.5 w-3.5" />
-                      Verification Proof:
-                    </span>
-                    <span className="font-semibold">Institutional Mailbox Active</span>
-                  </div>
-                )}
+                <div className="flex items-center justify-between text-emerald-700 dark:text-emerald-400">
+                  <span className="flex items-center gap-1.5">
+                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+                    Verification Method:
+                  </span>
+                  <span className="font-semibold">Physical RIT ID</span>
+                </div>
               </div>
 
               {/* Manual Gender Selection (Never inferred) */}
@@ -1045,7 +703,7 @@ export const VerifyCollegePage: React.FC = () => {
                   </Badge>
                 </div>
                 <p className="text-[11px] text-gray-500 dark:text-slate-400 leading-relaxed">
-                  Please select your gender manually. We never infer or guess this from your name, email, or department.
+                  Please select your gender manually. We never infer or guess this from your name or card credentials.
                 </p>
                 <div className="grid grid-cols-2 gap-2 pt-1">
                   {GENDER_OPTIONS.map((gOption) => (
@@ -1078,7 +736,7 @@ export const VerifyCollegePage: React.FC = () => {
                   <span>Private Identity Shield Active</span>
                 </div>
                 <p className="text-[11px] text-gray-500 dark:text-slate-400">
-                  Your real name, email, and credentials will NEVER be shown to other students in chats.
+                  Your real name and academic credentials will NEVER be shown to other students in chats.
                 </p>
               </div>
 
