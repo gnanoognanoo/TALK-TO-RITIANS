@@ -290,15 +290,34 @@ export function parseCollegeQr(rawValue: string): ParsedCollegeQrResult {
     };
   }
 
-  // Strategy 2: JSON (e.g. dev mock JSON)
+  // Strategy 2: Legacy / Senior Card Numeric QR (digits only, 8-16 digits)
+  if (/^\d{8,16}$/.test(trimmed)) {
+    return {
+      rawValue: trimmed,
+      formatDetected: 'rit_legacy_numeric_qr',
+      fields: {
+        registerNumber: trimmed,
+        studentReference: trimmed,
+        rawAttributes: {
+          qrNumericValue: trimmed,
+          cardType: 'legacy',
+        },
+      },
+      validStructure: true,
+      isMockData: false,
+      validationErrors: [],
+    };
+  }
+
+  // Strategy 3: JSON (e.g. dev mock JSON)
   const jsonResult = tryParseJson(trimmed);
   if (jsonResult) return jsonResult;
 
-  // Strategy 3: Delimited Key-Value (dev mock)
+  // Strategy 4: Delimited Key-Value (dev mock)
   const delimitedResult = tryParseDelimited(trimmed);
   if (delimitedResult) return delimitedResult;
 
-  // Strategy 4: Fallback / Unknown format
+  // Strategy 5: Fallback / Unknown format
   return {
     rawValue: trimmed,
     formatDetected: 'unknown',

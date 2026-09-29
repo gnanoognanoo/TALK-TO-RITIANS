@@ -25,6 +25,8 @@ import {
   AlertTriangle,
   Edit2,
   RefreshCw,
+  CreditCard,
+  Mail,
 } from 'lucide-react';
 import {
   Button,
@@ -423,31 +425,60 @@ export const SettingsPage: React.FC = () => {
             )}
           </div>
           <CardDescription className="text-xs sm:text-sm text-gray-500 dark:text-slate-400">
-            Link your physical Rajalakshmi Institute of Technology student ID card.
+            {isVerified
+              ? 'Your RIT identity is verified and locked to your account.'
+              : 'Choose either Physical ID or College Email to verify your RIT identity.'}
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-4">
           {!isVerified ? (
             /* UNVERIFIED STATE */
-            <div className="p-4 sm:p-5 rounded-xl bg-gray-50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="p-4 sm:p-5 rounded-xl bg-gray-50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700 space-y-4">
               <div className="space-y-1">
-                <h4 className="text-sm font-bold text-gray-900 dark:text-white">
-                  Status: Not Verified
-                </h4>
-                <p className="text-xs text-gray-500 dark:text-slate-400 max-w-md">
-                  Scanning your student ID card verifies you as a genuine RITian and unlocks profile customization. Chatting is always available.
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400">
+                    Status:
+                  </h4>
+                  <Badge variant="neutral" size="sm">
+                    Not Verified
+                  </Badge>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-slate-400">
+                  Verification unlocks your anonymous profile customization. You can still chat without verification.
                 </p>
               </div>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => navigate('/verify')}
-                rightIcon={<ArrowRight className="h-4 w-4" />}
-                className="shrink-0"
-              >
-                Scan & Link RIT ID
-              </Button>
+
+              <div className="pt-1 space-y-2">
+                <span className="text-xs font-semibold text-gray-700 dark:text-slate-300 block">
+                  Choose verification method:
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Button
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    onClick={() => navigate('/verify?method=physical')}
+                    leftIcon={<CreditCard className="h-4 w-4" />}
+                    rightIcon={<ArrowRight className="h-4 w-4" />}
+                    className="justify-between"
+                  >
+                    Scan Physical RIT ID
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => navigate('/verify?method=email')}
+                    leftIcon={<Mail className="h-4 w-4" />}
+                    rightIcon={<ArrowRight className="h-4 w-4" />}
+                    className="justify-between"
+                  >
+                    Verify with College Email
+                  </Button>
+                </div>
+              </div>
             </div>
           ) : (
             /* VERIFIED STATE */
@@ -459,10 +490,16 @@ export const SettingsPage: React.FC = () => {
                   </div>
                   <div>
                     <h4 className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white">
-                      ✓ RIT ID Linked
+                      ✓ Verified
                     </h4>
                     <p className="text-xs text-gray-600 dark:text-slate-300">
-                      Dept: <span className="font-semibold">{profile?.department || 'RIT'}</span>
+                      Method:{' '}
+                      <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+                        {profile?.verification_method === 'college_email'
+                          ? 'College Email'
+                          : 'Physical ID'}
+                      </span>
+                      {profile?.department && ` • ${profile.department}`}
                       {profile?.batch && ` • Batch: ${profile.batch}`}
                     </p>
                   </div>
@@ -476,11 +513,11 @@ export const SettingsPage: React.FC = () => {
                   leftIcon={<Unlink className="h-3.5 w-3.5 text-rose-500" />}
                   className="hover:border-rose-300 hover:text-rose-600 text-xs shrink-0"
                 >
-                  Unlink College ID
+                  Unlink Verification
                 </Button>
               </div>
               <p className="text-[11px] text-gray-400 dark:text-slate-500">
-                Your card's cryptographic fingerprint ensures 1-to-1 uniqueness across accounts.
+                Your college identity fingerprint ensures 1-to-1 uniqueness across accounts.
               </p>
             </div>
           )}

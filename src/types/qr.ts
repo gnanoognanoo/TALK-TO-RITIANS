@@ -23,6 +23,7 @@ export type CameraStatus =
  */
 export type DetectedQrFormat =
   | 'rit_official_url'
+  | 'rit_legacy_numeric_qr'
   | 'mock_json'
   | 'json'
   | 'delimited_kv'

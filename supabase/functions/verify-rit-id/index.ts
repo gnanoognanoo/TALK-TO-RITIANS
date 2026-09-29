@@ -734,13 +734,135 @@ serve(async (req: Request) => {
     }
 
     // 2. Parse request payload
-    let body: { qrUrl?: string };
+    let body: {
+      qrUrl?: string;
+      mode?: string;
+      registerNumber?: string;
+      qrNumber?: string;
+      name?: string;
+      department?: string;
+      batch?: string;
+    };
     try {
       body = await req.json();
     } catch {
       return new Response(
         JSON.stringify({ success: false, error: "INVALID_REQUEST", message: "Malformed JSON body." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // 2B. Handle Legacy Numeric QR + Physical Card Front Cross-check
+    if (body?.mode === "legacy") {
+      const registerNumber = (body?.registerNumber || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+      const qrNumber = (body?.qrNumber || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+
+      if (!registerNumber || !qrNumber) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: "INSUFFICIENT_IDENTITY_DATA",
+            message: "Missing register number or QR numeric identifier for legacy card verification.",
+          }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Cross-check invariant: normalizedQRNumber === normalizedPrintedRegisterNumber
+      if (registerNumber !== qrNumber) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: "ID_NUMBER_MISMATCH",
+            message: "The QR and printed student number do not match. Please scan the same physical RIT ID card again.",
+          }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Conservative format validation: 8 to 16 digits
+      if (!/^\d{8,16}$/.test(registerNumber)) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: "INVALID_STUDENT_REFERENCE",
+            message: "The detected student identifier does not conform to the expected format.",
+          }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const name = body?.name ? cleanFieldText(body.name).replace(/\s+/g, " ") : "RIT Student";
+      const departmentCode = normalizeDepartment(body?.department);
+      const batch = normalizeBatch(body?.batch);
+
+      // Invoke atomic PostgreSQL RPC to link identity & enforce 1-to-1 uniqueness
+      const { data: linkData, error: linkError } = await userClient.rpc("verify_and_link_college_identity", {
+        p_student_ref: registerNumber,
+        p_name: name,
+        p_department: departmentCode,
+        p_batch: batch,
+        p_qr_metadata: {
+          method: "physical_id_legacy",
+          source: "RIT_LEGACY_CARD_OCR",
+          verifiedAt: new Date().toISOString(),
+        },
+        p_cooldown_hours: 0,
+      });
+
+      if (linkError) {
+        console.error("[verify-rit-id] Database RPC error on legacy verification:", linkError);
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: "VERIFICATION_FAILED",
+            message: linkError.message || "Failed to link identity on server.",
+          }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const rpcResponse = linkData as {
+        success?: boolean;
+        error?: string;
+        message?: string;
+        already_linked_to_self?: boolean;
+        college_identity_id?: string;
+        identity_hash_preview?: string;
+        verified_at?: string;
+      } | null;
+
+      if (rpcResponse && rpcResponse.success === false) {
+        const isDuplicate = rpcResponse.error === "CARD_ALREADY_LINKED";
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: rpcResponse.error || "VERIFICATION_REJECTED",
+            message: isDuplicate
+              ? "This college identity is already linked to another account."
+              : rpcResponse.message || "Verification rejected.",
+          }),
+          { status: isDuplicate ? 409 : 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({
+          valid: true,
+          success: true,
+          verified: true,
+          identityLinked: true,
+          verificationMethod: "physical_id_legacy",
+          name,
+          department: departmentCode,
+          batch,
+          source: "RIT_LEGACY_CARD_OCR",
+          collegeIdentityId: rpcResponse?.college_identity_id,
+          identityHashPreview: rpcResponse?.identity_hash_preview,
+          alreadyLinkedToSelf: Boolean(rpcResponse?.already_linked_to_self),
+          verifiedAt: rpcResponse?.verified_at || new Date().toISOString(),
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -808,6 +930,7 @@ serve(async (req: Request) => {
       p_department: departmentCode,
       p_batch: batch,
       p_qr_metadata: {
+        method: "physical_id_ims",
         source: "RIT_OFFICIAL_PAGE",
         officialHost: APPROVED_RIT_DOMAIN,
         verifiedAt: new Date().toISOString(),
@@ -858,6 +981,7 @@ serve(async (req: Request) => {
         verified: true,
         success: true,
         identityLinked: true,
+        verificationMethod: "physical_id_ims",
         name,
         department: departmentCode,
         batch,

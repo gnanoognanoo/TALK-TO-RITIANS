@@ -30,6 +30,8 @@ export interface Database {
           batch: string | null;
           graduation_year: number | null;
           gender: string | null;
+          verification_method: string | null;
+          verified_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -45,6 +47,8 @@ export interface Database {
           batch?: string | null;
           graduation_year?: number | null;
           gender?: string | null;
+          verification_method?: string | null;
+          verified_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -60,6 +64,8 @@ export interface Database {
           batch?: string | null;
           graduation_year?: number | null;
           gender?: string | null;
+          verification_method?: string | null;
+          verified_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -70,6 +76,7 @@ export interface Database {
           id: string;
           user_id: string;
           identity_hash: string;
+          verification_method: string | null;
           name_from_qr: string | null;
           department_from_qr: string | null;
           batch_from_qr: string | null;
@@ -83,6 +90,7 @@ export interface Database {
           id?: string;
           user_id: string;
           identity_hash: string;
+          verification_method?: string | null;
           name_from_qr?: string | null;
           department_from_qr?: string | null;
           batch_from_qr?: string | null;
@@ -96,6 +104,7 @@ export interface Database {
           id?: string;
           user_id?: string;
           identity_hash?: string;
+          verification_method?: string | null;
           name_from_qr?: string | null;
           department_from_qr?: string | null;
           batch_from_qr?: string | null;
@@ -265,6 +274,22 @@ export interface Database {
           p_batch: string;
           p_qr_metadata?: Json;
           p_cooldown_hours?: number;
+          p_verification_method?: string;
+        };
+        Returns: Json;
+      };
+      request_college_email_otp: {
+        Args: {
+          p_email: string;
+          p_otp_hash: string;
+          p_expires_in_seconds?: number;
+        };
+        Returns: Json;
+      };
+      verify_college_email_otp: {
+        Args: {
+          p_email: string;
+          p_otp_hash: string;
         };
         Returns: Json;
       };
