@@ -239,10 +239,10 @@ export const MatchingPage: React.FC = () => {
       <div className="w-full max-w-md text-center space-y-8">
         {/* Header Titles */}
         <div className="space-y-2">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-[#F2F5F2] tracking-tight">
             Finding Your Next Conversation...
           </h1>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-[#AEB9AE]">
             Connecting you with a random RITian
           </p>
         </div>
@@ -250,25 +250,25 @@ export const MatchingPage: React.FC = () => {
         {/* Circular Animated Indicator with Soft Purple Rings (Zero Neon) */}
         <div className="relative flex items-center justify-center h-64 w-64 mx-auto my-6">
           {/* Outermost subtle pulse ring */}
-          <div className="absolute inset-0 rounded-full bg-[#F5F3FF] animate-ping opacity-30" />
-          {/* Middle soft purple rings */}
-          <div className="absolute inset-2 rounded-full border-2 border-[#EDE9FE] animate-pulse" />
-          <div className="absolute inset-8 rounded-full bg-[#F5F3FF]/70 border border-[#DDD6FE]" />
-          <div className="absolute inset-16 rounded-full bg-[#EDE9FE]/80 border border-[#C4B5FD]" />
+          <div className="absolute inset-0 rounded-full bg-[#F5F3FF] dark:bg-[#56733A]/10 animate-ping opacity-30" />
+          {/* Middle soft purple rings / dark muted sage & olive */}
+          <div className="absolute inset-2 rounded-full border-2 border-[#EDE9FE] dark:border-[rgba(120,160,100,0.18)] animate-pulse" />
+          <div className="absolute inset-8 rounded-full bg-[#F5F3FF]/70 dark:bg-[#101A12]/80 border border-[#DDD6FE] dark:border-[rgba(120,160,100,0.22)]" />
+          <div className="absolute inset-16 rounded-full bg-[#EDE9FE]/80 dark:bg-[#0D150F]/90 border border-[#C4B5FD] dark:border-[rgba(140,170,110,0.25)]" />
 
           {/* Center Avatar Badge */}
-          <div className="relative z-10 h-16 w-16 rounded-full bg-[#6C4CF5] flex items-center justify-center text-white shadow-md">
-            <User className="h-8 w-8 text-white" />
+          <div className="relative z-10 h-16 w-16 rounded-full bg-[#6C4CF5] dark:bg-[#8FAF56] flex items-center justify-center text-white dark:text-[#050806] shadow-md dark:shadow-[0_0_22px_rgba(143,175,86,0.25)]">
+            <User className="h-8 w-8 text-white dark:text-[#050806]" />
           </div>
         </div>
 
         {/* Friendly Message / Icebreaker Card */}
-        <Card className="p-4 bg-white border-gray-200 shadow-sm text-left max-w-sm mx-auto">
+        <Card className="p-4 bg-white dark:bg-[#0D150F]/90 border-gray-200 dark:border-[rgba(120,160,100,0.16)] shadow-sm text-left max-w-sm mx-auto">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-amber-50 text-amber-500 shrink-0">
+            <div className="p-2 rounded-xl bg-amber-50 dark:bg-[#101A12] text-amber-500 dark:text-[#A8C96A] shrink-0 border border-transparent dark:border-[rgba(120,160,100,0.18)]">
               <Lightbulb className="h-5 w-5" />
             </div>
-            <p className="text-xs sm:text-sm text-gray-700 font-medium">
+            <p className="text-xs sm:text-sm text-gray-700 dark:text-[#AEB9AE] font-medium">
               &ldquo;Good conversations start with open minds.&rdquo;
             </p>
           </div>
@@ -299,7 +299,7 @@ export const MatchingPage: React.FC = () => {
         </div>
 
         {/* Subtitle / elapsed timer counter */}
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-gray-400 dark:text-[#758275]">
           Searching for {secondsElapsed}s &bull; Safe &amp; Anonymous
         </p>
       </div>

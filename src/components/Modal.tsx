@@ -73,22 +73,22 @@ export const Modal: React.FC<ModalProps> = ({
       <div
         ref={modalRef}
         className={`
-          relative w-full ${maxWidthClasses[maxWidth]} bg-white border border-gray-200
+          relative w-full ${maxWidthClasses[maxWidth]} bg-white dark:bg-[#0D150F] border border-gray-200 dark:border-[rgba(120,160,100,0.18)]
           rounded-2xl shadow-xl z-10 overflow-hidden transform transition-all duration-200
           animate-in fade-in zoom-in-95
         `.trim()}
       >
         {/* Header */}
         {(title || showCloseButton) && (
-          <div className="flex items-start justify-between p-5 pb-3 border-b border-gray-100">
+          <div className="flex items-start justify-between p-5 pb-3 border-b border-gray-100 dark:border-[rgba(120,160,100,0.14)]">
             <div>
               {title && (
-                <h2 id={titleId} className="text-lg font-bold text-gray-900 tracking-tight">
+                <h2 id={titleId} className="text-lg font-bold text-gray-900 dark:text-[#F2F5F2] tracking-tight">
                   {title}
                 </h2>
               )}
               {description && (
-                <p id={descriptionId} className="text-xs text-gray-500 mt-1">
+                <p id={descriptionId} className="text-xs text-gray-500 dark:text-[#AEB9AE] mt-1">
                   {description}
                 </p>
               )}
@@ -98,7 +98,7 @@ export const Modal: React.FC<ModalProps> = ({
                 type="button"
                 onClick={onClose}
                 aria-label="Close modal"
-                className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-1.5 rounded-lg transition-colors ml-auto"
+                className="text-gray-400 dark:text-[#758275] hover:text-gray-600 dark:hover:text-[#F2F5F2] hover:bg-gray-100 dark:hover:bg-[#101A12] p-1.5 rounded-lg transition-colors ml-auto"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -107,11 +107,11 @@ export const Modal: React.FC<ModalProps> = ({
         )}
 
         {/* Body */}
-        <div className="p-5 text-sm text-gray-600">{children}</div>
+        <div className="p-5 text-sm text-gray-600 dark:text-[#AEB9AE]">{children}</div>
 
         {/* Footer */}
         {footer && (
-          <div className="p-5 pt-3 border-t border-gray-100 bg-gray-50/50 flex items-center justify-end gap-3">
+          <div className="p-5 pt-3 border-t border-gray-100 dark:border-[rgba(120,160,100,0.14)] bg-gray-50/50 dark:bg-[#080D09]/80 flex items-center justify-end gap-3">
             {footer}
           </div>
         )}

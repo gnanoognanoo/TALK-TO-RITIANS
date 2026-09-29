@@ -17,15 +17,15 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    'bg-brand-600 hover:bg-brand-700 text-white shadow-sm border border-transparent active:scale-[0.98]',
+    'bg-brand-600 hover:bg-brand-700 text-white shadow-sm border border-transparent active:scale-[0.98] dark:bg-[#839D50] dark:hover:bg-[#96AF5E] dark:text-[#050806] dark:font-semibold',
   secondary:
-    'bg-white hover:bg-slate-50 text-gray-700 border border-gray-200 hover:border-gray-300 shadow-sm active:scale-[0.98]',
+    'bg-white hover:bg-slate-50 text-gray-700 border border-gray-200 hover:border-gray-300 shadow-sm active:scale-[0.98] dark:bg-[#0D150F]/80 dark:hover:bg-[#101A12] dark:text-[#F2F5F2] dark:border-[rgba(120,160,100,0.22)]',
   danger:
-    'bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 hover:border-rose-300 active:scale-[0.98]',
+    'bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 hover:border-rose-300 active:scale-[0.98] dark:bg-[#0D150F] dark:hover:bg-rose-950/40 dark:text-rose-400 dark:border-rose-900/40',
   outline:
-    'bg-transparent hover:bg-slate-100 text-gray-700 border border-gray-300 hover:border-gray-400 active:scale-[0.98]',
+    'bg-transparent hover:bg-slate-100 text-gray-700 border border-gray-300 hover:border-gray-400 active:scale-[0.98] dark:text-[#AEB9AE] dark:border-[rgba(120,160,100,0.25)] dark:hover:bg-[#101A12]',
   ghost:
-    'bg-transparent hover:bg-slate-100 text-gray-600 hover:text-gray-900 active:scale-[0.98]',
+    'bg-transparent hover:bg-slate-100 text-gray-600 hover:text-gray-900 active:scale-[0.98] dark:text-[#AEB9AE] dark:hover:text-[#F2F5F2] dark:hover:bg-[#101A12]',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {

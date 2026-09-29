@@ -26,24 +26,24 @@ export const LandingPage: React.FC = () => {
     }
   }, [user, session, getRedirectPath, navigate]);
   return (
-    <div className="flex-1 flex flex-col bg-[#F8FAFC]">
+    <div className="flex-1 flex flex-col bg-[#F8FAFC] dark:bg-transparent">
       {/* =========================================================================
           HERO SECTION (Matching Reference Phase 1)
           ========================================================================= */}
       <section className="pt-12 pb-16 md:pt-18 md:pb-24 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto w-full">
         <div className="max-w-3xl space-y-6 text-left">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-50 border border-brand-100 text-brand-700 text-xs font-semibold">
-            <Sparkles className="h-3.5 w-3.5 text-brand-600" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-50 dark:bg-[#101A12] border border-brand-100 dark:border-[rgba(120,160,100,0.22)] text-brand-700 dark:text-[#A8C96A] text-xs font-semibold">
+            <Sparkles className="h-3.5 w-3.5 text-brand-600 dark:text-[#8FAF56]" />
             <span>Exclusively for Rajalakshmi Institute of Technology</span>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-gray-900 dark:text-white leading-[1.12]">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-gray-900 dark:text-[#F2F5F2] leading-[1.12]">
             Real Students.<br />
             Real Conversations.<br />
-            Cooked by <span className="text-brand-600 dark:text-brand-400">HEISENBERG.</span>
+            Cooked by <span className="text-brand-600 dark:text-[#9CB65F] dark:[text-shadow:0_0_18px_rgba(140,170,80,0.12)]">HEISENBERG.</span>
           </h1>
 
-          <p className="text-base sm:text-lg text-gray-600 font-normal leading-relaxed max-w-xl">
+          <p className="text-base sm:text-lg text-gray-600 dark:text-[#AEB9AE] font-normal leading-relaxed max-w-xl">
             A safe space for RITians to meet, talk, and connect anonymously.
           </p>
 
@@ -75,16 +75,16 @@ export const LandingPage: React.FC = () => {
 
           {/* Below Headline Trust Badges (Non-numeric, Authentic) */}
           <div className="pt-2 flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-semibold">
-            <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 shadow-sm">
-              <Users className="h-4 w-4 text-brand-600" />
+            <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-[#0D150F]/90 border border-gray-200 dark:border-[rgba(120,160,100,0.16)] text-gray-700 dark:text-[#AEB9AE] shadow-sm">
+              <Users className="h-4 w-4 text-brand-600 dark:text-[#8FAF56]" />
               <span>RIT Community</span>
             </div>
-            <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 shadow-sm">
-              <MessageSquare className="h-4 w-4 text-brand-600" />
+            <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-[#0D150F]/90 border border-gray-200 dark:border-[rgba(120,160,100,0.16)] text-gray-700 dark:text-[#AEB9AE] shadow-sm">
+              <MessageSquare className="h-4 w-4 text-brand-600 dark:text-[#8FAF56]" />
               <span>Anonymous Chats</span>
             </div>
-            <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 shadow-sm">
-              <ShieldCheck className="h-4 w-4 text-emerald-600" />
+            <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-[#0D150F]/90 border border-gray-200 dark:border-[rgba(120,160,100,0.16)] text-gray-700 dark:text-[#AEB9AE] shadow-sm">
+              <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-[#7FAE61]" />
               <span>Built for Students</span>
             </div>
           </div>
@@ -94,16 +94,16 @@ export const LandingPage: React.FC = () => {
       {/* =========================================================================
           BUILT FOR A SAFER COMMUNITY (Matching Reference Phase 13)
           ========================================================================= */}
-      <section id="features" className="py-14 px-4 sm:px-6 lg:px-8 bg-white border-y border-gray-200/80">
+      <section id="features" className="py-14 px-4 sm:px-6 lg:px-8 bg-white dark:bg-[#080D09]/80 border-y border-gray-200/80 dark:border-[rgba(120,160,100,0.12)]">
         <div className="max-w-4xl mx-auto space-y-8">
           <div className="text-center space-y-2">
             <Badge variant="brand" size="sm">
               Campus Security
             </Badge>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-[#F2F5F2] tracking-tight">
               Built for a Safer Community
             </h2>
-            <p className="text-xs sm:text-sm text-gray-500 max-w-md mx-auto">
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-[#758275] max-w-md mx-auto">
               Engineered exclusively for RIT students with complete identity isolation.
             </p>
           </div>
@@ -121,12 +121,12 @@ export const LandingPage: React.FC = () => {
             ].map((item) => (
               <div
                 key={item.text}
-                className="flex items-start gap-3 p-3.5 rounded-xl border border-gray-200/80 bg-gray-50/50 hover:bg-white hover:shadow-sm transition-all"
+                className="flex items-start gap-3 p-3.5 rounded-xl border border-gray-200/80 dark:border-[rgba(120,160,100,0.16)] bg-gray-50/50 dark:bg-[#0D150F]/70 hover:bg-white dark:hover:bg-[#101A12] hover:shadow-sm transition-all"
               >
-                <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-[#7FAE61] shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900">{item.text}</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">{item.desc}</p>
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-[#F2F5F2]">{item.text}</h3>
+                  <p className="text-xs text-gray-500 dark:text-[#AEB9AE] mt-0.5">{item.desc}</p>
                 </div>
               </div>
             ))}
@@ -142,41 +142,41 @@ export const LandingPage: React.FC = () => {
           <Badge variant="neutral" size="sm">
             Simple 3-Step Process
           </Badge>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-[#F2F5F2] tracking-tight">
             How It Works
           </h2>
-          <p className="text-xs sm:text-sm text-gray-500">
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-[#758275]">
             Start talking with fellow RITians in less than 2 minutes
           </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          <Card className="p-6 space-y-3 border-gray-200 shadow-sm">
-            <div className="h-9 w-9 rounded-xl bg-brand-50 text-brand-600 border border-brand-100 flex items-center justify-center text-sm font-bold">
+          <Card className="p-6 space-y-3 border-gray-200 dark:border-[rgba(120,160,100,0.16)] shadow-sm">
+            <div className="h-9 w-9 rounded-xl bg-brand-50 dark:bg-[#101A12] text-brand-600 dark:text-[#8FAF56] border border-brand-100 dark:border-[rgba(120,160,100,0.22)] flex items-center justify-center text-sm font-bold">
               1
             </div>
-            <h3 className="text-base font-bold text-gray-900">Sign In with Email</h3>
-            <p className="text-xs text-gray-500 leading-relaxed">
+            <h3 className="text-base font-bold text-gray-900 dark:text-[#F2F5F2]">Sign In with Email</h3>
+            <p className="text-xs text-gray-500 dark:text-[#AEB9AE] leading-relaxed">
               Use your personal email address. Your identity remains private and isolated.
             </p>
           </Card>
 
-          <Card className="p-6 space-y-3 border-gray-200 shadow-sm">
-            <div className="h-9 w-9 rounded-xl bg-brand-50 text-brand-600 border border-brand-100 flex items-center justify-center text-sm font-bold">
+          <Card className="p-6 space-y-3 border-gray-200 dark:border-[rgba(120,160,100,0.16)] shadow-sm">
+            <div className="h-9 w-9 rounded-xl bg-brand-50 dark:bg-[#101A12] text-brand-600 dark:text-[#8FAF56] border border-brand-100 dark:border-[rgba(120,160,100,0.22)] flex items-center justify-center text-sm font-bold">
               2
             </div>
-            <h3 className="text-base font-bold text-gray-900">Scan Student ID Card</h3>
-            <p className="text-xs text-gray-500 leading-relaxed">
+            <h3 className="text-base font-bold text-gray-900 dark:text-[#F2F5F2]">Scan Student ID Card</h3>
+            <p className="text-xs text-gray-500 dark:text-[#AEB9AE] leading-relaxed">
               Scan the QR code on the back of your physical card to link your campus status.
             </p>
           </Card>
 
-          <Card className="p-6 space-y-3 border-gray-200 shadow-sm">
-            <div className="h-9 w-9 rounded-xl bg-brand-50 text-brand-600 border border-brand-100 flex items-center justify-center text-sm font-bold">
+          <Card className="p-6 space-y-3 border-gray-200 dark:border-[rgba(120,160,100,0.16)] shadow-sm">
+            <div className="h-9 w-9 rounded-xl bg-brand-50 dark:bg-[#101A12] text-brand-600 dark:text-[#8FAF56] border border-brand-100 dark:border-[rgba(120,160,100,0.22)] flex items-center justify-center text-sm font-bold">
               3
             </div>
-            <h3 className="text-base font-bold text-gray-900">Create Persona &amp; Chat</h3>
-            <p className="text-xs text-gray-500 leading-relaxed">
+            <h3 className="text-base font-bold text-gray-900 dark:text-[#F2F5F2]">Create Persona &amp; Chat</h3>
+            <p className="text-xs text-gray-500 dark:text-[#AEB9AE] leading-relaxed">
               Choose an anonymous handle, build your avatar, and meet new students anytime.
             </p>
           </Card>

@@ -26,7 +26,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-gray-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md transition-colors">
+    <header className="sticky top-0 z-40 w-full border-b border-gray-200/90 dark:border-[rgba(130,160,100,0.14)] bg-white/95 dark:bg-[#080D09]/95 backdrop-blur-md transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Left Region: Brand Logo & Primary Persistent Settings Control */}
         <div className="flex items-center gap-3">
@@ -52,11 +52,11 @@ export const Navbar: React.FC<NavbarProps> = () => {
               aria-label="Settings"
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 active:scale-95 ${
                 isActive('/settings')
-                  ? 'bg-brand-50 dark:bg-brand-950/50 text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-brand-800'
-                  : 'text-gray-700 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 bg-gray-100/80 dark:bg-slate-800 hover:bg-brand-50 dark:hover:bg-brand-950/30 border border-gray-200 dark:border-slate-700'
+                  ? 'bg-brand-50 dark:bg-[#101A12] text-brand-600 dark:text-[#A8C96A] border border-brand-200 dark:border-[rgba(140,170,110,0.3)]'
+                  : 'text-gray-700 dark:text-[#F2F5F2] hover:text-brand-600 dark:hover:text-[#A8C96A] bg-gray-100/80 dark:bg-[#101A12]/80 hover:bg-brand-50 dark:hover:bg-[#101A12] border border-gray-200 dark:border-[rgba(120,160,100,0.2)]'
               }`}
             >
-              <Settings className="h-3.5 w-3.5 text-gray-500 dark:text-slate-400" />
+              <Settings className="h-3.5 w-3.5 text-gray-500 dark:text-[#AEB9AE]" />
               <span>Settings</span>
             </Link>
           )}

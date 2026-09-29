@@ -15,4 +15,5 @@ export * from './IdFrontScanner';
 export * from './Logo';
 export * from './HeisenbergSignature';
 export * from './CreatorSplashScreen';
+export * from './DarkChemicalBackdrop';
 export * from '../features/avatar';

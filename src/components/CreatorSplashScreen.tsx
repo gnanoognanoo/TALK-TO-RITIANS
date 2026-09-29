@@ -63,28 +63,28 @@ export const CreatorSplashScreen: React.FC<CreatorSplashScreenProps> = ({ forceS
       id="creator-splash-screen"
       role="status"
       aria-label="Talk to RITians Intro"
-      className="fixed inset-0 z-[9999] splash-bg bg-[#090D16] flex flex-col items-center justify-center px-4 select-none pointer-events-auto"
+      className="fixed inset-0 z-[9999] splash-bg bg-[#050806] flex flex-col items-center justify-center px-4 select-none pointer-events-auto"
     >
       <div className="flex flex-col items-center justify-center text-center space-y-4 max-w-sm mx-auto">
         {/* Talk to RITians */}
         <h1 className="splash-title text-2xl sm:text-3xl font-extrabold tracking-tight">
           <span className="text-white">Talk to </span>
-          <span className="text-brand-500">RITians</span>
+          <span className="text-[#8FAF56]">RITians</span>
         </h1>
 
         {/* Created by */}
-        <p className="splash-subtitle text-xs sm:text-[13px] font-mono tracking-widest uppercase text-slate-400">
+        <p className="splash-subtitle text-xs sm:text-[13px] font-mono tracking-widest uppercase text-[#AEB9AE]">
           Created by
         </p>
 
         {/* HEISENBERG [signature icon] */}
         <div className="splash-creator flex items-center justify-center gap-2.5 pt-0.5">
-          <span className="text-base sm:text-lg font-bold tracking-[0.25em] text-white uppercase font-mono">
+          <span className="text-base sm:text-lg font-bold tracking-[0.25em] text-[#9CB65F] [text-shadow:0_0_18px_rgba(140,170,80,0.12)] uppercase font-mono">
             HEISENBERG
           </span>
           <HeisenbergIcon
             size={18}
-            className="text-emerald-400 shrink-0"
+            className="text-[#8FAF56] shrink-0"
             aria-hidden="true"
           />
         </div>

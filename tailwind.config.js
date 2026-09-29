@@ -11,6 +11,35 @@ export default {
         sans: ['"Plus Jakarta Sans"', 'Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
       },
       colors: {
+        slate: {
+          50: '#F9FAF9',
+          100: '#F2F5F2', // Primary text in dark mode
+          200: '#E2EBE2',
+          300: '#C5D1C5',
+          400: '#AEB9AE', // Secondary text in dark mode
+          500: '#758275', // Muted text in dark mode
+          600: '#4A574A',
+          700: 'rgba(120, 160, 100, 0.22)',
+          750: 'rgba(120, 160, 100, 0.18)',
+          800: '#101A12', // Elevated surface in dark mode
+          850: '#0E1710',
+          900: '#0D150F', // Card background in dark mode
+          950: '#050806', // Base page background in dark mode
+        },
+        chemical: {
+          base: '#050806',
+          secondary: '#0A100B',
+          card: '#0D150F',
+          surface: '#101A12',
+          border: 'rgba(120, 160, 100, 0.16)',
+          accent: '#8FAF56',
+          bright: '#A8C96A',
+          deep: '#56733A',
+          success: '#7FAE61',
+          text: '#F2F5F2',
+          subtext: '#AEB9AE',
+          muted: '#758275',
+        },
         brand: {
           50: '#f5f3ff',
           100: '#ede9fe',

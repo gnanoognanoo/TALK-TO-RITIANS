@@ -4,30 +4,47 @@
 
 @layer base {
   body {
-    @apply bg-[#F8FAFC] text-gray-900 dark:bg-[#0F172A] dark:text-slate-100 antialiased min-h-screen selection:bg-brand-600 selection:text-white font-sans transition-colors duration-150;
+    @apply bg-[#F8FAFC] text-gray-900 dark:bg-[#050806] dark:text-[#F2F5F2] antialiased min-h-screen selection:bg-brand-600 selection:text-white font-sans;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  /* Subtle atmospheric background in dark mode */
+  .dark body {
+    background-color: #050806;
+    color: #F2F5F2;
+    background-image: 
+      radial-gradient(ellipse at 15% 15%, rgba(46, 75, 34, 0.08) 0%, transparent 55%),
+      radial-gradient(ellipse at 85% 75%, rgba(35, 60, 28, 0.07) 0%, transparent 60%),
+      radial-gradient(ellipse at 50% 50%, rgba(16, 26, 18, 0.4) 0%, transparent 100%);
+    background-attachment: fixed;
   }
 
   /* Accessible focus indicators */
   :focus-visible {
-    @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-white dark:ring-offset-slate-900;
+    @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-white dark:ring-offset-[#050806] dark:ring-[#8FAF56];
   }
 }
 
+/* Subtle theme transition (150-250ms) */
+body, header, nav, footer, .card-surface, .navbar-container {
+  transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease;
+}
+
 @layer components {
-  /* Design System: Primary Button (Solid Purple, Clean) */
+  /* Design System: Primary Button (Solid Purple in Light, Muted Olive in Dark) */
   .btn-primary {
     @apply inline-flex items-center justify-center font-medium rounded-xl transition-all duration-150
            bg-brand-600 hover:bg-brand-700 text-white shadow-sm active:scale-[0.98]
+           dark:bg-[#839D50] dark:hover:bg-[#96AF5E] dark:text-[#050806] dark:font-semibold
            disabled:opacity-50 disabled:pointer-events-none disabled:shadow-none;
   }
 
-  /* Design System: Secondary Button (Clean White with subtle border) */
+  /* Design System: Secondary Button (Clean White in Light, Dark Olive-Bordered in Dark) */
   .btn-secondary {
     @apply inline-flex items-center justify-center font-medium rounded-xl transition-all duration-150
            bg-white hover:bg-slate-50 text-gray-700 border border-gray-200
            hover:border-gray-300 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none shadow-sm
-           dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 dark:border-slate-700;
+           dark:bg-[#0D150F]/80 dark:hover:bg-[#101A12] dark:text-[#F2F5F2] dark:border-[rgba(120,160,100,0.22)];
   }
 
   /* Design System: Danger Action (Soft Red) */
@@ -35,28 +52,29 @@
     @apply inline-flex items-center justify-center font-medium rounded-xl transition-all duration-150
            bg-white hover:bg-rose-50 text-rose-600 border border-rose-200
            hover:border-rose-300 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none
-           dark:bg-slate-800 dark:hover:bg-rose-950/40 dark:border-rose-900/40;
+           dark:bg-[#0D150F] dark:hover:bg-rose-950/40 dark:text-rose-400 dark:border-rose-900/40;
   }
 
-  /* Design System: Form Input (Clean White with Purple Focus Ring) */
+  /* Design System: Form Input (Clean White in Light, Chemical Green-Black in Dark) */
   .form-input {
     @apply w-full bg-white text-gray-900 placeholder-gray-400 rounded-xl
            border border-gray-200 px-4 py-2.5 text-sm transition-all duration-150
            hover:border-gray-300 focus:border-brand-600 focus:ring-4 focus:ring-brand-500/10 focus:outline-none
            disabled:opacity-50 disabled:bg-gray-50 disabled:cursor-not-allowed
-           dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 dark:border-slate-700;
+           dark:bg-[#0C120D] dark:text-[#F2F5F2] dark:placeholder-[#758275] dark:border-[rgba(140,170,110,0.18)]
+           dark:focus:border-[#8FAF56] dark:focus:ring-[#8FAF56]/15;
   }
 
-  /* Design System: Card (White with 1px border and very subtle shadow) */
+  /* Design System: Card */
   .card-surface {
     @apply bg-white border border-gray-200/80 rounded-2xl shadow-card
-           dark:bg-slate-800/90 dark:border-slate-700/80;
+           dark:bg-[#0D150F]/90 dark:border-[rgba(120,160,100,0.16)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)];
   }
 
-  /* Design System: Navbar (Crisp White with thin bottom border) */
+  /* Design System: Navbar */
   .navbar-container {
     @apply sticky top-0 z-40 w-full border-b border-gray-200/80 bg-white/95 backdrop-blur-sm
-           dark:bg-slate-900/95 dark:border-slate-800;
+           dark:bg-[#080D09]/95 dark:border-[rgba(130,160,100,0.14)];
   }
 
   /* Design System: Badge */

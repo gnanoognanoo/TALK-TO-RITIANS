@@ -3,6 +3,7 @@ import { Outlet, Link } from 'react-router-dom';
 import { Navbar } from '../components/Navbar';
 import { ShieldCheck } from 'lucide-react';
 import { HeisenbergSignature } from '../components/HeisenbergSignature';
+import { DarkChemicalBackdrop } from '../components/DarkChemicalBackdrop';
 
 export interface AppLayoutProps {
   children?: React.ReactNode;
@@ -10,17 +11,20 @@ export interface AppLayoutProps {
 
 export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 text-gray-900 dark:text-slate-100 flex flex-col selection:bg-brand-600 selection:text-white">
+    <div className="relative min-h-screen bg-[#F8FAFC] dark:bg-[#050806] text-gray-900 dark:text-[#F2F5F2] flex flex-col selection:bg-brand-600 dark:selection:bg-[#8FAF56] selection:text-white dark:selection:text-[#050806]">
+      {/* Dark Chemical Atmospheric Backdrop (Active only in dark mode) */}
+      <DarkChemicalBackdrop />
+
       {/* Global Navigation */}
       <Navbar />
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col" id="main-content">
+      <main className="relative z-10 flex-1 flex flex-col" id="main-content">
         {children || <Outlet />}
       </main>
 
       {/* Campus Community Footer */}
-      <footer className="border-t border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-8 px-4 sm:px-6 lg:px-8 text-xs text-gray-500 dark:text-slate-400">
+      <footer className="relative z-10 border-t border-gray-200 dark:border-[rgba(120,160,100,0.14)] bg-white dark:bg-[#080D09]/95 py-8 px-4 sm:px-6 lg:px-8 text-xs text-gray-500 dark:text-[#AEB9AE]">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-gray-600 dark:text-slate-400">
             <span className="font-semibold text-gray-900 dark:text-white">Talk to RITians</span>

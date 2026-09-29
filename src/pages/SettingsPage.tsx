@@ -360,8 +360,8 @@ export const SettingsPage: React.FC = () => {
                         onClick={() => handleGenderSave(gOption)}
                         className={`p-2.5 rounded-xl border text-xs font-semibold text-center transition-all ${
                           isSelected
-                            ? 'bg-brand-50 dark:bg-brand-950/40 border-brand-600 text-brand-700 dark:text-brand-300 shadow-sm ring-1 ring-brand-500'
-                            : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 hover:border-gray-300 dark:hover:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-750'
+                            ? 'bg-brand-50 dark:bg-[#101A12] border-brand-600 dark:border-[#8FAF56] text-brand-700 dark:text-[#A8C96A] shadow-sm ring-1 ring-brand-500 dark:ring-[#8FAF56]'
+                            : 'bg-white dark:bg-[#0D150F] border-gray-200 dark:border-[rgba(120,160,100,0.18)] text-gray-700 dark:text-[#AEB9AE] hover:border-gray-300 dark:hover:border-[rgba(140,170,110,0.3)] hover:bg-gray-50 dark:hover:bg-[#101A12]'
                         }`}
                       >
                         {gOption}
@@ -515,7 +515,7 @@ export const SettingsPage: React.FC = () => {
         <CardHeader>
           <div className="flex items-center gap-2">
             {theme === 'dark' ? (
-              <Moon className="h-5 w-5 text-indigo-400" />
+              <Moon className="h-5 w-5 text-indigo-400 dark:text-[#A8C96A]" />
             ) : (
               <Sun className="h-5 w-5 text-amber-500" />
             )}
@@ -555,16 +555,16 @@ export const SettingsPage: React.FC = () => {
               onClick={() => setTheme('dark')}
               className={`p-4 rounded-xl border text-left transition-all flex items-center gap-3 ${
                 theme === 'dark'
-                  ? 'border-brand-500 bg-brand-950/40 text-white shadow-sm ring-2 ring-brand-500/30'
-                  : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:border-gray-300'
+                  ? 'border-brand-500 dark:border-[#8FAF56] bg-brand-950/40 dark:bg-[#101A12] text-white shadow-sm ring-2 ring-brand-500/30 dark:ring-[#8FAF56]/30'
+                  : 'border-gray-200 dark:border-[rgba(120,160,100,0.18)] bg-white dark:bg-[#0D150F] text-gray-700 dark:text-[#AEB9AE] hover:border-gray-300'
               }`}
             >
-              <div className="h-8 w-8 rounded-lg bg-indigo-950 text-indigo-400 flex items-center justify-center shrink-0">
+              <div className="h-8 w-8 rounded-lg bg-indigo-950 dark:bg-[#101A12] text-indigo-400 dark:text-[#A8C96A] border border-transparent dark:border-[rgba(140,170,110,0.2)] flex items-center justify-center shrink-0">
                 <Moon className="h-4 w-4" />
               </div>
               <div>
-                <span className="text-xs font-bold block">Dark</span>
-                <span className="text-[11px] text-gray-500 dark:text-slate-400">Deep & Focused</span>
+                <span className="text-xs font-bold block text-gray-900 dark:text-[#F2F5F2]">Dark</span>
+                <span className="text-[11px] text-gray-500 dark:text-[#AEB9AE]">Deep & Atmospheric</span>
               </div>
             </button>
           </div>

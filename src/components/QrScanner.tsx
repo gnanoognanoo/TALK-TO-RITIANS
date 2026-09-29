@@ -177,7 +177,7 @@ export const QrScanner: React.FC<QrScannerProps> = ({ onScan, onError, disabled 
   return (
     <div className="space-y-4">
       {/* Scanner Viewport Container */}
-      <div className="relative aspect-square max-w-[280px] sm:max-w-[300px] mx-auto rounded-2xl bg-gray-50 border border-gray-200 overflow-hidden shadow-sm flex flex-col items-center justify-center">
+      <div className="relative aspect-square max-w-[280px] sm:max-w-[300px] mx-auto rounded-2xl bg-gray-50 dark:bg-[#080D09] border border-gray-200 dark:border-[rgba(120,160,100,0.22)] overflow-hidden shadow-sm flex flex-col items-center justify-center">
         {/* DOM node where html5-qrcode attaches the <video> element */}
         <div
           id={containerId}
@@ -189,14 +189,14 @@ export const QrScanner: React.FC<QrScannerProps> = ({ onScan, onError, disabled 
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center p-6">
             <div className="relative w-full h-full rounded-xl overflow-hidden">
               {/* Corner brackets */}
-              <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-brand-500 rounded-tl" />
-              <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-brand-500 rounded-tr" />
-              <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-brand-500 rounded-bl" />
-              <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-brand-500 rounded-br" />
+              <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-brand-500 dark:border-[#8FAF56] rounded-tl" />
+              <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-brand-500 dark:border-[#8FAF56] rounded-tr" />
+              <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-brand-500 dark:border-[#8FAF56] rounded-bl" />
+              <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-brand-500 dark:border-[#8FAF56] rounded-br" />
 
               {/* Subtle Scanning Pulse Indicator */}
               <div
-                className="absolute inset-x-4 h-0.5 bg-brand-500/60 rounded-full animate-pulse"
+                className="absolute inset-x-4 h-0.5 bg-brand-500/60 dark:bg-[#8FAF56]/60 rounded-full animate-pulse"
                 style={{ top: '48%' }}
               />
             </div>
@@ -205,22 +205,22 @@ export const QrScanner: React.FC<QrScannerProps> = ({ onScan, onError, disabled 
 
         {/* State: Checking support */}
         {status === 'checking_support' && (
-          <div className="text-center p-6 space-y-3 text-gray-500">
-            <RefreshCw className="h-8 w-8 mx-auto text-brand-600 animate-spin" />
-            <p className="text-xs font-semibold text-gray-900">Initializing Camera...</p>
-            <p className="text-[11px] text-gray-400">Requesting device video stream</p>
+          <div className="text-center p-6 space-y-3 text-gray-500 dark:text-[#AEB9AE]">
+            <RefreshCw className="h-8 w-8 mx-auto text-brand-600 dark:text-[#8FAF56] animate-spin" />
+            <p className="text-xs font-semibold text-gray-900 dark:text-[#F2F5F2]">Initializing Camera...</p>
+            <p className="text-[11px] text-gray-400 dark:text-[#758275]">Requesting device video stream</p>
           </div>
         )}
 
         {/* State: Permission Denied */}
         {status === 'permission_denied' && (
           <div className="text-center p-5 space-y-3 animate-in fade-in">
-            <div className="h-12 w-12 rounded-full bg-amber-50 text-amber-600 border border-amber-200 mx-auto flex items-center justify-center">
+            <div className="h-12 w-12 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800 mx-auto flex items-center justify-center">
               <CameraOff className="h-6 w-6" />
             </div>
             <div className="space-y-1">
-              <h4 className="text-sm font-bold text-gray-900">Camera Access Denied</h4>
-              <p className="text-[11px] text-gray-500 leading-relaxed max-w-[240px] mx-auto">
+              <h4 className="text-sm font-bold text-gray-900 dark:text-[#F2F5F2]">Camera Access Denied</h4>
+              <p className="text-[11px] text-gray-500 dark:text-[#AEB9AE] leading-relaxed max-w-[240px] mx-auto">
                 {errorMessage}
               </p>
             </div>
@@ -239,12 +239,12 @@ export const QrScanner: React.FC<QrScannerProps> = ({ onScan, onError, disabled 
         {/* State: No Camera */}
         {status === 'no_camera' && (
           <div className="text-center p-5 space-y-3 animate-in fade-in">
-            <div className="h-12 w-12 rounded-full bg-rose-50 text-rose-600 border border-rose-200 mx-auto flex items-center justify-center">
+            <div className="h-12 w-12 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 mx-auto flex items-center justify-center">
               <CameraOff className="h-6 w-6" />
             </div>
             <div className="space-y-1">
-              <h4 className="text-sm font-bold text-gray-900">No Camera Found</h4>
-              <p className="text-[11px] text-gray-500 leading-relaxed max-w-[240px] mx-auto">
+              <h4 className="text-sm font-bold text-gray-900 dark:text-[#F2F5F2]">No Camera Found</h4>
+              <p className="text-[11px] text-gray-500 dark:text-[#AEB9AE] leading-relaxed max-w-[240px] mx-auto">
                 {errorMessage}
               </p>
             </div>
@@ -263,12 +263,12 @@ export const QrScanner: React.FC<QrScannerProps> = ({ onScan, onError, disabled 
         {/* State: Scan Error */}
         {status === 'scan_error' && (
           <div className="text-center p-5 space-y-3 animate-in fade-in">
-            <div className="h-12 w-12 rounded-full bg-rose-50 text-rose-600 border border-rose-200 mx-auto flex items-center justify-center">
+            <div className="h-12 w-12 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 mx-auto flex items-center justify-center">
               <AlertTriangle className="h-6 w-6" />
             </div>
             <div className="space-y-1">
-              <h4 className="text-sm font-bold text-gray-900">Scanner Interrupted</h4>
-              <p className="text-[11px] text-gray-500 leading-relaxed max-w-[240px] mx-auto">
+              <h4 className="text-sm font-bold text-gray-900 dark:text-[#F2F5F2]">Scanner Interrupted</h4>
+              <p className="text-[11px] text-gray-500 dark:text-[#AEB9AE] leading-relaxed max-w-[240px] mx-auto">
                 {errorMessage}
               </p>
             </div>
@@ -287,11 +287,11 @@ export const QrScanner: React.FC<QrScannerProps> = ({ onScan, onError, disabled 
         {/* State: Scan Success */}
         {status === 'scan_success' && (
           <div className="text-center p-5 space-y-2 animate-in zoom-in-95">
-            <div className="h-12 w-12 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 mx-auto flex items-center justify-center shadow-sm">
+            <div className="h-12 w-12 rounded-full bg-emerald-50 dark:bg-[#101A12] text-emerald-600 dark:text-[#7FAE61] border border-emerald-200 dark:border-[rgba(120,160,100,0.3)] mx-auto flex items-center justify-center shadow-sm">
               <CheckCircle2 className="h-6 w-6" />
             </div>
-            <h4 className="text-sm font-bold text-gray-900">QR Code Captured!</h4>
-            <p className="text-[11px] text-emerald-600">Parsing student card attributes...</p>
+            <h4 className="text-sm font-bold text-gray-900 dark:text-[#F2F5F2]">QR Code Captured!</h4>
+            <p className="text-[11px] text-emerald-600 dark:text-[#7FAE61]">Parsing student card attributes...</p>
           </div>
         )}
       </div>

@@ -12,28 +12,28 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 
 const variantStyles: Record<BadgeVariant, { bg: string; dot: string }> = {
   brand: {
-    bg: 'bg-brand-50 text-brand-700 border-brand-200',
-    dot: 'bg-brand-600',
+    bg: 'bg-brand-50 dark:bg-[#101A12] text-brand-700 dark:text-[#A8C96A] border-brand-200 dark:border-[rgba(120,160,100,0.25)]',
+    dot: 'bg-brand-600 dark:bg-[#8FAF56]',
   },
   success: {
-    bg: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    dot: 'bg-emerald-500',
+    bg: 'bg-emerald-50 dark:bg-[#101A12] text-emerald-700 dark:text-[#7FAE61] border-emerald-200 dark:border-[rgba(120,160,100,0.25)]',
+    dot: 'bg-emerald-500 dark:bg-[#7FAE61]',
   },
   warning: {
-    bg: 'bg-amber-50 text-amber-800 border-amber-200',
-    dot: 'bg-amber-500',
+    bg: 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800/60',
+    dot: 'bg-amber-500 dark:bg-amber-400',
   },
   danger: {
-    bg: 'bg-rose-50 text-rose-700 border-rose-200',
-    dot: 'bg-rose-500',
+    bg: 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800/60',
+    dot: 'bg-rose-500 dark:bg-rose-400',
   },
   neutral: {
-    bg: 'bg-gray-100 text-gray-700 border-gray-200',
-    dot: 'bg-gray-400',
+    bg: 'bg-gray-100 dark:bg-[#0D150F] text-gray-700 dark:text-[#AEB9AE] border-gray-200 dark:border-[rgba(120,160,100,0.18)]',
+    dot: 'bg-gray-400 dark:bg-[#758275]',
   },
   outline: {
-    bg: 'bg-transparent text-gray-600 border-gray-300',
-    dot: 'bg-gray-400',
+    bg: 'bg-transparent text-gray-600 dark:text-[#AEB9AE] border-gray-300 dark:border-[rgba(120,160,100,0.22)]',
+    dot: 'bg-gray-400 dark:bg-[#758275]',
   },
 };
 

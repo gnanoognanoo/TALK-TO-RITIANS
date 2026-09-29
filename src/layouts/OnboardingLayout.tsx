@@ -3,6 +3,7 @@ import { Outlet, useLocation, Link } from 'react-router-dom';
 import { Shield, CheckCircle2 } from 'lucide-react';
 import { PageContainer } from '../components';
 import { Logo } from '../components/Logo';
+import { DarkChemicalBackdrop } from '../components/DarkChemicalBackdrop';
 
 export interface OnboardingLayoutProps {
   children?: React.ReactNode;
@@ -25,24 +26,27 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({ children }) 
   const currentStepIdx = getCurrentStepIndex();
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-gray-900 flex flex-col relative selection:bg-brand-600 selection:text-white">
+    <div className="relative min-h-screen bg-[#F8FAFC] dark:bg-[#050806] text-gray-900 dark:text-[#F2F5F2] flex flex-col selection:bg-brand-600 dark:selection:bg-[#8FAF56] selection:text-white dark:selection:text-[#050806]">
+      {/* Dark Chemical Atmospheric Backdrop (Active only in dark mode) */}
+      <DarkChemicalBackdrop />
+
       {/* Top Navbar */}
-      <header className="border-b border-gray-200 bg-white/95 backdrop-blur-md px-4 sm:px-8 py-3.5 flex items-center justify-between">
+      <header className="relative z-10 border-b border-gray-200 dark:border-[rgba(120,160,100,0.14)] bg-white/95 dark:bg-[#080D09]/95 backdrop-blur-md px-4 sm:px-8 py-3.5 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
           <Logo size="sm" />
         </Link>
 
-        <div className="flex items-center gap-2 text-xs text-gray-500">
-          <Shield className="h-4 w-4 text-brand-600" />
+        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-[#AEB9AE]">
+          <Shield className="h-4 w-4 text-brand-600 dark:text-[#8FAF56]" />
           <span className="hidden sm:inline">Onboarding:</span>
-          <span className="font-semibold text-gray-900">
+          <span className="font-semibold text-gray-900 dark:text-[#F2F5F2]">
             Step {currentStepIdx + 1} of {steps.length}
           </span>
         </div>
       </header>
 
       {/* Stepper Progress Indicator */}
-      <div className="border-b border-gray-200 bg-white py-4 px-4 sm:px-8 shadow-subtle">
+      <div className="relative z-10 border-b border-gray-200 dark:border-[rgba(120,160,100,0.14)] bg-white dark:bg-[#0D150F] py-4 px-4 sm:px-8 shadow-subtle">
         <div className="max-w-2xl mx-auto">
           <nav aria-label="Onboarding Progress">
             <ol className="flex items-center justify-between gap-2">
@@ -104,14 +108,14 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({ children }) 
       </div>
 
       {/* Main Container */}
-      <main className="flex-1 flex flex-col" id="onboarding-content">
+      <main className="relative z-10 flex-1 flex flex-col" id="onboarding-content">
         <PageContainer maxWidth="md" className="flex-1 flex flex-col py-8">
           {children || <Outlet />}
         </PageContainer>
       </main>
 
       {/* Onboarding Footer */}
-      <footer className="border-t border-gray-200 bg-white py-4 text-center text-xs text-gray-400">
+      <footer className="relative z-10 border-t border-gray-200 dark:border-[rgba(120,160,100,0.14)] bg-white dark:bg-[#080D09] py-4 text-center text-xs text-gray-400 dark:text-[#758275]">
         Your real student details stay permanently isolated. Only your anonymous handle & avatar are visible.
       </footer>
     </div>
