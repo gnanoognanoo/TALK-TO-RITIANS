@@ -92,20 +92,32 @@ export const LandingPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Column: Anonymous Visual in Soft Rounded Container */}
-          <div className="lg:col-span-5">
-            <div className="relative rounded-2xl overflow-hidden border border-gray-200/90 dark:border-slate-800 shadow-card bg-white dark:bg-slate-900 p-2">
-              <img
-                src="/heisenberg.png"
-                alt="Heisenberg"
-                className="w-full h-auto aspect-[4/3] object-cover object-top rounded-xl"
-              />
-              <div className="p-3 text-center bg-white dark:bg-slate-900">
-                <p className="text-xs font-semibold text-gray-800 dark:text-slate-200">
-                  Rajalakshmi Institute of Technology
+          {/* Right Column: Anonymous Creator Identity Card */}
+          <div className="lg:col-span-5 flex justify-center">
+            <div className="w-full max-w-sm sm:max-w-md relative rounded-2xl overflow-hidden border border-slate-800 shadow-2xl bg-slate-950 p-2.5 sm:p-3 text-white">
+              {/* Creator Portrait: 3:4 ratio matches native portrait, framing hat, glasses, and face cleanly */}
+              <div className="relative rounded-xl overflow-hidden bg-slate-900 aspect-[3/4] w-full">
+                <img
+                  src="/heisenberg.png"
+                  alt="Heisenberg - Creator of Talk to RITians"
+                  className="w-full h-full object-cover object-top select-none"
+                  loading="eager"
+                />
+              </div>
+
+              {/* Creator Identity Signature Hierarchy */}
+              <div className="pt-3.5 pb-2 px-2 text-center flex flex-col items-center justify-center space-y-1">
+                <p className="font-serif italic text-sm sm:text-base text-slate-300 tracking-wide">
+                  &ldquo;Say my name.&rdquo;
                 </p>
-                <p className="text-[11px] text-gray-500 dark:text-slate-400">
-                  Verified anonymous connection for all departments
+                <h3 className="text-sm sm:text-base font-bold tracking-[0.25em] uppercase text-white">
+                  HEISENBERG
+                </h3>
+                <p className="text-[11px] sm:text-xs text-slate-400 font-normal">
+                  Creator of Talk to RITians
+                </p>
+                <p className="text-[10px] text-slate-500 font-mono tracking-wider pt-0.5">
+                  Built in anonymity.
                 </p>
               </div>
             </div>
