@@ -38,6 +38,7 @@ import {
   Avatar,
   Modal,
   ErrorMessage,
+  HeisenbergSignature,
 } from '../components';
 import { useAuth, useTheme } from '../context';
 import { GENDER_OPTIONS } from '../config/profileConfig';
@@ -609,6 +610,11 @@ export const SettingsPage: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Subtle Anonymous Creator Signature */}
+      <div className="pt-3 pb-8 flex flex-col items-center justify-center text-center gap-1.5">
+        <HeisenbergSignature variant="badge" />
+      </div>
 
       {/* Unlink Confirmation Modal */}
       <Modal

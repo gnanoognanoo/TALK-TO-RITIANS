@@ -13,4 +13,5 @@ export * from './ProtectedRoute';
 export * from './QrScanner';
 export * from './IdFrontScanner';
 export * from './Logo';
+export * from './HeisenbergSignature';
 export * from '../features/avatar';

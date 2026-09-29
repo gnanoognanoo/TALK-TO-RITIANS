@@ -2,6 +2,7 @@ import React from 'react';
 import { Outlet, Link } from 'react-router-dom';
 import { Navbar } from '../components/Navbar';
 import { ShieldCheck } from 'lucide-react';
+import { HeisenbergSignature } from '../components/HeisenbergSignature';
 
 export interface AppLayoutProps {
   children?: React.ReactNode;
@@ -42,9 +43,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             </Link>
           </div>
 
-          <p className="text-gray-400 dark:text-slate-500 text-[11px] text-center md:text-right">
-            Zero identity leakage &bull; Built for Rajalakshmi Institute of Technology students
-          </p>
+          <div className="flex flex-col items-center md:items-end gap-1.5">
+            <p className="text-gray-400 dark:text-slate-500 text-[11px] text-center md:text-right">
+              Zero identity leakage &bull; Built for Rajalakshmi Institute of Technology students
+            </p>
+            <HeisenbergSignature variant="footer" />
+          </div>
         </div>
       </footer>
     </div>
