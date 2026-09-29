@@ -14,4 +14,5 @@ export * from './QrScanner';
 export * from './IdFrontScanner';
 export * from './Logo';
 export * from './HeisenbergSignature';
+export * from './CreatorSplashScreen';
 export * from '../features/avatar';

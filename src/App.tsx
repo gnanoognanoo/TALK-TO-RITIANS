@@ -5,7 +5,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider, ThemeProvider } from './context';
 
 // Guards & Layouts
-import { ProtectedRoute } from './components';
+import { ProtectedRoute, CreatorSplashScreen } from './components';
 import { AppLayout, AuthLayout, OnboardingLayout } from './layouts';
 
 // Pages
@@ -27,6 +27,7 @@ export const App: React.FC = () => {
   return (
     <ThemeProvider>
       <AuthProvider>
+        <CreatorSplashScreen />
         <BrowserRouter>
           <Routes>
             {/* Public Landing & 404 Route within AppLayout */}
