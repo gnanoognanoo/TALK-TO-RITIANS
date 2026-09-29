@@ -8,7 +8,7 @@ import {
   CheckCircle2,
   Sparkles,
 } from 'lucide-react';
-import { Button, Card, Badge, HeisenbergIcon } from '../components';
+import { Button, Card, Badge } from '../components';
 import { useAuth } from '../context';
 
 export const LandingPage: React.FC = () => {
@@ -37,10 +37,10 @@ export const LandingPage: React.FC = () => {
             <span>Exclusively for Rajalakshmi Institute of Technology</span>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-gray-900 leading-[1.12]">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-gray-900 dark:text-white leading-[1.12]">
             Real Students.<br />
             Real Conversations.<br />
-            <span className="text-brand-600">Stay Anonymous.</span>
+            Cooked by <span className="text-brand-600 dark:text-brand-400">HEISENBERG.</span>
           </h1>
 
           <p className="text-base sm:text-lg text-gray-600 font-normal leading-relaxed max-w-xl">
@@ -86,24 +86,6 @@ export const LandingPage: React.FC = () => {
             <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 shadow-sm">
               <ShieldCheck className="h-4 w-4 text-emerald-600" />
               <span>Built for Students</span>
-            </div>
-          </div>
-
-          {/* Subtle Creator Signature Block */}
-          <div className="pt-6 sm:pt-8 border-t border-gray-200/60 dark:border-slate-800/60 max-w-sm space-y-0.5 select-none">
-            <p className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-slate-300 tracking-tight">
-              Talk to RITians
-            </p>
-            <div className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-mono text-gray-400 dark:text-slate-500">
-              <span>Cooked by</span>
-              <span className="font-bold tracking-wider text-gray-600 dark:text-slate-300 uppercase">
-                HEISENBERG
-              </span>
-              <HeisenbergIcon
-                size={13}
-                className="text-emerald-600/80 dark:text-emerald-400/80 shrink-0 ml-0.5"
-                aria-hidden="true"
-              />
             </div>
           </div>
         </div>
