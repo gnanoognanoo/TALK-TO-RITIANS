@@ -9,6 +9,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ['"Plus Jakarta Sans"', 'Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        signature: ['"Caveat"', '"Kaushan Script"', 'cursive'],
       },
       colors: {
         slate: {
