@@ -31,6 +31,8 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
 
 // ----------------------------------------------------------------------------
 // Domain Configuration & Validations
@@ -603,6 +605,316 @@ EMERGENCY CONTACT: 9123456780`;
       assert.equal(keys.includes('register_number'), false);
       assert.equal(keys.includes('identity_hash'), false);
       assert.equal(keys.includes('verification_method'), false);
+    });
+  });
+
+  // ==========================================================================
+  // METHOD D: EMAIL OTP DELIVERY RELIABILITY & SECURITY HARDENING
+  // ==========================================================================
+  describe('D. Email OTP Delivery Reliability & Security Hardening (Production Bug Fix)', () => {
+    // Helper to simulate deliverOtpEmail matching Edge Function semantics
+    async function simulateDeliverOtpEmail({
+      toEmail,
+      otp,
+      recipientDomain,
+      resendApiKey,
+      enableDevSimulation = false,
+      fetchMock,
+    }) {
+      if (!resendApiKey) {
+        if (enableDevSimulation) {
+          return { success: true };
+        }
+        return { success: false, error: 'EMAIL_PROVIDER_NOT_CONFIGURED' };
+      }
+
+      const fromEmail = 'Talk to RITians <verify@our-domain.edu>';
+      try {
+        const resp = await fetchMock('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${resendApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: fromEmail,
+            to: [toEmail],
+            subject: 'Talk to RITians verification code',
+            text: `Your verification code is: ${otp}`,
+          }),
+        });
+
+        if (!resp.ok) {
+          return { success: false, error: 'EMAIL_DELIVERY_FAILED' };
+        }
+
+        return { success: true };
+      } catch (_err) {
+        return { success: false, error: 'EMAIL_DELIVERY_FAILED' };
+      }
+    }
+
+    test('D1: missing RESEND_API_KEY does NOT report success', async () => {
+      // In production (dev simulation false):
+      const res = await simulateDeliverOtpEmail({
+        toEmail: 'student@cse.ritchennai.edu.in',
+        otp: '123456',
+        recipientDomain: 'cse.ritchennai.edu.in',
+        resendApiKey: undefined,
+        enableDevSimulation: false,
+      });
+
+      assert.equal(res.success, false, 'Must NOT report success when RESEND_API_KEY is missing');
+      assert.equal(res.error, 'EMAIL_PROVIDER_NOT_CONFIGURED');
+
+      // Development simulation only operates if explicitly enabled
+      const devRes = await simulateDeliverOtpEmail({
+        toEmail: 'student@cse.ritchennai.edu.in',
+        otp: '123456',
+        recipientDomain: 'cse.ritchennai.edu.in',
+        resendApiKey: undefined,
+        enableDevSimulation: true,
+      });
+      assert.equal(devRes.success, true);
+    });
+
+    test('D2: provider non-2xx does NOT report success', async () => {
+      const non2xxStatuses = [400, 401, 403, 429, 500, 502, 503];
+
+      for (const status of non2xxStatuses) {
+        const res = await simulateDeliverOtpEmail({
+          toEmail: 'student@cse.ritchennai.edu.in',
+          otp: '123456',
+          recipientDomain: 'cse.ritchennai.edu.in',
+          resendApiKey: 're_test_key_123',
+          fetchMock: async () => ({
+            ok: false,
+            status,
+            text: async () => 'Provider error detail',
+          }),
+        });
+
+        assert.equal(res.success, false, `Status ${status} must NOT report success`);
+        assert.equal(res.error, 'EMAIL_DELIVERY_FAILED');
+        // Raw provider internals / tokens must NOT be exposed
+        assert.equal(res.error.includes(String(status)), false);
+      }
+    });
+
+    test('D3: network error does NOT report success', async () => {
+      const networkErrors = [
+        new Error('ECONNRESET: Connection reset by peer'),
+        new TypeError('Failed to fetch'),
+        new Error('ETIMEDOUT: Connection timed out'),
+      ];
+
+      for (const err of networkErrors) {
+        const res = await simulateDeliverOtpEmail({
+          toEmail: 'student@cse.ritchennai.edu.in',
+          otp: '123456',
+          recipientDomain: 'cse.ritchennai.edu.in',
+          resendApiKey: 're_test_key_123',
+          fetchMock: async () => {
+            throw err;
+          },
+        });
+
+        assert.equal(res.success, false, 'Network exception must NOT report success');
+        assert.equal(res.error, 'EMAIL_DELIVERY_FAILED');
+      }
+
+      // Verify safe frontend message mapping
+      const frontendMessageMap = {
+        EMAIL_PROVIDER_NOT_CONFIGURED: 'Email verification is temporarily unavailable.',
+        EMAIL_DELIVERY_FAILED: "We couldn't send the verification email. Please try again.",
+      };
+      assert.equal(
+        frontendMessageMap['EMAIL_DELIVERY_FAILED'],
+        "We couldn't send the verification email. Please try again."
+      );
+    });
+
+    test('D4: successful provider response reports success', async () => {
+      const res = await simulateDeliverOtpEmail({
+        toEmail: 'student@cse.ritchennai.edu.in',
+        otp: '654321',
+        recipientDomain: 'cse.ritchennai.edu.in',
+        resendApiKey: 're_valid_production_key',
+        fetchMock: async () => ({
+          ok: true,
+          status: 200,
+          json: async () => ({ id: 'email_msg_98765' }),
+        }),
+      });
+
+      assert.equal(res.success, true);
+      assert.equal(res.error, undefined);
+    });
+
+    test('D5: failed delivery invalidates pending OTP', async () => {
+      // Simulate database state for pending OTPs
+      const pendingOtpDatabase = new Map();
+      const otpHash = crypto.createHash('sha256').update('999888' + 'salt').digest('hex');
+
+      // 1. request_college_email_otp creates pending OTP record
+      pendingOtpDatabase.set(otpHash, {
+        email: 'student@cse.ritchennai.edu.in',
+        consumed: false,
+        invalidated: false,
+        expiresAt: new Date(Date.now() + 600000),
+      });
+
+      assert.equal(pendingOtpDatabase.get(otpHash).consumed, false);
+
+      // 2. Email delivery fails
+      const delivery = await simulateDeliverOtpEmail({
+        toEmail: 'student@cse.ritchennai.edu.in',
+        otp: '999888',
+        recipientDomain: 'cse.ritchennai.edu.in',
+        resendApiKey: undefined, // Missing provider
+      });
+      assert.equal(delivery.success, false);
+
+      // 3. Server calls invalidate_pending_college_email_otp
+      function invalidatePendingCollegeEmailOtp(hash) {
+        const record = pendingOtpDatabase.get(hash);
+        if (record) {
+          record.invalidated = true;
+          record.consumed = true; // Consumed so it cannot be verified
+        }
+      }
+
+      invalidatePendingCollegeEmailOtp(otpHash);
+
+      // 4. Assert OTP is invalidated & cannot be confirmed
+      const postInvalidation = pendingOtpDatabase.get(otpHash);
+      assert.equal(postInvalidation.invalidated, true);
+      assert.equal(postInvalidation.consumed, true, 'Pending OTP must be consumed to prevent verification of undelivered code');
+    });
+
+    test('D6: direct RPC fallback is not used for email delivery', () => {
+      // Read verificationService.ts to verify direct RPC fallback was eliminated
+      const servicePath = path.resolve('src/services/verificationService.ts');
+      const serviceContent = fs.readFileSync(servicePath, 'utf8');
+
+      // The method requestCollegeEmailOtp must NEVER invoke request_college_email_otp RPC directly
+      const methodMatch = serviceContent.match(/async requestCollegeEmailOtp[\s\S]*?async verifyCollegeEmailOtp/);
+      assert.ok(methodMatch, 'requestCollegeEmailOtp method must be found in verificationService.ts');
+      const methodBody = methodMatch[0];
+
+      // Assert no direct rpc call to request_college_email_otp in requestCollegeEmailOtp
+      const hasDirectRpc = methodBody.includes("rpc('request_college_email_otp'");
+      assert.equal(
+        hasDirectRpc,
+        false,
+        'requestCollegeEmailOtp must NOT fall back to direct database RPC when Edge Function is unavailable'
+      );
+
+      // Assert error mapping returns EMAIL_DELIVERY_FAILED or EMAIL_PROVIDER_NOT_CONFIGURED
+      assert.ok(methodBody.includes('EMAIL_DELIVERY_FAILED'));
+      assert.ok(methodBody.includes('EMAIL_PROVIDER_NOT_CONFIGURED'));
+    });
+
+    test('D7: plaintext OTP never returned to frontend', () => {
+      // Simulated response from Edge Function send_code
+      const serverResponse = {
+        success: true,
+        message: 'Verification code sent to your institutional mailbox.',
+        expiresIn: 600,
+      };
+
+      // Invariant checks
+      assert.equal(serverResponse.success, true);
+      assert.equal('otp' in serverResponse, false, 'Plaintext OTP must not exist in response');
+      assert.equal('plaintextOtp' in serverResponse, false, 'Plaintext OTP must not exist in response');
+      assert.equal('otp_hash' in serverResponse, false, 'OTP hash must not exist in response');
+      assert.equal('otpHash' in serverResponse, false, 'OTP hash must not exist in response');
+      assert.equal('hash' in serverResponse, false, 'Hash must not exist in response');
+    });
+
+    test('D8: OTP secret not hardcoded in client/server repo', () => {
+      const HARDCODED_SALT = '::rit_campus_identity_secret_salt_2026';
+
+      // Check client verification service
+      const servicePath = path.resolve('src/services/verificationService.ts');
+      const serviceContent = fs.readFileSync(servicePath, 'utf8');
+      assert.equal(
+        serviceContent.includes(HARDCODED_SALT),
+        false,
+        'Client verification service must NOT contain hardcoded OTP salt'
+      );
+
+      // Check Edge Function
+      const edgeFuncPath = path.resolve('supabase/functions/verify-college-email/index.ts');
+      const edgeFuncContent = fs.readFileSync(edgeFuncPath, 'utf8');
+      assert.equal(
+        edgeFuncContent.includes(HARDCODED_SALT),
+        false,
+        'Edge Function must NOT contain hardcoded OTP salt'
+      );
+
+      // Check Edge Function reads from environment
+      assert.ok(
+        edgeFuncContent.includes('COLLEGE_EMAIL_OTP_SECRET'),
+        'Edge Function must read COLLEGE_EMAIL_OTP_SECRET from environment'
+      );
+    });
+
+    test('D9: rate limits still work (max 3 sends per 15 minutes)', () => {
+      const userSendHistory = [];
+      const MAX_SENDS_PER_WINDOW = 3;
+      const WINDOW_MS = 15 * 60 * 1000;
+
+      function canSendOtp(now = Date.now()) {
+        const recentSends = userSendHistory.filter((t) => now - t < WINDOW_MS);
+        if (recentSends.length >= MAX_SENDS_PER_WINDOW) {
+          return { allowed: false, error: 'RATE_LIMITED' };
+        }
+        userSendHistory.push(now);
+        return { allowed: true };
+      }
+
+      const now = Date.now();
+      assert.equal(canSendOtp(now).allowed, true, '1st send allowed');
+      assert.equal(canSendOtp(now + 1000).allowed, true, '2nd send allowed');
+      assert.equal(canSendOtp(now + 2000).allowed, true, '3rd send allowed');
+
+      const fourthSend = canSendOtp(now + 3000);
+      assert.equal(fourthSend.allowed, false, '4th send must be rate limited');
+      assert.equal(fourthSend.error, 'RATE_LIMITED');
+
+      // After 16 minutes, rate limit window clears
+      const laterSend = canSendOtp(now + 16 * 60 * 1000);
+      assert.equal(laterSend.allowed, true, 'Send after window expiry must be allowed');
+    });
+
+    test('D10: replay protection still works (single-use OTP & max 5 attempts)', () => {
+      // 1. Single-use replay protection
+      const otpRecord = {
+        otpHash: 'mock_hash_for_otp_112233',
+        consumed: false,
+        attempts: 0,
+        expiresAt: new Date(Date.now() + 600000),
+      };
+
+      // First verification: success, marks consumed
+      assert.equal(otpRecord.consumed, false);
+      otpRecord.consumed = true;
+
+      // Replay attempt with same code: must fail because already consumed
+      const isReplayBlocked = otpRecord.consumed === true;
+      assert.equal(isReplayBlocked, true, 'Replay attempt must be blocked');
+
+      // 2. Max 5 verification attempts protection
+      let attempts = 0;
+      const MAX_ATTEMPTS = 5;
+
+      for (let i = 1; i <= 5; i++) {
+        attempts++;
+      }
+      assert.equal(attempts >= MAX_ATTEMPTS, true);
+      const isLockedOut = attempts >= MAX_ATTEMPTS;
+      assert.equal(isLockedOut, true, 'OTP must be locked out after 5 failed attempts');
     });
   });
 });

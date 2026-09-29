@@ -6,14 +6,17 @@
  * 1. Verifies caller is authenticated via personal Supabase session
  * 2. Strictly validates that email belongs to an approved RIT domain:
  *    Exact match against ALLOWED_RIT_EMAIL_DOMAINS (no substring spoofing)
- * 3. Supports two actions:
+ * 3. Actions:
  *    - "send_code": generates cryptographically secure 6-digit OTP, stores
- *      salted SHA-256 hash in database with 10-minute expiry, delivers email,
- *      and enforces server-side rate limits (3/15min per user, 5/hr per email).
+ *      salted SHA-256 hash in database with 10-minute expiry, delivers email
+ *      via verified provider, and enforces server-side rate limits.
+ *      CRITICAL: Fails if mail provider fails, and immediately invalidates the OTP.
  *    - "verify_code": validates candidate OTP hash, attempt bounding (max 5),
  *      one-time usage, enforces 1-to-1 college email uniqueness, and atomically
  *      links the verified college identity to the caller's account.
- * 4. Never exposes plaintext OTP or OTP hash to the client.
+ *    - "provider_status": safely checks whether provider secrets are configured
+ *      (returns boolean only; never leaks secrets).
+ * 4. Never exposes plaintext OTP, OTP hash, or API keys to the client.
  * 5. Institutional email is never exposed publicly or in anonymous chat.
  */
 
@@ -44,14 +47,25 @@ const ALLOWED_RIT_EMAIL_DOMAINS = [
   "rajalakshmi.edu.in",
 ];
 
-const OTP_SALT = "::rit_campus_identity_secret_salt_2026";
+/**
+ * Retrieves the server-side salt for OTP hashing from Edge Function secrets.
+ * Configured via COLLEGE_EMAIL_OTP_SECRET in Supabase Edge Secrets.
+ * NEVER hardcoded in source repository.
+ */
+function getOtpSecret(): string {
+  return (
+    Deno.env.get("COLLEGE_EMAIL_OTP_SECRET") ||
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ||
+    ""
+  );
+}
 
 /**
  * Computes salted SHA-256 hash string (hex).
  */
 async function hashSha256(val: string): Promise<string> {
   const encoder = new TextEncoder();
-  const data = encoder.encode(val + OTP_SALT);
+  const data = encoder.encode(val + getOtpSecret());
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -79,12 +93,56 @@ function validateEmailDomain(email: string): { isValid: boolean; normalized?: st
   return { isValid: true, normalized: clean };
 }
 
-/**
- * Delivers email using Resend API (if configured) or server-side logs in dev mode.
- */
-async function deliverOtpEmail(toEmail: string, otp: string): Promise<{ success: boolean; error?: string }> {
-  const resendApiKey = Deno.env.get("RESEND_API_KEY");
+interface EmailDeliveryResult {
+  success: boolean;
+  error?: "EMAIL_PROVIDER_NOT_CONFIGURED" | "EMAIL_DELIVERY_FAILED";
+}
 
+/**
+ * Delivers email using Resend API.
+ * CRITICAL FIXES:
+ * 1. Missing RESEND_API_KEY returns failure (EMAIL_PROVIDER_NOT_CONFIGURED), NO fake success.
+ * 2. Non-2xx response from Resend returns failure (EMAIL_DELIVERY_FAILED), NO fake success.
+ * 3. Network exception returns failure (EMAIL_DELIVERY_FAILED), NO fake success.
+ * 4. Logs ONLY safe delivery diagnostics (never logs OTP, full email, or API keys).
+ */
+async function deliverOtpEmail(
+  toEmail: string,
+  otp: string,
+  recipientDomain: string
+): Promise<EmailDeliveryResult> {
+  const resendApiKey = Deno.env.get("RESEND_API_KEY");
+  const isDevSimulation = Deno.env.get("ENABLE_DEV_EMAIL_SIMULATION") === "true";
+
+  // Case 1: Mail provider not configured
+  if (!resendApiKey) {
+    if (isDevSimulation) {
+      console.log(
+        JSON.stringify({
+          event: "dev_email_simulation",
+          providerConfigured: false,
+          deliverySucceeded: true,
+          recipientDomain,
+          timestamp: new Date().toISOString(),
+        })
+      );
+      return { success: true };
+    }
+
+    console.warn(
+      JSON.stringify({
+        event: "otp_delivery_failed",
+        providerConfigured: false,
+        providerHttpStatus: 0,
+        deliverySucceeded: false,
+        recipientDomain,
+        timestamp: new Date().toISOString(),
+      })
+    );
+    return { success: false, error: "EMAIL_PROVIDER_NOT_CONFIGURED" };
+  }
+
+  const fromEmail = Deno.env.get("RESEND_FROM_EMAIL") || "Talk to RITians <onboarding@resend.dev>";
   const emailSubject = "Talk to RITians verification code";
   const emailText = `Your verification code is:
 
@@ -94,40 +152,64 @@ This code expires in 10 minutes.
 
 If you did not request this verification, you can ignore this message.`;
 
-  if (resendApiKey) {
-    try {
-      const fromEmail = Deno.env.get("RESEND_FROM_EMAIL") || "Talk to RITians <onboarding@resend.dev>";
-      const resp = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${resendApiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: fromEmail,
-          to: [toEmail],
-          subject: emailSubject,
-          text: emailText,
-        }),
-      });
+  try {
+    const resp = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${resendApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: fromEmail,
+        to: [toEmail],
+        subject: emailSubject,
+        text: emailText,
+      }),
+    });
 
-      if (!resp.ok) {
-        const errorText = await resp.text();
-        console.warn("[verify-college-email] Resend API error:", resp.status, errorText);
-        // If Resend test domain restriction fails on student email, do not completely block student in testing
-        return { success: true };
-      }
+    const status = resp.status;
 
-      return { success: true };
-    } catch (err: unknown) {
-      console.warn("[verify-college-email] Email delivery network error:", err);
-      return { success: true };
+    // Case 2: Provider non-2xx failure
+    if (!resp.ok) {
+      console.warn(
+        JSON.stringify({
+          event: "otp_delivery_failed",
+          providerConfigured: true,
+          providerHttpStatus: status,
+          deliverySucceeded: false,
+          recipientDomain,
+          timestamp: new Date().toISOString(),
+        })
+      );
+      return { success: false, error: "EMAIL_DELIVERY_FAILED" };
     }
-  }
 
-  // If no external mail provider configured yet, safely simulate delivery
-  console.log(`[verify-college-email] Verification email dispatched to institutional address: ${toEmail.replace(/^(.)(.*)(@.*)$/, "$1***$3")}`);
-  return { success: true };
+    // Case 3: Confirmed successful delivery by mail provider
+    console.log(
+      JSON.stringify({
+        event: "otp_delivery_success",
+        providerConfigured: true,
+        providerHttpStatus: status,
+        deliverySucceeded: true,
+        recipientDomain,
+        timestamp: new Date().toISOString(),
+      })
+    );
+    return { success: true };
+  } catch (_err: unknown) {
+    // Case 4: Network error during delivery
+    console.warn(
+      JSON.stringify({
+        event: "otp_delivery_network_error",
+        providerConfigured: true,
+        providerHttpStatus: 0,
+        deliverySucceeded: false,
+        recipientDomain,
+        timestamp: new Date().toISOString(),
+      })
+    );
+    return { success: false, error: "EMAIL_DELIVERY_FAILED" };
+  }
 }
 
 serve(async (req: Request) => {
@@ -136,14 +218,39 @@ serve(async (req: Request) => {
   }
 
   if (req.method !== "POST") {
-    return new Response(JSON.stringify({ success: false, error: "METHOD_NOT_ALLOWED", message: "Method not allowed." }), {
-      status: 405,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ success: false, error: "METHOD_NOT_ALLOWED", message: "Method not allowed." }),
+      { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
 
   try {
-    // 1. Authenticate user from session token
+    // 1. Parse request payload
+    let body: { action?: string; email?: string; otp?: string };
+    try {
+      body = await req.json();
+    } catch {
+      return new Response(
+        JSON.stringify({ success: false, error: "INVALID_REQUEST", message: "Malformed JSON body." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const action = body?.action || "send_code";
+
+    // Diagnostic Action: Check provider configuration safely (never leaks secret values)
+    if (action === "provider_status") {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          resendApiKeyConfigured: Boolean(Deno.env.get("RESEND_API_KEY")),
+          resendFromEmailConfigured: Boolean(Deno.env.get("RESEND_FROM_EMAIL")),
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // 2. Authenticate user from session token for verification actions
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(
@@ -175,18 +282,6 @@ serve(async (req: Request) => {
       );
     }
 
-    // 2. Parse request payload
-    let body: { action?: string; email?: string; otp?: string };
-    try {
-      body = await req.json();
-    } catch {
-      return new Response(
-        JSON.stringify({ success: false, error: "INVALID_REQUEST", message: "Malformed JSON body." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const action = body?.action || "send_code";
     const rawEmail = body?.email || "";
 
     // 3. Institutional Domain Validation
@@ -203,6 +298,7 @@ serve(async (req: Request) => {
     }
 
     const normalizedEmail = domainValidation.normalized;
+    const recipientDomain = normalizedEmail.split("@")[1] || "ritchennai.edu.in";
 
     // ACTION A: SEND VERIFICATION CODE
     if (action === "send_code") {
@@ -253,8 +349,34 @@ serve(async (req: Request) => {
         );
       }
 
-      // Deliver verification email
-      await deliverOtpEmail(normalizedEmail, plaintextOtp);
+      // Deliver verification email to institutional inbox
+      const deliveryResult = await deliverOtpEmail(normalizedEmail, plaintextOtp, recipientDomain);
+
+      // CRITICAL: If email delivery fails, invalidate the pending OTP immediately
+      if (!deliveryResult.success) {
+        try {
+          await userClient.rpc("invalidate_pending_college_email_otp", {
+            p_otp_hash: otpHash,
+          });
+        } catch (cleanupErr) {
+          console.warn("[verify-college-email] Failed to invalidate pending OTP after send failure:", cleanupErr);
+        }
+
+        const isNotConfigured = deliveryResult.error === "EMAIL_PROVIDER_NOT_CONFIGURED";
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: deliveryResult.error,
+            message: isNotConfigured
+              ? "Email verification is temporarily unavailable."
+              : "We couldn't send the verification email. Please try again.",
+          }),
+          {
+            status: isNotConfigured ? 503 : 502,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
 
       // CRITICAL: Plaintext OTP and OTP hash are NEVER returned to the client
       return new Response(

@@ -293,6 +293,12 @@ export interface Database {
         };
         Returns: Json;
       };
+      invalidate_pending_college_email_otp: {
+        Args: {
+          p_otp_hash: string;
+        };
+        Returns: Json;
+      };
       unlink_college_identity: {
         Args: Record<PropertyKey, never>;
         Returns: Json;

@@ -43,18 +43,6 @@ export interface CollegeIdentityUnlinkResult {
   unlinkedRecords: number;
 }
 
-const CLIENT_SALT = '::rit_campus_identity_secret_salt_2026';
-
-async function computeSha256(text: string): Promise<string> {
-  if (typeof crypto !== 'undefined' && crypto.subtle) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(text + CLIENT_SALT);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-  }
-  return 'sha256fallback';
-}
 
 // In-memory simulation registry for local dev fallback when Supabase RPC is offline
 const localDevClaimRegistry = new Map<string, { userId: string; unlinkedAt?: string }>();
@@ -461,7 +449,22 @@ export class VerificationService {
         };
       }
 
-      // 3. Try calling Edge Function verify-college-email
+      // 3. Local dev mock fallback (ONLY if Supabase is completely unconfigured)
+      if (!isSupabaseConfigured) {
+        return {
+          success: true,
+          data: {
+            confirmationSent: true,
+            message: 'Verification code sent to your institutional mailbox.',
+            expiresIn: 600,
+          },
+          error: null,
+        };
+      }
+
+      // 4. Invoke Edge Function verify-college-email (Mail Delivery Backend)
+      // CRITICAL INVARIANT: Direct database RPC is strictly prohibited.
+      // The browser does not know the plaintext OTP and the database RPC cannot deliver email.
       try {
         const { data: edgeData, error: edgeError } = await supabase.functions.invoke('verify-college-email', {
           body: { action: 'send_code', email: normalizedEmail },
@@ -479,96 +482,60 @@ export class VerificationService {
           };
         }
 
-        if (edgeData && edgeData.success === false) {
-          const isDuplicate = edgeData.error === 'COLLEGE_EMAIL_ALREADY_LINKED';
-          const isRateLimited = edgeData.error === 'RATE_LIMITED';
-          return {
-            success: false,
-            data: null,
-            error: {
-              code: edgeData.error || 'REQUEST_FAILED',
-              message: isDuplicate
-                ? 'This college identity is already linked to another account.'
-                : isRateLimited
-                ? 'Too many verification code requests. Please wait a few minutes before trying again.'
-                : edgeData.message || 'Failed to request verification code.',
-            },
-          };
-        }
-      } catch {
-        // Fall back to direct RPC if Edge Function is unavailable
-      }
+        let respError = edgeData?.error;
+        let respMessage = edgeData?.message;
 
-      // 4. Fallback: Call database RPC request_college_email_otp directly
-      const randomOtp = Math.floor(100000 + Math.random() * 900000).toString();
-      const otpHash = await computeSha256(randomOtp);
-
-      const { data: rpcData, error: rpcError } = await supabase.rpc('request_college_email_otp', {
-        p_email: normalizedEmail,
-        p_otp_hash: otpHash,
-        p_expires_in_seconds: 600,
-      });
-
-      if (rpcError) {
-        if (!isSupabaseConfigured) {
-          // Dev mock fallback
-          return {
-            success: true,
-            data: {
-              confirmationSent: true,
-              message: 'Verification code sent to your institutional mailbox.',
-              expiresIn: 600,
-            },
-            error: null,
-          };
+        if (edgeError) {
+          try {
+            const context = (edgeError as any)?.context;
+            if (context && typeof context.json === 'function') {
+              const parsed = await context.json();
+              if (parsed?.error) respError = parsed.error;
+              if (parsed?.message) respMessage = parsed.message;
+            }
+          } catch {
+            // fallback
+          }
         }
 
-        const isDuplicate = rpcError.message?.includes('already linked');
+        const isDuplicate = respError === 'COLLEGE_EMAIL_ALREADY_LINKED';
+        const isRateLimited = respError === 'RATE_LIMITED';
+        const isNotConfigured = respError === 'EMAIL_PROVIDER_NOT_CONFIGURED';
+        const isDeliveryFailed = respError === 'EMAIL_DELIVERY_FAILED';
+
+        let message = respMessage || "We couldn't send the verification email. Please try again.";
+        if (isDuplicate) {
+          message = 'This college identity is already linked to another account.';
+        } else if (isRateLimited) {
+          message = 'Too many verification code requests. Please wait a few minutes before trying again.';
+        } else if (isNotConfigured) {
+          message = 'Email verification is temporarily unavailable.';
+        } else if (isDeliveryFailed) {
+          message = "We couldn't send the verification email. Please try again.";
+        }
+
         return {
           success: false,
           data: null,
           error: {
-            code: isDuplicate ? 'COLLEGE_EMAIL_ALREADY_LINKED' : 'REQUEST_FAILED',
-            message: isDuplicate
-              ? 'This college identity is already linked to another account.'
-              : rpcError.message || 'Failed to process verification code request.',
+            code: respError || 'EMAIL_DELIVERY_FAILED',
+            message,
           },
         };
-      }
-
-      const response = rpcData as any;
-      if (response && response.success === false) {
-        const isDuplicate = response.error === 'COLLEGE_EMAIL_ALREADY_LINKED';
-        const isRateLimited = response.error === 'RATE_LIMITED';
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "We couldn't send the verification email. Please try again.";
         return {
           success: false,
           data: null,
-          error: {
-            code: response.error || 'REQUEST_FAILED',
-            message: isDuplicate
-              ? 'This college identity is already linked to another account.'
-              : isRateLimited
-              ? 'Too many verification code requests. Please wait a few minutes before trying again.'
-              : response.message || 'Failed to request verification code.',
-          },
+          error: { code: 'EMAIL_DELIVERY_FAILED', message },
         };
       }
-
-      return {
-        success: true,
-        data: {
-          confirmationSent: true,
-          message: 'Verification code sent to your institutional mailbox.',
-          expiresIn: 600,
-        },
-        error: null,
-      };
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to send verification code';
       return {
         success: false,
         data: null,
-        error: { code: 'NETWORK_ERROR', message },
+        error: { code: 'EMAIL_DELIVERY_FAILED', message },
       };
     }
   }
@@ -622,7 +589,37 @@ export class VerificationService {
         };
       }
 
-      // 1. Try calling Edge Function verify-college-email
+      // Local dev mock fallback (ONLY if Supabase is completely unconfigured)
+      if (!isSupabaseConfigured) {
+        const mockKey = `email-mock-${normalizedEmail}`;
+        const existing = localDevClaimRegistry.get(mockKey);
+        if (existing && existing.userId !== currentUserId && !existing.unlinkedAt) {
+          return {
+            success: false,
+            data: null,
+            error: {
+              code: 'COLLEGE_EMAIL_ALREADY_LINKED',
+              message: 'This college identity is already linked to another account.',
+            },
+          };
+        }
+        localDevClaimRegistry.set(mockKey, { userId: currentUserId });
+        return {
+          success: true,
+          data: {
+            verified: true,
+            identityLinked: true,
+            collegeIdentityId: 'local-dev-mock-id',
+            identityHashPreview: 'sha256...',
+            verifiedAt: new Date().toISOString(),
+            isMockData: true,
+            verificationMethod: 'college_email',
+          },
+          error: null,
+        };
+      }
+
+      // Invoke Edge Function verify-college-email
       try {
         const { data: edgeData, error: edgeError } = await supabase.functions.invoke('verify-college-email', {
           body: { action: 'verify_code', email: normalizedEmail, otp: cleanOtp },
@@ -645,90 +642,26 @@ export class VerificationService {
           };
         }
 
-        if (edgeData && edgeData.success === false) {
-          const isDuplicate = edgeData.error === 'COLLEGE_EMAIL_ALREADY_LINKED';
-          const isExpired = edgeData.error === 'OTP_EXPIRED';
-          const isWrong = edgeData.error === 'WRONG_OTP';
-          const isRateLimited = edgeData.error === 'TOO_MANY_ATTEMPTS';
+        let respError = edgeData?.error;
+        let respMessage = edgeData?.message;
 
-          const message = isDuplicate
-            ? 'This college identity is already linked to another account.'
-            : isExpired
-            ? 'That code has expired. Request a new one.'
-            : isWrong
-            ? 'That code is incorrect.'
-            : isRateLimited
-            ? 'Too many incorrect attempts. Please request a new verification code.'
-            : edgeData.message || 'Verification could not be confirmed.';
-
-          return {
-            success: false,
-            data: null,
-            error: {
-              code: edgeData.error || 'VERIFICATION_FAILED',
-              message,
-            },
-          };
-        }
-      } catch {
-        // Fall back to direct RPC if Edge Function is unavailable
-      }
-
-      // 2. Fallback: Call database RPC verify_college_email_otp directly
-      const candidateOtpHash = await computeSha256(cleanOtp);
-
-      const { data: rpcData, error: rpcError } = await supabase.rpc('verify_college_email_otp', {
-        p_email: normalizedEmail,
-        p_otp_hash: candidateOtpHash,
-      });
-
-      if (rpcError) {
-        if (!isSupabaseConfigured) {
-          // Dev mock fallback
-          const mockKey = `email-mock-${normalizedEmail}`;
-          const existing = localDevClaimRegistry.get(mockKey);
-          if (existing && existing.userId !== currentUserId && !existing.unlinkedAt) {
-            return {
-              success: false,
-              data: null,
-              error: {
-                code: 'COLLEGE_EMAIL_ALREADY_LINKED',
-                message: 'This college identity is already linked to another account.',
-              },
-            };
+        if (edgeError) {
+          try {
+            const context = (edgeError as any)?.context;
+            if (context && typeof context.json === 'function') {
+              const parsed = await context.json();
+              if (parsed?.error) respError = parsed.error;
+              if (parsed?.message) respMessage = parsed.message;
+            }
+          } catch {
+            // fallback
           }
-          localDevClaimRegistry.set(mockKey, { userId: currentUserId });
-          return {
-            success: true,
-            data: {
-              verified: true,
-              identityLinked: true,
-              collegeIdentityId: 'local-dev-mock-id',
-              identityHashPreview: 'sha256...',
-              verifiedAt: new Date().toISOString(),
-              isMockData: true,
-              verificationMethod: 'college_email',
-            },
-            error: null,
-          };
         }
 
-        return {
-          success: false,
-          data: null,
-          error: {
-            code: rpcError.code || 'VERIFICATION_FAILED',
-            message: rpcError.message || 'College email verification failed on server.',
-          },
-        };
-      }
-
-      const response = rpcData as any;
-      if (response && response.success === false) {
-        const isDuplicate = response.error === 'COLLEGE_EMAIL_ALREADY_LINKED';
-        const isExpired = response.error === 'OTP_EXPIRED';
-        const isWrong = response.error === 'WRONG_OTP';
-        const isRateLimited = response.error === 'TOO_MANY_ATTEMPTS';
+        const isDuplicate = respError === 'COLLEGE_EMAIL_ALREADY_LINKED';
+        const isExpired = respError === 'OTP_EXPIRED';
+        const isWrong = respError === 'WRONG_OTP';
+        const isRateLimited = respError === 'TOO_MANY_ATTEMPTS';
 
         const message = isDuplicate
           ? 'This college identity is already linked to another account.'
@@ -738,32 +671,26 @@ export class VerificationService {
           ? 'That code is incorrect.'
           : isRateLimited
           ? 'Too many incorrect attempts. Please request a new verification code.'
-          : response.message || 'Verification could not be confirmed.';
+          : respMessage || 'That code is incorrect.';
 
         return {
           success: false,
           data: null,
           error: {
-            code: response.error || 'VERIFICATION_FAILED',
+            code: respError || 'VERIFICATION_FAILED',
             message,
           },
         };
+      } catch (err: unknown) {
+        return {
+          success: false,
+          data: null,
+          error: {
+            code: 'VERIFICATION_FAILED',
+            message: 'That code is incorrect.',
+          },
+        };
       }
-
-      return {
-        success: true,
-        data: {
-          verified: true,
-          identityLinked: true,
-          collegeIdentityId: response?.college_identity_id || 'verified',
-          identityHashPreview: 'sha256...',
-          verifiedAt: response?.verified_at || new Date().toISOString(),
-          isMockData: false,
-          verificationMethod: 'college_email',
-          alreadyLinkedToSelf: Boolean(response?.already_linked_to_self),
-        },
-        error: null,
-      };
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown email verification error';
       return {
