@@ -92,19 +92,19 @@ export const LandingPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Column: Clean Campus Visual in Soft Rounded Container */}
+          {/* Right Column: Anonymous Visual in Soft Rounded Container */}
           <div className="lg:col-span-5">
-            <div className="relative rounded-2xl overflow-hidden border border-gray-200/90 shadow-card bg-white p-2">
+            <div className="relative rounded-2xl overflow-hidden border border-gray-200/90 dark:border-slate-800 shadow-card bg-white dark:bg-slate-900 p-2">
               <img
-                src="/campus.jpg"
-                alt="Rajalakshmi Institute of Technology Campus"
-                className="w-full h-auto aspect-[4/3] object-cover rounded-xl"
+                src="/heisenberg.png"
+                alt="Heisenberg"
+                className="w-full h-auto aspect-[4/3] object-cover object-top rounded-xl"
               />
-              <div className="p-3 text-center bg-white">
-                <p className="text-xs font-semibold text-gray-800">
+              <div className="p-3 text-center bg-white dark:bg-slate-900">
+                <p className="text-xs font-semibold text-gray-800 dark:text-slate-200">
                   Rajalakshmi Institute of Technology
                 </p>
-                <p className="text-[11px] text-gray-500">
+                <p className="text-[11px] text-gray-500 dark:text-slate-400">
                   Verified anonymous connection for all departments
                 </p>
               </div>
