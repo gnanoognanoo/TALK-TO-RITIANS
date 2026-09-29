@@ -37,10 +37,16 @@ export const LandingPage: React.FC = () => {
             <span>Exclusively for Rajalakshmi Institute of Technology</span>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-gray-900 dark:text-[#F2F5F2] leading-[1.12]">
-            Real Students.<br />
-            Real Conversations.<br />
-            Cooked by <span className="text-brand-600 dark:text-[#9CB65F] dark:[text-shadow:0_0_18px_rgba(140,170,80,0.12)]">HEISENBERG.</span>
+          <h1 className="tracking-tight text-left">
+            <span className="block text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 dark:text-[#F2F5F2] leading-[1.1]">
+              Talk to RITians
+            </span>
+            <span className="block text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-[#F2F5F2] mt-2 sm:mt-3 leading-tight">
+              Cooked by{' '}
+              <span className="text-brand-600 dark:text-[#9CB65F] dark:[text-shadow:0_0_18px_rgba(140,170,80,0.12)]">
+                HEISENBERG
+              </span>
+            </span>
           </h1>
 
           <p className="text-base sm:text-lg text-gray-600 dark:text-[#AEB9AE] font-normal leading-relaxed max-w-xl">
