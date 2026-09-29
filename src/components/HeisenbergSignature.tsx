@@ -78,7 +78,7 @@ export const HeisenbergSignature: React.FC<HeisenbergSignatureProps> = ({
         />
         <span>
           Built for RITians. Signed:{' '}
-          <span className="font-signature font-bold text-sm tracking-wide text-gray-600 dark:text-[#9CB65F] dark:[text-shadow:0_0_18px_rgba(140,170,80,0.10)] group-hover:text-gray-800 dark:group-hover:text-[#A8C96A]">
+          <span className="font-signature font-bold text-base tracking-wide text-gray-600 dark:text-[#9CB65F] dark:[text-shadow:0_0_18px_rgba(140,170,80,0.10)] group-hover:text-gray-800 dark:group-hover:text-[#A8C96A]">
             Heisenberg
           </span>
         </span>
@@ -94,7 +94,7 @@ export const HeisenbergSignature: React.FC<HeisenbergSignatureProps> = ({
         <HeisenbergIcon size={14} className="text-gray-400 dark:text-[#8FAF56]" />
         <span>
           An anonymous student project by{' '}
-          <span className="font-signature font-bold text-base text-gray-700 dark:text-[#9CB65F] dark:[text-shadow:0_0_18px_rgba(140,170,80,0.10)] tracking-wide">
+          <span className="font-signature font-bold text-lg text-gray-700 dark:text-[#9CB65F] dark:[text-shadow:0_0_18px_rgba(140,170,80,0.10)] tracking-wide">
             Heisenberg
           </span>
         </span>
@@ -109,7 +109,7 @@ export const HeisenbergSignature: React.FC<HeisenbergSignatureProps> = ({
       <HeisenbergIcon size={13} className="text-gray-400 dark:text-[#8FAF56]" />
       <span>
         Cooked by{' '}
-        <span className="font-signature font-bold text-sm text-gray-600 dark:text-[#9CB65F] dark:[text-shadow:0_0_18px_rgba(140,170,80,0.10)]">Heisenberg</span>
+        <span className="font-signature font-bold text-base text-gray-600 dark:text-[#9CB65F] dark:[text-shadow:0_0_18px_rgba(140,170,80,0.10)]">Heisenberg</span>
       </span>
     </div>
   );

@@ -43,7 +43,7 @@ export const LandingPage: React.FC = () => {
             </span>
             <span className="block text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-[#F2F5F2] mt-2 sm:mt-3 leading-tight">
               Cooked by{' '}
-              <span className="font-signature font-bold text-3xl sm:text-4xl lg:text-5xl text-brand-600 dark:text-[#9CB65F] dark:[text-shadow:0_0_18px_rgba(140,170,80,0.12)]">
+              <span className="font-signature font-bold text-5xl sm:text-6xl lg:text-7xl text-brand-600 dark:text-[#9CB65F] dark:[text-shadow:0_0_18px_rgba(140,170,80,0.12)] inline-block align-baseline ml-1">
                 Heisenberg
               </span>
             </span>

@@ -78,12 +78,12 @@ export const CreatorSplashScreen: React.FC<CreatorSplashScreenProps> = ({ forceS
         </p>
 
         {/* HEISENBERG [signature icon] */}
-        <div className="splash-creator flex items-center justify-center gap-2.5 pt-0.5">
-          <span className="font-signature font-bold text-2xl sm:text-3xl tracking-wide text-[#9CB65F] [text-shadow:0_0_18px_rgba(140,170,80,0.12)]">
+        <div className="splash-creator flex items-center justify-center gap-3 pt-0.5">
+          <span className="font-signature font-bold text-3xl sm:text-4xl lg:text-5xl tracking-wide text-[#9CB65F] [text-shadow:0_0_18px_rgba(140,170,80,0.12)]">
             Heisenberg
           </span>
           <HeisenbergIcon
-            size={20}
+            size={24}
             className="text-[#8FAF56] shrink-0"
             aria-hidden="true"
           />
