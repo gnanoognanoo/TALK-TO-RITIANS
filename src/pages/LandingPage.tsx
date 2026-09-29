@@ -8,7 +8,7 @@ import {
   CheckCircle2,
   Sparkles,
 } from 'lucide-react';
-import { Button, Card, Badge } from '../components';
+import { Button, Card, Badge, HeisenbergIcon } from '../components';
 import { useAuth } from '../context';
 
 export const LandingPage: React.FC = () => {
@@ -30,96 +30,80 @@ export const LandingPage: React.FC = () => {
       {/* =========================================================================
           HERO SECTION (Matching Reference Phase 1)
           ========================================================================= */}
-      <section className="pt-10 pb-16 md:pt-16 md:pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-          {/* Left Column: Headline, Subheading, CTAs, Badges */}
-          <div className="lg:col-span-7 space-y-6 text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-50 border border-brand-100 text-brand-700 text-xs font-semibold">
-              <Sparkles className="h-3.5 w-3.5 text-brand-600" />
-              <span>Exclusively for Rajalakshmi Institute of Technology</span>
+      <section className="pt-12 pb-16 md:pt-18 md:pb-24 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto w-full">
+        <div className="max-w-3xl space-y-6 text-left">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-50 border border-brand-100 text-brand-700 text-xs font-semibold">
+            <Sparkles className="h-3.5 w-3.5 text-brand-600" />
+            <span>Exclusively for Rajalakshmi Institute of Technology</span>
+          </div>
+
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-gray-900 leading-[1.12]">
+            Real Students.<br />
+            Real Conversations.<br />
+            <span className="text-brand-600">Stay Anonymous.</span>
+          </h1>
+
+          <p className="text-base sm:text-lg text-gray-600 font-normal leading-relaxed max-w-xl">
+            A safe space for RITians to meet, talk, and connect anonymously.
+          </p>
+
+          {/* Action Buttons */}
+          <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
+            <Link to="/login" className="w-full sm:w-auto">
+              <Button
+                variant="primary"
+                size="lg"
+                fullWidth
+                rightIcon={<ArrowRight className="h-4 w-4" />}
+                className="px-6 py-3 font-semibold shadow-sm"
+              >
+                Get Started
+              </Button>
+            </Link>
+
+            <a href="#how-it-works" className="w-full sm:w-auto">
+              <Button
+                variant="secondary"
+                size="lg"
+                fullWidth
+                className="px-6 py-3 font-semibold"
+              >
+                Learn More
+              </Button>
+            </a>
+          </div>
+
+          {/* Below Headline Trust Badges (Non-numeric, Authentic) */}
+          <div className="pt-2 flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-semibold">
+            <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 shadow-sm">
+              <Users className="h-4 w-4 text-brand-600" />
+              <span>RIT Community</span>
             </div>
-
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-gray-900 leading-[1.12]">
-              Real Students.<br />
-              Real Conversations.<br />
-              <span className="text-brand-600">Stay Anonymous.</span>
-            </h1>
-
-            <p className="text-base sm:text-lg text-gray-600 font-normal leading-relaxed max-w-xl">
-              A safe space for RITians to meet, talk, and connect anonymously.
-            </p>
-
-            {/* Action Buttons */}
-            <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
-              <Link to="/login" className="w-full sm:w-auto">
-                <Button
-                  variant="primary"
-                  size="lg"
-                  fullWidth
-                  rightIcon={<ArrowRight className="h-4 w-4" />}
-                  className="px-6 py-3 font-semibold shadow-sm"
-                >
-                  Get Started
-                </Button>
-              </Link>
-
-              <a href="#how-it-works" className="w-full sm:w-auto">
-                <Button
-                  variant="secondary"
-                  size="lg"
-                  fullWidth
-                  className="px-6 py-3 font-semibold"
-                >
-                  Learn More
-                </Button>
-              </a>
+            <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 shadow-sm">
+              <MessageSquare className="h-4 w-4 text-brand-600" />
+              <span>Anonymous Chats</span>
             </div>
-
-            {/* Below Headline Trust Badges (Non-numeric, Authentic) */}
-            <div className="pt-4 flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-semibold">
-              <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 shadow-sm">
-                <Users className="h-4 w-4 text-brand-600" />
-                <span>RIT Community</span>
-              </div>
-              <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 shadow-sm">
-                <MessageSquare className="h-4 w-4 text-brand-600" />
-                <span>Anonymous Chats</span>
-              </div>
-              <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 shadow-sm">
-                <ShieldCheck className="h-4 w-4 text-emerald-600" />
-                <span>Built for Students</span>
-              </div>
+            <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 shadow-sm">
+              <ShieldCheck className="h-4 w-4 text-emerald-600" />
+              <span>Built for Students</span>
             </div>
           </div>
 
-          {/* Right Column: Anonymous Creator Identity Card */}
-          <div className="lg:col-span-5 flex justify-center">
-            <div className="w-full max-w-sm sm:max-w-md relative rounded-2xl overflow-hidden border border-slate-800 shadow-2xl bg-slate-950 p-2.5 sm:p-3 text-white">
-              {/* Creator Portrait: 3:4 ratio matches native portrait, framing hat, glasses, and face cleanly */}
-              <div className="relative rounded-xl overflow-hidden bg-slate-900 aspect-[3/4] w-full">
-                <img
-                  src="/heisenberg.png"
-                  alt="Heisenberg - Creator of Talk to RITians"
-                  className="w-full h-full object-cover object-top select-none"
-                  loading="eager"
-                />
-              </div>
-
-              {/* Creator Identity Signature Hierarchy */}
-              <div className="pt-3.5 pb-2 px-2 text-center flex flex-col items-center justify-center space-y-1">
-                <p className="font-serif italic text-sm sm:text-base text-slate-300 tracking-wide">
-                  &ldquo;Say my name.&rdquo;
-                </p>
-                <h3 className="text-sm sm:text-base font-bold tracking-[0.25em] uppercase text-white">
-                  HEISENBERG
-                </h3>
-                <p className="text-[11px] sm:text-xs text-slate-400 font-normal">
-                  Creator of Talk to RITians
-                </p>
-                <p className="text-[10px] text-slate-500 font-mono tracking-wider pt-0.5">
-                  Built in anonymity.
-                </p>
-              </div>
+          {/* Subtle Creator Signature Block */}
+          <div className="pt-6 sm:pt-8 border-t border-gray-200/60 dark:border-slate-800/60 max-w-sm space-y-0.5 select-none">
+            <p className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-slate-300 tracking-tight">
+              Talk to RITians
+            </p>
+            <div className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-mono text-gray-400 dark:text-slate-500">
+              <span>Cooked by</span>
+              <span className="font-bold tracking-wider text-gray-600 dark:text-slate-300 uppercase">
+                HEISENBERG
+              </span>
+              <HeisenbergIcon
+                size={13}
+                className="text-emerald-600/80 dark:text-emerald-400/80 shrink-0 ml-0.5"
+                aria-hidden="true"
+              />
             </div>
           </div>
         </div>

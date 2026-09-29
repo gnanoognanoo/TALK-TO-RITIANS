@@ -108,7 +108,7 @@ export const HeisenbergSignature: React.FC<HeisenbergSignatureProps> = ({
     >
       <HeisenbergIcon size={13} className="text-gray-400 dark:text-slate-500" />
       <span>
-        Created by{' '}
+        Cooked by{' '}
         <span className="font-semibold text-gray-600 dark:text-slate-400">Heisenberg</span>
       </span>
     </div>
