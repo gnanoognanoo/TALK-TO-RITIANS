@@ -30,69 +30,113 @@ export const LandingPage: React.FC = () => {
       {/* =========================================================================
           HERO SECTION (Matching Reference Phase 1)
           ========================================================================= */}
-      <section className="pt-12 pb-16 md:pt-18 md:pb-24 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto w-full">
-        <div className="max-w-3xl space-y-6 text-left">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-50 dark:bg-[#101A12] border border-brand-100 dark:border-[rgba(120,160,100,0.22)] text-brand-700 dark:text-[#A8C96A] text-xs font-semibold">
-            <Sparkles className="h-3.5 w-3.5 text-brand-600 dark:text-[#8FAF56]" />
-            <span>Exclusively for Rajalakshmi Institute of Technology</span>
-          </div>
+      {/* =========================================================================
+          HERO SECTION (Matching Reference Phase 1)
+          ========================================================================= */}
+      <section className="relative overflow-hidden pt-10 pb-14 md:pt-16 md:pb-20 lg:pt-18 lg:pb-24 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
+          {/* Left Column: Hero Text, CTAs & Community Badges */}
+          <div className="lg:col-span-7 space-y-6 text-left">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-50 dark:bg-[#101A12] border border-brand-100 dark:border-[rgba(120,160,100,0.22)] text-brand-700 dark:text-[#A8C96A] text-xs font-semibold">
+              <Sparkles className="h-3.5 w-3.5 text-brand-600 dark:text-[#8FAF56]" />
+              <span>Exclusively for Rajalakshmi Institute of Technology</span>
+            </div>
 
-          <h1 className="tracking-tight text-left">
-            <span className="block text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 dark:text-[#F2F5F2] leading-[1.1]">
-              Talk to RITians
-            </span>
-            <span className="block text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-[#F2F5F2] mt-2 sm:mt-3 leading-tight">
-              Cooked by{' '}
-              <span className="font-signature font-bold text-5xl sm:text-6xl lg:text-7xl text-brand-600 dark:text-[#9CB65F] dark:[text-shadow:0_0_18px_rgba(140,170,80,0.12)] inline-block align-baseline ml-1">
-                Heisenberg
+            <h1 className="tracking-tight text-left">
+              <span className="block text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 dark:text-[#F2F5F2] leading-[1.1]">
+                Talk to RITians
               </span>
-            </span>
-          </h1>
+              <span className="block text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-[#F2F5F2] mt-2 sm:mt-3 leading-tight">
+                Cooked by{' '}
+                <span className="font-signature font-bold text-5xl sm:text-6xl lg:text-7xl text-brand-600 dark:text-[#9CB65F] dark:[text-shadow:0_0_18px_rgba(140,170,80,0.12)] inline-block align-baseline ml-1">
+                  Heisenberg
+                </span>
+              </span>
+            </h1>
 
-          <p className="text-base sm:text-lg text-gray-600 dark:text-[#AEB9AE] font-normal leading-relaxed max-w-xl">
-            A safe space for RITians to meet, talk, and connect anonymously.
-          </p>
+            <p className="text-base sm:text-lg text-gray-600 dark:text-[#AEB9AE] font-normal leading-relaxed max-w-xl">
+              A safe space for RITians to meet, talk, and connect anonymously.
+            </p>
 
-          {/* Action Buttons */}
-          <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
-            <Link to="/login" className="w-full sm:w-auto">
-              <Button
-                variant="primary"
-                size="lg"
-                fullWidth
-                rightIcon={<ArrowRight className="h-4 w-4" />}
-                className="px-6 py-3 font-semibold shadow-sm"
-              >
-                Get Started
-              </Button>
-            </Link>
+            {/* Action Buttons */}
+            <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
+              <Link to="/login" className="w-full sm:w-auto">
+                <Button
+                  variant="primary"
+                  size="lg"
+                  fullWidth
+                  rightIcon={<ArrowRight className="h-4 w-4" />}
+                  className="px-6 py-3 font-semibold shadow-sm"
+                >
+                  Get Started
+                </Button>
+              </Link>
 
-            <a href="#how-it-works" className="w-full sm:w-auto">
-              <Button
-                variant="secondary"
-                size="lg"
-                fullWidth
-                className="px-6 py-3 font-semibold"
-              >
-                Learn More
-              </Button>
-            </a>
+              <a href="#how-it-works" className="w-full sm:w-auto">
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  fullWidth
+                  className="px-6 py-3 font-semibold"
+                >
+                  Learn More
+                </Button>
+              </a>
+            </div>
+
+            {/* Below Headline Trust Badges (Non-numeric, Authentic) */}
+            <div className="pt-2 flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-semibold">
+              <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-[#0D150F]/90 border border-gray-200 dark:border-[rgba(120,160,100,0.16)] text-gray-700 dark:text-[#AEB9AE] shadow-sm">
+                <Users className="h-4 w-4 text-brand-600 dark:text-[#8FAF56]" />
+                <span>RIT Community</span>
+              </div>
+              <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-[#0D150F]/90 border border-gray-200 dark:border-[rgba(120,160,100,0.16)] text-gray-700 dark:text-[#AEB9AE] shadow-sm">
+                <MessageSquare className="h-4 w-4 text-brand-600 dark:text-[#8FAF56]" />
+                <span>Anonymous Chats</span>
+              </div>
+              <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-[#0D150F]/90 border border-gray-200 dark:border-[rgba(120,160,100,0.16)] text-gray-700 dark:text-[#AEB9AE] shadow-sm">
+                <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-[#7FAE61]" />
+                <span>Built for Students</span>
+              </div>
+            </div>
           </div>
 
-          {/* Below Headline Trust Badges (Non-numeric, Authentic) */}
-          <div className="pt-2 flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-semibold">
-            <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-[#0D150F]/90 border border-gray-200 dark:border-[rgba(120,160,100,0.16)] text-gray-700 dark:text-[#AEB9AE] shadow-sm">
-              <Users className="h-4 w-4 text-brand-600 dark:text-[#8FAF56]" />
-              <span>RIT Community</span>
+          {/* Right Column: Decorative Heisenberg Creator Emblem (Floats naturally, dark-mode atmospheric visual) */}
+          <div
+            className="hidden dark:flex lg:col-span-5 flex-col items-center justify-center relative select-none pointer-events-none mt-8 lg:mt-0"
+            aria-hidden="true"
+          >
+            {/* Soft Atmospheric Green Glow */}
+            <div
+              className="absolute -inset-8 sm:-inset-12 rounded-full pointer-events-none"
+              style={{
+                background:
+                  'radial-gradient(circle, rgba(130, 160, 70, 0.12) 0%, rgba(130, 160, 70, 0.03) 50%, transparent 70%)',
+              }}
+            />
+
+            {/* Optional Subtle Chemistry Notation Offset Outside Face Symbol */}
+            <div className="absolute top-0 right-2 sm:right-6 text-right opacity-[0.06] select-none pointer-events-none">
+              <span className="font-serif text-2xl sm:text-3xl text-[#9CB65F] tracking-tight block">
+                C<sub>10</sub>H<sub>15</sub>N
+              </span>
+              <span className="font-mono text-[10px] sm:text-xs text-[#A8C96A] tracking-widest block">
+                149.24
+              </span>
             </div>
-            <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-[#0D150F]/90 border border-gray-200 dark:border-[rgba(120,160,100,0.16)] text-gray-700 dark:text-[#AEB9AE] shadow-sm">
-              <MessageSquare className="h-4 w-4 text-brand-600 dark:text-[#8FAF56]" />
-              <span>Anonymous Chats</span>
-            </div>
-            <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-[#0D150F]/90 border border-gray-200 dark:border-[rgba(120,160,100,0.16)] text-gray-700 dark:text-[#AEB9AE] shadow-sm">
-              <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-[#7FAE61]" />
-              <span>Built for Students</span>
-            </div>
+
+            {/* Floating Heisenberg Emblem Asset */}
+            <picture className="relative z-10 w-full flex justify-center">
+              <source srcSet="/heisenberg-emblem.webp" type="image/webp" />
+              <img
+                src="/heisenberg-emblem.png"
+                alt=""
+                aria-hidden="true"
+                loading="eager"
+                decoding="async"
+                className="w-[180px] sm:w-[210px] md:w-[260px] lg:w-[290px] xl:w-[350px] 2xl:w-[390px] h-auto object-contain filter drop-shadow-[0_0_30px_rgba(140,170,80,0.12)]"
+              />
+            </picture>
           </div>
         </div>
       </section>

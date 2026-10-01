@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 168" width="200" height="168" fill="none">
+  <defs>
+    <!-- Card Gradient -->
+    <linearGradient id="cardGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a5832" />
+      <stop offset="45%" stop-color="#134427" />
+      <stop offset="100%" stop-color="#0b2c18" />
+    </linearGradient>
+
+    <!-- Green Glow for Right Bubble -->
+    <filter id="greenGlow" x="-35%" y="-35%" width="170%" height="170%">
+      <feDropShadow dx="0" dy="0" stdDeviation="4.5" flood-color="#4ADE80" flood-opacity="0.6" />
+      <feDropShadow dx="0" dy="0" stdDeviation="1.5" flood-color="#5CD678" flood-opacity="0.85" />
+    </filter>
+
+    <!-- Drop Shadow for Left Bubble -->
+    <filter id="leftBubbleShadow" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="3" dy="3" stdDeviation="3.5" flood-color="#000000" flood-opacity="0.75" />
+    </filter>
+
+    <!-- Drop Shadow for Ba Card -->
+    <filter id="baCardShadow" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="-2" dy="2" stdDeviation="2.5" flood-color="#000000" flood-opacity="0.7" />
+    </filter>
+
+    <!-- Metallic/Silver Stroke Gradient for Left Bubble -->
+    <linearGradient id="silverStroke" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="40%" stop-color="#F8FAFC" />
+      <stop offset="85%" stop-color="#CBD5E1" />
+      <stop offset="100%" stop-color="#94A3B8" />
+    </linearGradient>
+
+    <!-- Vivid Green Stroke Gradient -->
+    <linearGradient id="greenStroke" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6EE7B7" />
+      <stop offset="50%" stop-color="#4ADE80" />
+      <stop offset="100%" stop-color="#22C55E" />
+    </linearGradient>
+  </defs>
+
+  <!-- RIGHT SPEECH BUBBLE (Behind, Green) -->
+  <g filter="url(#greenGlow)">
+    <path
+      d="M 98 12
+         H 176
+         A 19 19 0 0 1 195 31
+         V 102
+         A 19 19 0 0 1 176 121
+         H 164
+         L 178 152
+         L 146 121
+         H 98
+         A 19 19 0 0 1 79 102
+         V 31
+         A 19 19 0 0 1 98 12 Z"
+      fill="#050806"
+      stroke="url(#greenStroke)"
+      stroke-width="4.5"
+      stroke-linejoin="round"
+    />
+  </g>
+
+  <!-- LEFT SPEECH BUBBLE (In Front, Silver/White) -->
+  <g filter="url(#leftBubbleShadow)">
+    <path
+      d="M 36 28
+         H 114
+         A 19 19 0 0 1 133 47
+         V 116
+         A 19 19 0 0 1 114 135
+         H 60
+         L 32 161
+         L 41 135
+         H 36
+         A 19 19 0 0 1 17 116
+         V 47
+         A 19 19 0 0 1 36 28 Z"
+      fill="#050806"
+      stroke="url(#silverStroke)"
+      stroke-width="4.5"
+      stroke-linejoin="round"
+    />
+  </g>
+
+  <!-- PERIODIC TABLE CARD 1: [ 35 | Br ] -->
+  <g transform="translate(32, 44)">
+    <rect width="70" height="70" rx="2" fill="url(#cardGrad)" stroke="#061f10" stroke-width="1" />
+    <rect x="2" y="2" width="66" height="66" rx="1" fill="none" stroke="#FFFFFF" stroke-width="1.3" opacity="0.95" />
+    <!-- Atomic Number 35 -->
+    <text x="62" y="18" text-anchor="end" fill="#FFFFFF" font-family="'Plus Jakarta Sans', Arial, Helvetica, sans-serif" font-weight="800" font-size="13" letter-spacing="-0.5">35</text>
+    <!-- Element Symbol Br -->
+    <text x="8" y="55" fill="#FFFFFF" font-family="'Plus Jakarta Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="39" letter-spacing="-1.5">Br</text>
+  </g>
+
+  <!-- PERIODIC TABLE CARD 2: [ 56 | Ba ] -->
+  <g transform="translate(99, 44)" filter="url(#baCardShadow)">
+    <rect width="70" height="70" rx="2" fill="url(#cardGrad)" stroke="#061f10" stroke-width="1" />
+    <rect x="2" y="2" width="66" height="66" rx="1" fill="none" stroke="#FFFFFF" stroke-width="1.3" opacity="0.95" />
+    <!-- Atomic Number 56 -->
+    <text x="62" y="18" text-anchor="end" fill="#FFFFFF" font-family="'Plus Jakarta Sans', Arial, Helvetica, sans-serif" font-weight="800" font-size="13" letter-spacing="-0.5">56</text>
+    <!-- Element Symbol Ba -->
+    <text x="8" y="55" fill="#FFFFFF" font-family="'Plus Jakarta Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="39" letter-spacing="-1.5">Ba</text>
+  </g>
+</svg>
