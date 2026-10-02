@@ -271,7 +271,7 @@ export const SettingsPage: React.FC = () => {
         </Link>
       </div>
 
-      {/* Privileged Staff Access Card (Visible to DEVELOPER / ADMIN only) */}
+      {/* Privileged Staff Access Card (Visible to DEVELOPER only) */}
       {isStaff && (
         <Card className="border-amber-300 dark:border-amber-800 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20 shadow-md">
           <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -279,7 +279,7 @@ export const SettingsPage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Terminal className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                 <h3 className="text-base font-bold text-gray-900 dark:text-white">
-                  Developer &amp; Admin Console
+                  Developer Console
                 </h3>
                 <Badge variant="warning" size="sm">
                   {staffRole?.toUpperCase() || 'DEVELOPER'}

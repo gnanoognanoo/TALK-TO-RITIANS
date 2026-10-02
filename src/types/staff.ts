@@ -4,7 +4,7 @@
  * ============================================================================
  */
 
-export type PlatformStaffRole = 'developer' | 'admin';
+export type PlatformStaffRole = 'developer';
 
 export interface PlatformStaffRow {
   user_id: string;

@@ -20,6 +20,7 @@ export interface AuthContextType {
   profile: ProfileRow | null;
   loading: boolean;
   isStaff: boolean;
+  isDeveloper: boolean;
   staffRole: PlatformStaffRole | null;
   signInWithEmail: (email: string) => Promise<{ success: boolean; error?: string }>;
   signInWithPassword: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
@@ -314,6 +315,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     profile,
     loading,
     isStaff,
+    isDeveloper: isStaff && staffRole === 'developer',
     staffRole,
     signInWithEmail,
     signInWithPassword,
