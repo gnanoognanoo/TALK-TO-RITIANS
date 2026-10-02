@@ -104,3 +104,17 @@ To prevent students from creating multiple accounts with the same physical ID ca
    ```
 3. If an account is already linked to that hash, the transaction aborts with error `COLLEGE_ID_ALREADY_LINKED`.
 4. The raw QR data is never retained in cleartext logs.
+
+---
+
+## 6. Administrative Oversight, Moderation & Auditability
+
+1. **Peer Anonymity**:
+   - A student's real identity, registration number, and department credentials remain permanently concealed from chat partners.
+2. **Authorized Staff Access**:
+   - Authorized platform administrators (`developer`, `admin`) may access limited information strictly for abuse reports, platform safety, technical operations, or debugging.
+3. **Mandatory Audited Reason**:
+   - Access to private profiles or room moderation transcripts requires a mandatory documented reason and automatically writes an immutable record to `public.admin_audit_log`.
+   - Direct, unrestricted `SELECT` on `chat_messages` is prohibited from browser clients.
+4. **Zero Secret Observer Presence**:
+   - Staff moderation never joins an active chat room as an invisible third participant. Participant limits and timers remain completely untouched.

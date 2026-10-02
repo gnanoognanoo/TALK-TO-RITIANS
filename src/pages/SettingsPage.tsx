@@ -27,6 +27,8 @@ import {
   RefreshCw,
   CreditCard,
   MessageSquare,
+  Terminal,
+  Upload,
 } from 'lucide-react';
 import {
   Button,
@@ -44,16 +46,17 @@ import {
 import { useAuth, useTheme } from '../context';
 import { GENDER_OPTIONS } from '../config/profileConfig';
 import { profileService } from '../services/profileService';
+import { staffService } from '../services/staffService';
 import { getRandomShortAlias } from '../services/aliasPool';
 import { getEffectivePersona } from '../utils/persona';
 import { presenceService } from '../services/presenceService';
 
 export const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, profile, refreshProfile, unlinkCollegeIdentity, signOut } = useAuth();
+  const { user, profile, isStaff, staffRole, refreshProfile, unlinkCollegeIdentity, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
 
-  const effectivePersona = getEffectivePersona(profile);
+  const effectivePersona = getEffectivePersona(profile, isStaff);
   const isVerified = effectivePersona.isVerified;
   const displayUsername = effectivePersona.displayUsername;
 
@@ -102,6 +105,71 @@ export const SettingsPage: React.FC = () => {
     await refreshProfile();
     setAliasSuccessMessage('Alias saved!');
     setTimeout(() => setAliasSuccessMessage(null), 3000);
+  };
+
+  // Developer persona state (manual username + gallery avatar upload)
+  const [devUsername, setDevUsername] = useState<string>(() => {
+    if (profile?.display_username && !profile.display_username.startsWith('Unknown User')) {
+      return profile.display_username;
+    }
+    return 'Heisenberg';
+  });
+  const [devAvatarUrl, setDevAvatarUrl] = useState<string | null>(() => {
+    if (profile?.avatar_config && typeof profile.avatar_config === 'object' && 'url' in profile.avatar_config) {
+      return (profile.avatar_config as { url?: string }).url || null;
+    }
+    return null;
+  });
+  const [isUploadingDevAvatar, setIsUploadingDevAvatar] = useState<boolean>(false);
+  const [isSavingDevPersona, setIsSavingDevPersona] = useState<boolean>(false);
+  const [devPersonaSuccess, setDevPersonaSuccess] = useState<string | null>(null);
+  const [devPersonaError, setDevPersonaError] = useState<string | null>(null);
+
+  // Sync dev persona when profile changes
+  useEffect(() => {
+    if (profile?.display_username && !profile.display_username.startsWith('Unknown User')) {
+      setDevUsername(profile.display_username);
+    }
+    if (profile?.avatar_config && typeof profile.avatar_config === 'object' && 'url' in profile.avatar_config) {
+      setDevAvatarUrl((profile.avatar_config as { url?: string }).url || null);
+    }
+  }, [profile?.display_username, profile?.avatar_config]);
+
+  const handleUploadDevAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingDevAvatar(true);
+    setDevPersonaError(null);
+    setDevPersonaSuccess(null);
+
+    const res = await staffService.uploadDeveloperAvatar(file);
+    setIsUploadingDevAvatar(false);
+
+    if (!res.success || !res.data) {
+      setDevPersonaError(res.error?.message || 'Failed to upload avatar.');
+      return;
+    }
+
+    setDevAvatarUrl(res.data.publicUrl);
+    setDevPersonaSuccess('Avatar uploaded! Click Save Developer Persona to apply.');
+  };
+
+  const handleSaveDevPersona = async () => {
+    setIsSavingDevPersona(true);
+    setDevPersonaError(null);
+    setDevPersonaSuccess(null);
+
+    const res = await staffService.setDeveloperPersona(devUsername, devAvatarUrl || undefined);
+    setIsSavingDevPersona(false);
+
+    if (!res.success) {
+      setDevPersonaError(res.error?.message || 'Failed to save developer persona.');
+      return;
+    }
+
+    await refreshProfile();
+    setDevPersonaSuccess('Developer persona saved successfully!');
+    setTimeout(() => setDevPersonaSuccess(null), 3000);
   };
 
   // Gender selection & freeze state
@@ -203,6 +271,33 @@ export const SettingsPage: React.FC = () => {
         </Link>
       </div>
 
+      {/* Privileged Staff Access Card (Visible to DEVELOPER / ADMIN only) */}
+      {isStaff && (
+        <Card className="border-amber-300 dark:border-amber-800 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20 shadow-md">
+          <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Terminal className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                <h3 className="text-base font-bold text-gray-900 dark:text-white">
+                  Developer &amp; Admin Console
+                </h3>
+                <Badge variant="warning" size="sm">
+                  {staffRole?.toUpperCase() || 'DEVELOPER'}
+                </Badge>
+              </div>
+              <p className="text-xs text-gray-600 dark:text-slate-300">
+                Access realtime campus overview, online users, active rooms, and audited moderation transcripts.
+              </p>
+            </div>
+            <Link to="/developer">
+              <Button variant="primary" size="sm" className="shrink-0 bg-amber-600 hover:bg-amber-700 text-white font-semibold">
+                Open Console &rarr;
+              </Button>
+            </Link>
+          </div>
+        </Card>
+      )}
+
       {/* =========================================================================
           SECTION A: PROFILE CUSTOMIZATION
           ========================================================================= */}
@@ -215,7 +310,11 @@ export const SettingsPage: React.FC = () => {
                 Profile Customization
               </CardTitle>
             </div>
-            {isVerified ? (
+            {isStaff ? (
+              <Badge variant="warning" size="sm" withDot>
+                Staff Persona Unlocked
+              </Badge>
+            ) : isVerified ? (
               <Badge variant="success" size="sm" withDot>
                 Unlocked
               </Badge>
@@ -226,14 +325,130 @@ export const SettingsPage: React.FC = () => {
             )}
           </div>
           <CardDescription className="text-xs sm:text-sm text-gray-500 dark:text-slate-400">
-            {isVerified
+            {isStaff
+              ? 'Developer persona mode: custom typed handle and gallery avatar image.'
+              : isVerified
               ? 'Customize your anonymous public handle and modular vector avatar.'
               : 'Verify your RIT ID to unlock anonymous alias and avatar customization.'}
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {!isVerified ? (
+          {isStaff ? (
+            /* DEVELOPER PERSONA CUSTOMIZATION (Custom Typed Username + Gallery Avatar) */
+            <div className="space-y-6">
+              <div className="p-4 rounded-xl bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/40 flex items-start gap-3">
+                <Terminal className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <h4 className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider">
+                    Developer Persona Mode
+                  </h4>
+                  <p className="text-xs text-gray-600 dark:text-slate-300 leading-relaxed">
+                    Physical RIT ID verification is bypassed for platform staff without faking student records. You can manually enter any custom username and upload an avatar image from your gallery.
+                  </p>
+                </div>
+              </div>
+
+              {/* Developer Username Input */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="dev-username-input" className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider block">
+                    Custom Anonymous Username
+                  </label>
+                  <span className="text-[11px] font-mono text-gray-400">
+                    {devUsername.length}/20 chars
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    id="dev-username-input"
+                    type="text"
+                    value={devUsername}
+                    onChange={(e) => setDevUsername(e.target.value)}
+                    maxLength={20}
+                    placeholder="e.g. Heisenberg"
+                    className="flex-1 px-3.5 py-2 text-sm rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium"
+                  />
+                </div>
+                <p className="text-[11px] text-gray-500 dark:text-slate-400">
+                  Must be 3–20 characters. Trimmed automatically. HTML and control characters are rejected.
+                </p>
+              </div>
+
+              {/* Gallery Avatar Upload */}
+              <div className="space-y-3 pt-2">
+                <span className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider block">
+                  Gallery Avatar
+                </span>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-xl bg-gray-50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700">
+                  <Avatar
+                    size="xl"
+                    src={devAvatarUrl || undefined}
+                    avatarConfig={!devAvatarUrl ? effectivePersona.avatarConfig : undefined}
+                    initials={devUsername.slice(0, 2).toUpperCase()}
+                    shape="circle"
+                  />
+                  <div className="space-y-2 flex-1">
+                    <h4 className="text-sm font-bold text-gray-900 dark:text-white">
+                      Device Gallery Upload
+                    </h4>
+                    <p className="text-xs text-gray-500 dark:text-slate-400">
+                      Upload any JPEG, PNG, or WebP image. Automatically cropped to square and optimized to 512x512 WebP with metadata stripped. Max 5 MB.
+                    </p>
+                    <div className="flex items-center gap-3">
+                      <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 text-xs font-semibold text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer transition-colors shadow-sm">
+                        <Upload className="h-3.5 w-3.5" />
+                        <span>{isUploadingDevAvatar ? 'Processing...' : 'Upload from Gallery'}</span>
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          onChange={handleUploadDevAvatar}
+                          disabled={isUploadingDevAvatar}
+                          className="hidden"
+                        />
+                      </label>
+                      {devAvatarUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setDevAvatarUrl(null)}
+                          className="text-xs text-rose-600 dark:text-rose-400 hover:underline"
+                        >
+                          Remove image
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Feedback messages */}
+              {devPersonaError && (
+                <p className="text-xs text-rose-600 dark:text-rose-400 font-medium">
+                  {devPersonaError}
+                </p>
+              )}
+              {devPersonaSuccess && (
+                <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
+                  ✓ {devPersonaSuccess}
+                </p>
+              )}
+
+              {/* Save Persona Button */}
+              <div className="pt-2">
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  isLoading={isSavingDevPersona}
+                  loadingText="Saving Persona..."
+                  onClick={handleSaveDevPersona}
+                  className="font-semibold"
+                >
+                  Save Developer Persona
+                </Button>
+              </div>
+            </div>
+          ) : !isVerified ? (
             /* UNVERIFIED LOCKED STATE */
             <div className="p-6 rounded-xl bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/40 text-center space-y-4">
               <div className="h-12 w-12 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto">

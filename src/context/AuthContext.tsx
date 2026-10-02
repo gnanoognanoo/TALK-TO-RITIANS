@@ -9,15 +9,18 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import { ProfileRow } from '../types';
+import { ProfileRow, PlatformStaffRole } from '../types';
 import { authService, generateTemporaryUsername, getPostLoginRedirect } from '../services/authService';
 import { verificationService } from '../services/verificationService';
+import { staffService } from '../services/staffService';
 
 export interface AuthContextType {
   user: SupabaseUser | null;
   session: Session | null;
   profile: ProfileRow | null;
   loading: boolean;
+  isStaff: boolean;
+  staffRole: PlatformStaffRole | null;
   signInWithEmail: (email: string) => Promise<{ success: boolean; error?: string }>;
   signInWithPassword: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signUpWithPassword: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
@@ -39,6 +42,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<ProfileRow | null>(null);
+  const [isStaff, setIsStaff] = useState<boolean>(false);
+  const [staffRole, setStaffRole] = useState<PlatformStaffRole | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   /**
@@ -46,11 +51,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
    */
   const loadProfile = useCallback(async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
+      const [profileRes, staffRes] = await Promise.all([
+        supabase.from('profiles').select('*').eq('id', userId).maybeSingle(),
+        staffService.checkStaffStatus(),
+      ]);
+
+      setIsStaff(staffRes.isStaff);
+      setStaffRole(staffRes.role);
+
+      const { data, error } = profileRes;
 
       if (error) {
         console.warn('[AuthContext] Profile fetch warning:', error);
@@ -266,6 +275,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(null);
       setSession(null);
       setProfile(null);
+      setIsStaff(false);
+      setStaffRole(null);
       setLoading(false);
       if (typeof window !== 'undefined') {
         sessionStorage.clear();
@@ -302,6 +313,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     session,
     profile,
     loading,
+    isStaff,
+    staffRole,
     signInWithEmail,
     signInWithPassword,
     signUpWithPassword,

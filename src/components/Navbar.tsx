@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, LogIn, Settings } from 'lucide-react';
+import { Menu, X, LogIn, Settings, Terminal } from 'lucide-react';
 import { Logo } from './Logo';
 import { Badge } from './Badge';
 import { useAuth } from '../context';
@@ -14,7 +14,7 @@ export interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, isStaff } = useAuth();
 
   // Navigation Links for public / unauthenticated visitors only
   const unauthLinks = [
@@ -58,6 +58,22 @@ export const Navbar: React.FC<NavbarProps> = () => {
             >
               <Settings className="h-3.5 w-3.5 text-gray-500 dark:text-[#AEB9AE]" />
               <span>Settings</span>
+            </Link>
+          )}
+
+          {/* Privileged Staff Control: Developer Console (Authorized Staff Only) */}
+          {user && isStaff && (
+            <Link
+              to="/developer"
+              aria-label="Developer Console"
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 active:scale-95 ${
+                location.pathname.startsWith('/developer')
+                  ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700'
+                  : 'text-amber-800 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-300 bg-amber-50/80 dark:bg-amber-950/30 hover:bg-amber-100/90 dark:hover:bg-amber-950/50 border border-amber-200/80 dark:border-amber-900/50'
+              }`}
+            >
+              <Terminal className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+              <span>Console</span>
             </Link>
           )}
         </div>

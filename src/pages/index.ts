@@ -8,4 +8,5 @@ export * from './HomePage';
 export * from './MatchingPage';
 export * from './ChatPage';
 export * from './SettingsPage';
+export * from './DeveloperPage';
 export * from './NotFoundPage';

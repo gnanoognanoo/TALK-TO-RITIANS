@@ -80,3 +80,4 @@ export * from './profileService';
 export * from './matchmakingService';
 export * from './chatService';
 export * from './telemetryService';
+export * from './staffService';

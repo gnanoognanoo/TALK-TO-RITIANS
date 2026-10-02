@@ -51,6 +51,14 @@ export const Avatar: React.FC<AvatarProps> = ({
       ('face' in avatarConfig || 'skin' in avatarConfig || isValidAvatarConfig(avatarConfig))
   );
 
+  const galleryUrl =
+    src ||
+    (avatarConfig && typeof avatarConfig === 'object' && 'type' in avatarConfig && (avatarConfig as any).type === 'gallery'
+      ? (avatarConfig as any).url
+      : avatarConfig && typeof avatarConfig === 'object' && 'url' in avatarConfig
+      ? (avatarConfig as any).url
+      : undefined);
+
   return (
     <div
       className={`
@@ -62,9 +70,9 @@ export const Avatar: React.FC<AvatarProps> = ({
       aria-label={alt}
       {...props}
     >
-      {src ? (
+      {galleryUrl ? (
         <img
-          src={src}
+          src={galleryUrl}
           alt={alt}
           className={`h-full w-full object-cover ${radius}`}
         />

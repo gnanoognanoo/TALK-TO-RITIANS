@@ -10,6 +10,7 @@ export * from './Avatar';
 export * from './Navbar';
 export * from './PageContainer';
 export * from './ProtectedRoute';
+export * from './DeveloperRoute';
 export * from './QrScanner';
 export * from './IdFrontScanner';
 export * from './Logo';

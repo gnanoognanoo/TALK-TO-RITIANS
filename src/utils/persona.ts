@@ -72,6 +72,8 @@ export interface PersonaProfileInput {
   first_verified_at?: string | null;
   name?: string | null;
   full_name?: string | null;
+  is_staff?: boolean | null;
+  staff_role?: string | null;
 }
 
 export interface EffectivePersona {
@@ -97,14 +99,54 @@ export function computeDeterministicUnknownUser(userId?: string | null): string 
 
 /**
  * Resolves the effective public anonymous persona for a profile.
- * When college_identity_linked is false, strictly suppresses any saved alias
- * or custom avatar and returns the deterministic Unknown User and default avatar.
+ * - When user is staff (is_staff: true or isStaffOverride: true):
+ *   Custom typed username and custom gallery/modular avatar are unlocked
+ *   without requiring physical RIT ID verification (never faking college_identity_linked).
+ * - When college_identity_linked is false and not staff, strictly suppresses any saved alias
+ *   or custom avatar and returns the deterministic Unknown User and default avatar.
  */
 export function getEffectivePersona(
-  profile: PersonaProfileInput | null | undefined
+  profile: PersonaProfileInput | null | undefined,
+  isStaffOverride?: boolean
 ): EffectivePersona {
+  const isStaff = Boolean(isStaffOverride || profile?.is_staff);
   const isVerified = Boolean(profile?.college_identity_linked);
   const userId = profile?.id || '';
+
+  // DEVELOPER / STAFF PERSONA: Custom typed username + gallery/modular avatar allowed without physical ID
+  if (isStaff) {
+    const rawUsername = profile?.display_username?.trim();
+    const displayUsername =
+      rawUsername && !rawUsername.startsWith('Unknown User')
+        ? rawUsername
+        : rawUsername || 'Developer';
+
+    const isGalleryAvatar =
+      profile?.avatar_config &&
+      typeof profile.avatar_config === 'object' &&
+      ('url' in (profile.avatar_config as Record<string, unknown>) ||
+        (profile.avatar_config as Record<string, unknown>).type === 'gallery');
+
+    const avatarConfig = isGalleryAvatar
+      ? (profile!.avatar_config as unknown as AvatarConfig)
+      : profile?.avatar_config && isValidAvatarConfig(profile.avatar_config)
+      ? (profile.avatar_config as unknown as AvatarConfig)
+      : DEFAULT_AVATAR_CONFIG;
+
+    const initials = displayUsername
+      .split(' ')
+      .map((w) => w[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase();
+
+    return {
+      displayUsername,
+      avatarConfig,
+      isVerified,
+      initials,
+    };
+  }
 
   if (isVerified) {
     const rawUsername = profile?.display_username?.trim();

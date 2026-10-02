@@ -467,6 +467,77 @@ export interface Database {
         Args: Record<PropertyKey, never>;
         Returns: Json;
       };
+      check_staff_status: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      get_admin_dashboard_stats: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      get_online_users_admin: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      get_user_admin_details: {
+        Args: {
+          p_user_id: string;
+          p_reason: string;
+        };
+        Returns: Json;
+      };
+      get_active_rooms_admin: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      get_room_admin_details: {
+        Args: {
+          p_room_id: string;
+        };
+        Returns: Json;
+      };
+      get_room_moderation_transcript: {
+        Args: {
+          p_room_id: string;
+          p_reason: string;
+        };
+        Returns: Json;
+      };
+      send_admin_chat_invite: {
+        Args: {
+          p_user_id: string;
+        };
+        Returns: Json;
+      };
+      create_test_session: {
+        Args: {
+          p_target_user_id: string;
+        };
+        Returns: Json;
+      };
+      get_admin_audit_logs: {
+        Args: {
+          p_limit?: number;
+        };
+        Returns: Json;
+      };
+      set_developer_persona: {
+        Args: {
+          p_username: string;
+          p_avatar_url?: string | null;
+        };
+        Returns: Json;
+      };
+      log_admin_action: {
+        Args: {
+          p_action: string;
+          p_target_user_id?: string | null;
+          p_room_id?: string | null;
+          p_reason?: string | null;
+          p_metadata?: Json;
+        };
+        Returns: string;
+      };
     };
   };
 }

@@ -33,9 +33,9 @@ import { getEffectivePersona } from '../utils/persona';
 
 export const UsernameSelectionPage: React.FC = () => {
   const navigate = useNavigate();
-  const { profile, refreshProfile } = useAuth();
+  const { profile, refreshProfile, isStaff } = useAuth();
 
-  const effectivePersona = getEffectivePersona(profile);
+  const effectivePersona = getEffectivePersona(profile, isStaff);
   const isVerified = effectivePersona.isVerified;
 
   // Initialize ONE curated short alias

@@ -5,7 +5,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider, ThemeProvider } from './context';
 
 // Guards & Layouts
-import { ProtectedRoute, CreatorSplashScreen } from './components';
+import { ProtectedRoute, DeveloperRoute, CreatorSplashScreen } from './components';
 import { AppLayout, AuthLayout, OnboardingLayout } from './layouts';
 
 // Pages
@@ -20,6 +20,7 @@ import {
   MatchingPage,
   ChatPage,
   SettingsPage,
+  DeveloperPage,
   NotFoundPage,
 } from './pages';
 
@@ -63,6 +64,13 @@ export const App: React.FC = () => {
                 <Route path="/profile/setup" element={<ProfileSetupPage />} />
                 <Route path="/username" element={<UsernameSelectionPage />} />
                 <Route path="/avatar" element={<AvatarBuilderPage />} />
+              </Route>
+            </Route>
+
+            {/* Developer / Admin Console — Requires Authenticated Staff Session */}
+            <Route element={<DeveloperRoute />}>
+              <Route element={<AppLayout />}>
+                <Route path="/developer" element={<DeveloperPage />} />
               </Route>
             </Route>
           </Routes>
