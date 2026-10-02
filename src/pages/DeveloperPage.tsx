@@ -801,11 +801,15 @@ export const DeveloperPage: React.FC = () => {
                                   setUserDetails(null);
                                   setInspectError(null);
                                 }}
-                                title="Inspect private student profile (audited)"
+                                title={
+                                  staffRole !== 'admin'
+                                    ? 'Requires Admin role to inspect private credentials'
+                                    : 'Inspect private student profile (audited)'
+                                }
                                 className="text-xs h-7 px-2"
                               >
                                 <Eye className="h-3.5 w-3.5 mr-1" />
-                                Inspect
+                                Inspect{staffRole !== 'admin' ? ' (Admin)' : ''}
                               </Button>
 
                               {/* Invite to Chat Button */}
@@ -989,9 +993,14 @@ export const DeveloperPage: React.FC = () => {
                                   setTranscriptMessages(null);
                                   setTranscriptError(null);
                                 }}
+                                title={
+                                  staffRole !== 'admin'
+                                    ? 'Requires Admin role to access moderation transcripts'
+                                    : 'Read moderation chat transcript (audited)'
+                                }
                                 className="text-xs h-7 px-2"
                               >
-                                Moderation
+                                Moderation{staffRole !== 'admin' ? ' (Admin)' : ''}
                               </Button>
                             </div>
                           </td>
@@ -1125,6 +1134,15 @@ export const DeveloperPage: React.FC = () => {
                   <strong>Mandatory Auditing:</strong> Inspecting private student credentials creates an immutable log in <code className="font-mono">public.admin_audit_log</code>. Enter a specific operational or moderation reason.
                 </p>
               </div>
+
+              {staffRole !== 'admin' && (
+                <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 text-rose-800 dark:text-rose-300 text-xs flex items-start gap-2.5">
+                  <Shield className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+                  <p>
+                    <strong>Admin Role Required:</strong> Access to private student credentials (real name, department, batch, gender, verification details) is strictly restricted to accounts with the Admin role.
+                  </p>
+                </div>
+              )}
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-gray-700 dark:text-slate-300 uppercase tracking-wider block">
@@ -1398,6 +1416,15 @@ export const DeveloperPage: React.FC = () => {
                   <strong>Mandatory Auditing:</strong> Opening a student conversation transcript creates an immutable log in <code className="font-mono">public.admin_audit_log</code>. Enter a specific operational or moderation reason (minimum 5 characters).
                 </p>
               </div>
+
+              {staffRole !== 'admin' && (
+                <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 text-rose-800 dark:text-rose-300 text-xs flex items-start gap-2.5">
+                  <Shield className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+                  <p>
+                    <strong>Admin Role Required:</strong> Chat transcript inspection is strictly restricted to accounts with the Admin role.
+                  </p>
+                </div>
+              )}
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-gray-700 dark:text-slate-300 uppercase tracking-wider block">

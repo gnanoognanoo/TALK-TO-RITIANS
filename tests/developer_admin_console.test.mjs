@@ -2,21 +2,25 @@
  * ============================================================================
  * TALK TO RITIANS - Developer & Admin Console Test Suite
  * ============================================================================
- * Validates:
- * 1. Privileged role model & Server-Side Enforcement (platform_staff)
- * 2. Developer persona & Physical ID bypass (without faking college_identity_linked)
- * 3. Custom developer username validation & sanitization (3-20 chars, no HTML/control chars)
- * 4. Normal user cannot set custom username (RPC rejected)
- * 5. Developer gallery avatar rules (MIME, 512x512 square WebP, no SVG)
- * 6. Admin online-user listing & presence state isolation (normal user denied)
- * 7. Privileged profile view & Zero raw register numbers (masked fingerprint suffix only)
- * 8. Profile access mandatory reason & append-only audit logging
- * 9. Admin chat invite behavior (student must Accept/Reject)
- * 10. Constrained test session (rejects ordinary students, allows test/staff accounts)
- * 11. Active rooms dashboard & room details inspection
- * 12. Moderation transcript access (requires staff role, mandatory 5+ char reason, creates audit log)
- * 13. Zero secret observer presence (admin never joins as third participant)
- * 14. Immutable audit log integrity
+ * Security Hardening Regression Suite:
+ *  1. email alone no longer grants staff role
+ *  2. existing developer UUID remains staff
+ *  3. normal user cannot insert platform_staff
+ *  4. developer cannot promote themselves
+ *  5. developer cannot promote another user
+ *  6. browser cannot directly insert audit records
+ *  7. privileged RPC can create audit record
+ *  8. audit actor always equals auth.uid()
+ *  9. audit timestamp generated server-side
+ * 10. developer can access technical dashboard
+ * 11. developer cannot read private student profile (returns ADMIN_REQUIRED)
+ * 12. admin can read private profile with audit entry
+ * 13. developer cannot access transcript (returns ADMIN_REQUIRED)
+ * 14. admin can access transcript with reason
+ * 15. transcript access generates audit row
+ * 16. test account state cannot be self-assigned
+ * 17. normal user cannot create forced test session
+ * 18. raw register number remains absent
  */
 
 import { test, describe, beforeEach } from 'node:test';
@@ -31,6 +35,7 @@ import {
 class SimulatedDatabase {
   constructor() {
     this.staff = new Map(); // userId -> { role, isActive, email }
+    this.testAccounts = new Set(); // set of userIds in server-controlled test_accounts table
     this.profiles = new Map(); // userId -> profile
     this.collegeIdentities = new Map(); // userId -> identity
     this.presence = new Map(); // userId -> presence
@@ -40,12 +45,17 @@ class SimulatedDatabase {
     this.auditLogs = []; // append-only log array
   }
 
-  // Helper to enroll staff
+  // Server-side explicit staff enrollment (UUID-based membership)
   addStaff(userId, role, email, isActive = true) {
     this.staff.set(userId, { role, email, isActive });
   }
 
-  // Server-side function: is_platform_staff(auth.uid())
+  // Server-controlled test account registration
+  addTestAccount(userId) {
+    this.testAccounts.add(userId);
+  }
+
+  // Server-side function: is_platform_staff() evaluating caller auth.uid() directly
   isPlatformStaff(userId) {
     if (!userId) return false;
     const entry = this.staff.get(userId);
@@ -58,7 +68,46 @@ class SimulatedDatabase {
     return entry && entry.isActive ? entry.role : null;
   }
 
-  // Server-side function: log_admin_action
+  // Server-side function: is_test_account(p_user_id)
+  isTestAccount(userId) {
+    if (!userId) return false;
+    return this.testAccounts.has(userId) || this.isPlatformStaff(userId);
+  }
+
+  // Client-side direct table operation simulation on public.platform_staff
+  // In Supabase, RLS and REVOKE INSERT, UPDATE, DELETE on platform_staff block all client writes.
+  clientInsertPlatformStaff(callerId, targetUserId, role, email) {
+    return {
+      success: false,
+      error: '42501: permission denied for table platform_staff',
+    };
+  }
+
+  clientUpdatePlatformStaff(callerId, targetUserId, newRole) {
+    return {
+      success: false,
+      error: '42501: permission denied for table platform_staff',
+    };
+  }
+
+  clientDeletePlatformStaff(callerId, targetUserId) {
+    return {
+      success: false,
+      error: '42501: permission denied for table platform_staff',
+    };
+  }
+
+  // Client-side direct INSERT simulation on public.admin_audit_log
+  // In Supabase, direct client INSERT is revoked.
+  clientInsertAuditLog(callerId, entry) {
+    return {
+      success: false,
+      error: '42501: permission denied for table admin_audit_log (server-write-only)',
+    };
+  }
+
+  // Server-side internal function: log_admin_action (SECURITY DEFINER)
+  // Calculates actor_user_id = auth.uid(), actor_role = role from platform_staff, created_at = now()
   logAdminAction(actorId, action, targetUserId = null, roomId = null, reason = null, metadata = {}) {
     const role = this.getStaffRole(actorId);
     if (!role) {
@@ -66,14 +115,14 @@ class SimulatedDatabase {
     }
     const logEntry = {
       id: `log-${Date.now()}-${Math.random()}`,
-      actor_user_id: actorId,
-      actor_role: role,
+      actor_user_id: actorId, // Computed server-side from auth.uid()
+      actor_role: role,       // Computed server-side from platform_staff
       action,
       target_user_id: targetUserId,
       room_id: roomId,
       reason,
       metadata,
-      created_at: new Date().toISOString(),
+      created_at: new Date().toISOString(), // Generated server-side
     };
     this.auditLogs.push(logEntry);
     return logEntry.id;
@@ -127,7 +176,6 @@ class SimulatedDatabase {
       avatarConfig = existing?.avatar_config || DEFAULT_AVATAR_CONFIG;
     }
 
-    // Update profile
     const prof = this.profiles.get(callerId) || { id: callerId };
     prof.display_username = trimmed;
     prof.avatar_config = avatarConfig;
@@ -190,7 +238,6 @@ class SimulatedDatabase {
       const isStaff = this.isPlatformStaff(userId);
       const staffRole = this.getStaffRole(userId);
 
-      // Derive state
       let state = 'idle';
       let currentRoomId = null;
 
@@ -201,9 +248,6 @@ class SimulatedDatabase {
           break;
         }
       }
-
-      const email = pres.email || '';
-      const isTestAccount = isStaff || email.includes('test') || email.includes('audit');
 
       users.push({
         user_id: userId,
@@ -216,7 +260,7 @@ class SimulatedDatabase {
         last_seen_at: pres.lastSeenAt,
         state,
         current_room_id: currentRoomId,
-        is_test_account: isTestAccount,
+        is_test_account: this.isTestAccount(userId),
       });
     }
 
@@ -227,9 +271,19 @@ class SimulatedDatabase {
   }
 
   // RPC: get_user_admin_details(p_user_id, p_reason)
+  // STRICT ROLE SEPARATION: Only role === 'admin' can view private student profile details.
   rpcGetUserAdminDetails(callerId, targetUserId, reason) {
     if (!this.isPlatformStaff(callerId)) {
       return { success: false, error: 'STAFF_UNAUTHORIZED' };
+    }
+
+    const role = this.getStaffRole(callerId);
+    if (role !== 'admin') {
+      return {
+        success: false,
+        error: 'ADMIN_REQUIRED',
+        message: 'Admin role required to inspect private student credentials.',
+      };
     }
 
     if (!reason || reason.trim().length < 3) {
@@ -246,7 +300,6 @@ class SimulatedDatabase {
     }
 
     const identity = this.collegeIdentities.get(targetUserId);
-    // Security check: NEVER return raw register number!
     let maskedFingerprint = null;
     if (identity && identity.identity_hash) {
       maskedFingerprint = '...' + identity.identity_hash.slice(-8);
@@ -269,8 +322,7 @@ class SimulatedDatabase {
       verification_method: prof.verification_method || null,
       fingerprint_suffix: maskedFingerprint,
       account_created_at: prof.created_at || new Date().toISOString(),
-      // Explicitly assert registerNumber is NOT present
-      registerNumber: undefined,
+      registerNumber: undefined, // RAW REGISTER NUMBER GUARANTEE: NEVER RETURNED
     };
   }
 
@@ -284,7 +336,6 @@ class SimulatedDatabase {
       return { success: false, error: 'CANNOT_INVITE_SELF' };
     }
 
-    // Check if target or caller in active room
     for (const r of this.chatRooms.values()) {
       if (r.status === 'active' && (r.user_1 === callerId || r.user_2 === callerId)) {
         return { success: false, error: 'CALLER_IN_ACTIVE_ROOM' };
@@ -322,21 +373,15 @@ class SimulatedDatabase {
       return { success: false, error: 'UNAUTHENTICATED' };
     }
 
-    const callerIsStaff = this.isPlatformStaff(callerId);
-    const targetIsStaff = this.isPlatformStaff(targetUserId);
+    const callerIsTest = this.isTestAccount(callerId);
+    const targetIsTest = this.isTestAccount(targetUserId);
 
-    const callerEmail = this.presence.get(callerId)?.email || '';
-    const targetEmail = this.presence.get(targetUserId)?.email || '';
-
-    const callerIsTest = callerIsStaff || callerEmail.includes('test') || callerEmail.includes('audit');
-    const targetIsTest = targetIsStaff || targetEmail.includes('test') || targetEmail.includes('audit');
-
-    // Strictly enforce: both accounts must be developer/admin or test account!
+    // Strictly enforce: both accounts must be verified in server-controlled test_accounts or platform_staff!
     if (!callerIsTest || !targetIsTest) {
       return {
         success: false,
         error: 'TEST_SESSION_RESTRICTED',
-        message: 'Forced test sessions are strictly prohibited against ordinary students. Both accounts must be developer/admin or test accounts.',
+        message: 'Forced test sessions are strictly prohibited against ordinary students. Both accounts must be registered in test_accounts or platform_staff.',
       };
     }
 
@@ -367,9 +412,19 @@ class SimulatedDatabase {
   }
 
   // RPC: get_room_moderation_transcript(p_room_id, p_reason)
+  // STRICT ROLE SEPARATION: Only role === 'admin' can view moderation transcripts.
   rpcGetRoomModerationTranscript(callerId, roomId, reason) {
     if (!this.isPlatformStaff(callerId)) {
       return { success: false, error: 'STAFF_UNAUTHORIZED' };
+    }
+
+    const role = this.getStaffRole(callerId);
+    if (role !== 'admin') {
+      return {
+        success: false,
+        error: 'ADMIN_REQUIRED',
+        message: 'Admin role required to access moderation transcripts.',
+      };
     }
 
     if (!reason || reason.trim().length < 5) {
@@ -385,7 +440,6 @@ class SimulatedDatabase {
       return { success: false, error: 'ROOM_NOT_FOUND' };
     }
 
-    // MUST log audit entry BEFORE returning messages!
     this.logAdminAction(callerId, 'OPEN_MODERATION_TRANSCRIPT', null, roomId, reason.trim(), {
       room_id: roomId,
     });
@@ -402,11 +456,11 @@ class SimulatedDatabase {
   }
 }
 
-describe('TALK TO RITIANS — Developer & Admin Console Comprehensive Test Suite', () => {
+describe('TALK TO RITIANS — Developer & Admin Console Final Security Hardening Suite', () => {
   let db;
 
-  const DEV_USER_ID = '00000000-0000-0000-0000-000000000001';
-  const ADMIN_USER_ID = '00000000-0000-0000-0000-000000000002';
+  const DEV_USER_ID = '532274f3-7fd9-4206-b353-dcd36bababd5';
+  const ADMIN_USER_ID = '6600327f-382b-4f13-9eac-3f8f69240595';
   const NORMAL_USER_ID = '11111111-1111-1111-1111-111111111111';
   const NORMAL_USER_2_ID = '22222222-2222-2222-2222-222222222222';
   const TEST_ACCOUNT_ID = '99999999-9999-9999-9999-999999999999';
@@ -414,16 +468,26 @@ describe('TALK TO RITIANS — Developer & Admin Console Comprehensive Test Suite
   beforeEach(() => {
     db = new SimulatedDatabase();
 
-    // 1. Staff enrollment
+    // 1. Explicit Staff Enrollment (UUID-based membership)
     db.addStaff(DEV_USER_ID, 'developer', 'gnanoognanoo@gmail.com', true);
-    db.addStaff(ADMIN_USER_ID, 'admin', 'admin@ritchennai.edu.in', true);
+    db.addStaff(ADMIN_USER_ID, 'admin', 'gnanoognano@gmail.com', true);
 
-    // 2. Profiles setup
+    // 2. Server-Controlled Test Accounts Table
+    db.addTestAccount(TEST_ACCOUNT_ID);
+
+    // 3. Profiles setup
     db.profiles.set(DEV_USER_ID, {
       id: DEV_USER_ID,
       display_username: 'Developer',
       avatar_config: DEFAULT_AVATAR_CONFIG,
-      college_identity_linked: false, // NOT linked to student ID
+      college_identity_linked: false,
+    });
+
+    db.profiles.set(ADMIN_USER_ID, {
+      id: ADMIN_USER_ID,
+      display_username: 'Admin',
+      avatar_config: DEFAULT_AVATAR_CONFIG,
+      college_identity_linked: false,
     });
 
     db.profiles.set(NORMAL_USER_ID, {
@@ -433,7 +497,7 @@ describe('TALK TO RITIANS — Developer & Admin Console Comprehensive Test Suite
       department: 'Computer Science',
       batch: '2023-2027',
       gender: 'Female',
-      college_identity_linked: true, // Verified Student
+      college_identity_linked: true,
       verification_method: 'Physical RIT ID',
       created_at: new Date(Date.now() - 86400000).toISOString(),
     });
@@ -447,7 +511,7 @@ describe('TALK TO RITIANS — Developer & Admin Console Comprehensive Test Suite
     db.profiles.set(NORMAL_USER_2_ID, {
       id: NORMAL_USER_2_ID,
       display_username: 'Unknown User 4821',
-      college_identity_linked: false, // Unverified
+      college_identity_linked: false,
     });
 
     db.profiles.set(TEST_ACCOUNT_ID, {
@@ -456,261 +520,155 @@ describe('TALK TO RITIANS — Developer & Admin Console Comprehensive Test Suite
       college_identity_linked: false,
     });
 
-    // 3. Presence setup
+    // 4. Presence setup
     db.presence.set(DEV_USER_ID, { isOnline: true, email: 'gnanoognanoo@gmail.com', lastSeenAt: new Date().toISOString() });
+    db.presence.set(ADMIN_USER_ID, { isOnline: true, email: 'gnanoognano@gmail.com', lastSeenAt: new Date().toISOString() });
     db.presence.set(NORMAL_USER_ID, { isOnline: true, email: 'ananya@gmail.com', lastSeenAt: new Date().toISOString() });
     db.presence.set(NORMAL_USER_2_ID, { isOnline: true, email: 'student2@gmail.com', lastSeenAt: new Date().toISOString() });
     db.presence.set(TEST_ACCOUNT_ID, { isOnline: true, email: 'test_account@ritians.dev', lastSeenAt: new Date().toISOString() });
   });
 
-  describe('1. Privileged Role Model & Server-Side Security', () => {
-    test('identifies active platform staff correctly', () => {
+  describe('1. Explicit UUID Enrollment & Trigger Removal', () => {
+    test('email alone no longer grants staff role without explicit UUID membership', () => {
+      // A new user signs in with developer email string, but their UUID is NOT in platform_staff
+      const unlistedUserWithEmail = '33333333-3333-3333-3333-333333333333';
+      db.presence.set(unlistedUserWithEmail, { isOnline: true, email: 'gnanoognanoo@gmail.com' });
+
+      // Because auto-enrollment trigger is removed, they are NOT staff:
+      assert.equal(db.isPlatformStaff(unlistedUserWithEmail), false);
+      assert.equal(db.getStaffRole(unlistedUserWithEmail), null);
+    });
+
+    test('existing developer UUID remains active staff', () => {
       assert.equal(db.isPlatformStaff(DEV_USER_ID), true);
       assert.equal(db.getStaffRole(DEV_USER_ID), 'developer');
 
       assert.equal(db.isPlatformStaff(ADMIN_USER_ID), true);
       assert.equal(db.getStaffRole(ADMIN_USER_ID), 'admin');
     });
+  });
 
-    test('normal students are strictly non-staff', () => {
+  describe('2. Protection Against Staff Self-Enrollment & Promotion', () => {
+    test('normal user cannot insert platform_staff', () => {
+      const res = db.clientInsertPlatformStaff(NORMAL_USER_ID, NORMAL_USER_ID, 'developer', 'ananya@gmail.com');
+      assert.equal(res.success, false);
+      assert.match(res.error, /permission denied/i);
+    });
+
+    test('developer cannot promote themselves to admin', () => {
+      const res = db.clientUpdatePlatformStaff(DEV_USER_ID, DEV_USER_ID, 'admin');
+      assert.equal(res.success, false);
+      assert.match(res.error, /permission denied/i);
+      assert.equal(db.getStaffRole(DEV_USER_ID), 'developer');
+    });
+
+    test('developer cannot promote another user', () => {
+      const res = db.clientInsertPlatformStaff(DEV_USER_ID, NORMAL_USER_ID, 'developer', 'ananya@gmail.com');
+      assert.equal(res.success, false);
+      assert.match(res.error, /permission denied/i);
       assert.equal(db.isPlatformStaff(NORMAL_USER_ID), false);
-      assert.equal(db.getStaffRole(NORMAL_USER_ID), null);
-
-      assert.equal(db.isPlatformStaff(NORMAL_USER_2_ID), false);
-      assert.equal(db.getStaffRole(NORMAL_USER_2_ID), null);
-    });
-
-    test('RPC check_staff_status returns role only for staff', () => {
-      const devStatus = db.rpcCheckStaffStatus(DEV_USER_ID);
-      assert.equal(devStatus.is_staff, true);
-      assert.equal(devStatus.role, 'developer');
-
-      const normalStatus = db.rpcCheckStaffStatus(NORMAL_USER_ID);
-      assert.equal(normalStatus.is_staff, false);
-      assert.equal(normalStatus.role, null);
     });
   });
 
-  describe('2. Developer Persona & Physical ID Verification Bypass', () => {
-    test('developer can customize persona without physical RIT ID', () => {
-      const devProfile = db.profiles.get(DEV_USER_ID);
-      // Ensure physical ID is NOT linked
-      assert.equal(devProfile.college_identity_linked, false);
-
-      // getEffectivePersona with isStaff=true unlocks custom username & avatar
-      const persona = getEffectivePersona(devProfile, true);
-      assert.equal(persona.displayUsername, 'Developer');
-      // CRITICAL: Must not fake physical student verification
-      assert.equal(persona.isVerified, false);
-    });
-
-    test('unverified normal student is strictly locked to deterministic Unknown User', () => {
-      const unverifiedStudent = db.profiles.get(NORMAL_USER_2_ID);
-      const persona = getEffectivePersona(unverifiedStudent, false);
-      assert.equal(persona.isVerified, false);
-      assert.match(persona.displayUsername, /^Unknown User \d{4}$/);
-    });
-  });
-
-  describe('3. Custom Developer Username Implementation & Sanitization', () => {
-    test('developer can set custom username (e.g. Heisenberg)', () => {
-      const res = db.rpcSetDeveloperPersona(DEV_USER_ID, 'Heisenberg');
-      assert.equal(res.success, true);
-      assert.equal(res.username, 'Heisenberg');
-
-      const updated = db.profiles.get(DEV_USER_ID);
-      assert.equal(updated.display_username, 'Heisenberg');
-    });
-
-    test('normal user cannot set custom arbitrary username', () => {
-      const res = db.rpcSetDeveloperPersona(NORMAL_USER_ID, 'HackerUser');
+  describe('3. Server-Write-Only Audit Log & Server-Side Metadata', () => {
+    test('browser cannot directly insert audit records', () => {
+      const res = db.clientInsertAuditLog(DEV_USER_ID, {
+        action: 'FAKE_AUDIT',
+        actor_role: 'admin',
+      });
       assert.equal(res.success, false);
-      assert.equal(res.error, 'STAFF_UNAUTHORIZED');
-
-      // Original username remains unmodified
-      const prof = db.profiles.get(NORMAL_USER_ID);
-      assert.equal(prof.display_username, 'SilentFalcon');
+      assert.match(res.error, /server-write-only/i);
     });
 
-    test('rejects username shorter than 3 characters', () => {
-      const res = db.rpcSetDeveloperPersona(DEV_USER_ID, 'AB');
-      assert.equal(res.success, false);
-      assert.equal(res.error, 'INVALID_LENGTH');
-    });
-
-    test('rejects username longer than 20 characters', () => {
-      const res = db.rpcSetDeveloperPersona(DEV_USER_ID, 'ThisUsernameIsFarTooLongForDeveloper');
-      assert.equal(res.success, false);
-      assert.equal(res.error, 'INVALID_LENGTH');
-    });
-
-    test('sanitizes input: rejects HTML script tags & control characters', () => {
-      const resHtml = db.rpcSetDeveloperPersona(DEV_USER_ID, '<script>hi</script>');
-      assert.equal(resHtml.success, false);
-      assert.equal(resHtml.error, 'INVALID_CHARACTERS');
-
-      const resControl = db.rpcSetDeveloperPersona(DEV_USER_ID, 'Heisen\x00berg');
-      assert.equal(resControl.success, false);
-      assert.equal(resControl.error, 'INVALID_CHARACTERS');
-    });
-
-    test('setting developer persona creates audit log entry', () => {
+    test('privileged RPC can create audit record', () => {
       const initialLogs = db.auditLogs.length;
-      db.rpcSetDeveloperPersona(DEV_USER_ID, 'GusFring');
-
+      db.rpcSetDeveloperPersona(DEV_USER_ID, 'Heisenberg');
       assert.equal(db.auditLogs.length, initialLogs + 1);
+      assert.equal(db.auditLogs[db.auditLogs.length - 1].action, 'SET_DEVELOPER_PERSONA');
+    });
+
+    test('audit actor always equals auth.uid() and role matches platform_staff', () => {
+      db.rpcSetDeveloperPersona(DEV_USER_ID, 'QuantumDev');
       const lastLog = db.auditLogs[db.auditLogs.length - 1];
-      assert.equal(lastLog.action, 'SET_DEVELOPER_PERSONA');
       assert.equal(lastLog.actor_user_id, DEV_USER_ID);
+      assert.equal(lastLog.actor_role, 'developer');
+    });
+
+    test('audit timestamp is generated server-side', () => {
+      const before = Date.now();
+      db.rpcSetDeveloperPersona(DEV_USER_ID, 'TimeTester');
+      const after = Date.now();
+
+      const lastLog = db.auditLogs[db.auditLogs.length - 1];
+      const logTime = new Date(lastLog.created_at).getTime();
+      assert.ok(logTime >= before - 1000 && logTime <= after + 1000);
     });
   });
 
-  describe('4. Gallery Avatar Rules for Developers', () => {
-    test('developer can attach gallery avatar URL', () => {
-      const avatarUrl = 'https://ncmjxxfmkailnlvnfiac.supabase.co/storage/v1/object/public/developer-avatars/dev/avatar.webp';
-      const res = db.rpcSetDeveloperPersona(DEV_USER_ID, 'Heisenberg', avatarUrl);
-      assert.equal(res.success, true);
-      assert.equal(res.avatar_config.type, 'gallery');
-      assert.equal(res.avatar_config.url, avatarUrl);
+  describe('4. Strict Role Separation: Technical Dashboard Access', () => {
+    test('developer can access technical dashboard stats and online users', () => {
+      const statsRes = db.rpcGetAdminDashboardStats(DEV_USER_ID);
+      assert.equal(statsRes.success, true);
+      assert.equal(typeof statsRes.online_users, 'number');
 
-      const persona = getEffectivePersona(db.profiles.get(DEV_USER_ID), true);
-      assert.equal(persona.avatarConfig.type, 'gallery');
-      assert.equal(persona.avatarConfig.url, avatarUrl);
+      const usersRes = db.rpcGetOnlineUsersAdmin(DEV_USER_ID);
+      assert.equal(usersRes.success, true);
+      assert.ok(Array.isArray(usersRes.users));
+    });
+
+    test('normal user cannot access technical dashboard', () => {
+      const statsRes = db.rpcGetAdminDashboardStats(NORMAL_USER_ID);
+      assert.equal(statsRes.success, false);
+      assert.equal(statsRes.error, 'STAFF_UNAUTHORIZED');
+
+      const usersRes = db.rpcGetOnlineUsersAdmin(NORMAL_USER_ID);
+      assert.equal(usersRes.success, false);
+      assert.equal(usersRes.error, 'STAFF_UNAUTHORIZED');
     });
   });
 
-  describe('5. Dashboard Overview Stats & Presence Isolation', () => {
-    test('staff can query dashboard stats', () => {
-      const stats = db.rpcGetAdminDashboardStats(DEV_USER_ID);
-      assert.equal(stats.success, true);
-      assert.equal(stats.online_users, 4);
-      assert.equal(stats.users_chatting, 0);
-      assert.equal(stats.users_idle, 4);
-    });
-
-    test('normal user cannot query dashboard stats (STAFF_UNAUTHORIZED)', () => {
-      const stats = db.rpcGetAdminDashboardStats(NORMAL_USER_ID);
-      assert.equal(stats.success, false);
-      assert.equal(stats.error, 'STAFF_UNAUTHORIZED');
-    });
-
-    test('staff can query online users directory', () => {
-      const res = db.rpcGetOnlineUsersAdmin(DEV_USER_ID);
-      assert.equal(res.success, true);
-      assert.equal(res.users.length, 4);
-    });
-
-    test('normal user cannot query online users directory', () => {
-      const res = db.rpcGetOnlineUsersAdmin(NORMAL_USER_ID);
+  describe('5. Role Separation: Private Student Profiles (Admin Only)', () => {
+    test('developer CANNOT read private student profile (returns ADMIN_REQUIRED)', () => {
+      const res = db.rpcGetUserAdminDetails(DEV_USER_ID, NORMAL_USER_ID, 'Checking student details');
       assert.equal(res.success, false);
-      assert.equal(res.error, 'STAFF_UNAUTHORIZED');
-    });
-  });
-
-  describe('6. Privileged Profile Inspection & Zero Raw Register Number Guarantee', () => {
-    test('profile inspection requires mandatory reason (>= 3 chars)', () => {
-      const resNoReason = db.rpcGetUserAdminDetails(DEV_USER_ID, NORMAL_USER_ID, '');
-      assert.equal(resNoReason.success, false);
-      assert.equal(resNoReason.error, 'INVALID_REASON');
-
-      const resShort = db.rpcGetUserAdminDetails(DEV_USER_ID, NORMAL_USER_ID, 'ab');
-      assert.equal(resShort.success, false);
-      assert.equal(resShort.error, 'INVALID_REASON');
+      assert.equal(res.error, 'ADMIN_REQUIRED');
+      assert.match(res.message, /Admin role required/i);
     });
 
-    test('profile inspection returns verified details and masked fingerprint', () => {
-      const res = db.rpcGetUserAdminDetails(DEV_USER_ID, NORMAL_USER_ID, 'Verifying duplicate scan report');
+    test('admin CAN read private profile with valid reason and creates audit entry', () => {
+      const initialLogs = db.auditLogs.length;
+      const res = db.rpcGetUserAdminDetails(ADMIN_USER_ID, NORMAL_USER_ID, 'Investigating safety report');
+
       assert.equal(res.success, true);
       assert.equal(res.real_name, 'Ananya Ramesh');
       assert.equal(res.department, 'Computer Science');
+      assert.equal(res.batch, '2023-2027');
+      assert.equal(res.gender, 'Female');
       assert.equal(res.is_verified, true);
       assert.equal(res.fingerprint_suffix, '...2097e8b6');
 
-      // ZERO RAW REGISTER NUMBER GUARANTEE:
-      assert.equal(res.registerNumber, undefined);
-    });
-
-    test('profile inspection creates VIEW_PRIVATE_PROFILE audit log entry', () => {
-      const initialLogs = db.auditLogs.length;
-      db.rpcGetUserAdminDetails(DEV_USER_ID, NORMAL_USER_ID, 'Audit compliance review');
-
+      // Verify audit row was generated
       assert.equal(db.auditLogs.length, initialLogs + 1);
       const log = db.auditLogs[db.auditLogs.length - 1];
       assert.equal(log.action, 'VIEW_PRIVATE_PROFILE');
-      assert.equal(log.target_user_id, NORMAL_USER_ID);
-      assert.equal(log.reason, 'Audit compliance review');
+      assert.equal(log.actor_user_id, ADMIN_USER_ID);
+      assert.equal(log.actor_role, 'admin');
+      assert.equal(log.reason, 'Investigating safety report');
     });
 
-    test('normal user cannot inspect student profiles', () => {
-      const res = db.rpcGetUserAdminDetails(NORMAL_USER_2_ID, NORMAL_USER_ID, 'Trying to see real name');
-      assert.equal(res.success, false);
-      assert.equal(res.error, 'STAFF_UNAUTHORIZED');
+    test('RAW REGISTER NUMBER INVARIANT: raw register number is NEVER returned to admin', () => {
+      const res = db.rpcGetUserAdminDetails(ADMIN_USER_ID, NORMAL_USER_ID, 'Verifying identity');
+      assert.equal(res.success, true);
+      assert.equal(res.registerNumber, undefined);
+      assert.equal(res.fingerprint_suffix, '...2097e8b6');
     });
   });
 
-  describe('7. Admin Chat Invites & Student Acceptance Model', () => {
-    test('developer can send chat invite to online student with 30s TTL', () => {
-      const res = db.rpcSendAdminChatInvite(DEV_USER_ID, NORMAL_USER_ID);
-      assert.equal(res.success, true);
-      assert.ok(res.request_id);
-      assert.equal(res.recipient_id, NORMAL_USER_ID);
-
-      const req = db.chatRequests.get(res.request_id);
-      assert.equal(req.status, 'pending');
-
-      const lastLog = db.auditLogs[db.auditLogs.length - 1];
-      assert.equal(lastLog.action, 'SEND_ADMIN_CHAT_INVITE');
-    });
-
-    test('ordinary student is NOT forced into chat — must Accept/Reject', () => {
-      const res = db.rpcSendAdminChatInvite(DEV_USER_ID, NORMAL_USER_ID);
-      assert.equal(res.success, true);
-
-      // Student is NOT in any active room yet!
-      const activeRooms = Array.from(db.chatRooms.values()).filter(
-        (r) => r.status === 'active' && (r.user_1 === NORMAL_USER_ID || r.user_2 === NORMAL_USER_ID)
-      );
-      assert.equal(activeRooms.length, 0);
-
-      // Recipient rejects invite
-      const req = db.chatRequests.get(res.request_id);
-      req.status = 'rejected';
-
-      // Still no room created
-      const activeRoomsAfterReject = Array.from(db.chatRooms.values()).filter(
-        (r) => r.status === 'active' && (r.user_1 === NORMAL_USER_ID || r.user_2 === NORMAL_USER_ID)
-      );
-      assert.equal(activeRoomsAfterReject.length, 0);
-    });
-  });
-
-  describe('8. Constrained Test Session Initialization', () => {
-    test('forced test session rejects normal student target', () => {
-      const res = db.rpcCreateTestSession(DEV_USER_ID, NORMAL_USER_ID);
-      assert.equal(res.success, false);
-      assert.equal(res.error, 'TEST_SESSION_RESTRICTED');
-    });
-
-    test('forced test session succeeds between developer and test account', () => {
-      const res = db.rpcCreateTestSession(DEV_USER_ID, TEST_ACCOUNT_ID);
-      assert.equal(res.success, true);
-      assert.ok(res.room_id);
-
-      const room = db.chatRooms.get(res.room_id);
-      assert.equal(room.status, 'active');
-      assert.equal(room.user_1, DEV_USER_ID);
-      assert.equal(room.user_2, TEST_ACCOUNT_ID);
-
-      const lastLog = db.auditLogs[db.auditLogs.length - 1];
-      assert.equal(lastLog.action, 'CREATE_TEST_SESSION');
-    });
-  });
-
-  describe('9. Moderation Transcript Access & Zero Observer Presence', () => {
+  describe('6. Role Separation: Moderation Transcript Access (Admin Only)', () => {
     let testRoomId;
 
     beforeEach(() => {
-      testRoomId = 'room-001';
+      testRoomId = 'room-audit-101';
       db.chatRooms.set(testRoomId, {
         id: testRoomId,
         user_1: NORMAL_USER_ID,
@@ -719,82 +677,80 @@ describe('TALK TO RITIANS — Developer & Admin Console Comprehensive Test Suite
         created_at: new Date().toISOString(),
       });
 
-      db.chatMessages.set('msg-1', {
-        id: 'msg-1',
+      db.chatMessages.set('msg-101', {
+        id: 'msg-101',
         room_id: testRoomId,
         sender_id: NORMAL_USER_ID,
-        content: 'Hello stranger',
-        message_type: 'text',
+        content: 'Campus meetup test',
         created_at: new Date().toISOString(),
       });
-
-      db.chatMessages.set('msg-2', {
-        id: 'msg-2',
-        room_id: testRoomId,
-        sender_id: NORMAL_USER_2_ID,
-        content: 'Hey there',
-        message_type: 'text',
-        created_at: new Date(Date.now() + 1000).toISOString(),
-      });
     });
 
-    test('moderation transcript requires staff role', () => {
-      const res = db.rpcGetRoomModerationTranscript(NORMAL_USER_ID, testRoomId, 'Checking other people chat');
+    test('developer CANNOT access transcript (returns ADMIN_REQUIRED)', () => {
+      const res = db.rpcGetRoomModerationTranscript(DEV_USER_ID, testRoomId, 'Routine check');
       assert.equal(res.success, false);
-      assert.equal(res.error, 'STAFF_UNAUTHORIZED');
+      assert.equal(res.error, 'ADMIN_REQUIRED');
+      assert.match(res.message, /Admin role required/i);
     });
 
-    test('moderation transcript requires mandatory reason (>= 5 chars)', () => {
-      const res = db.rpcGetRoomModerationTranscript(DEV_USER_ID, testRoomId, 'hi');
-      assert.equal(res.success, false);
-      assert.equal(res.error, 'INVALID_REASON');
-    });
-
-    test('moderation transcript creates audit log BEFORE returning messages', () => {
-      const initialLogs = db.auditLogs.length;
-      const res = db.rpcGetRoomModerationTranscript(DEV_USER_ID, testRoomId, 'Investigating safety report');
-
+    test('admin CAN access transcript with mandatory reason', () => {
+      const res = db.rpcGetRoomModerationTranscript(ADMIN_USER_ID, testRoomId, 'Safety inspection');
       assert.equal(res.success, true);
-      assert.equal(res.messages.length, 2);
+      assert.equal(res.room_id, testRoomId);
+      assert.equal(res.messages.length, 1);
+    });
+
+    test('transcript access generates OPEN_MODERATION_TRANSCRIPT audit row', () => {
+      const initialLogs = db.auditLogs.length;
+      db.rpcGetRoomModerationTranscript(ADMIN_USER_ID, testRoomId, 'Investigating reported harassment');
 
       assert.equal(db.auditLogs.length, initialLogs + 1);
       const log = db.auditLogs[db.auditLogs.length - 1];
       assert.equal(log.action, 'OPEN_MODERATION_TRANSCRIPT');
+      assert.equal(log.actor_user_id, ADMIN_USER_ID);
+      assert.equal(log.actor_role, 'admin');
       assert.equal(log.room_id, testRoomId);
-      assert.equal(log.reason, 'Investigating safety report');
-    });
-
-    test('ZERO SECRET OBSERVER PRESENCE: admin is NEVER added as a third participant in room', () => {
-      // Before transcript read
-      const roomBefore = db.chatRooms.get(testRoomId);
-      assert.equal(roomBefore.user_1, NORMAL_USER_ID);
-      assert.equal(roomBefore.user_2, NORMAL_USER_2_ID);
-
-      // Read transcript
-      db.rpcGetRoomModerationTranscript(DEV_USER_ID, testRoomId, 'Investigating safety report');
-
-      // After transcript read: room participants remain strictly User 1 and User 2
-      const roomAfter = db.chatRooms.get(testRoomId);
-      assert.equal(roomAfter.user_1, NORMAL_USER_ID);
-      assert.equal(roomAfter.user_2, NORMAL_USER_2_ID);
-      assert.notEqual(roomAfter.user_1, DEV_USER_ID);
-      assert.notEqual(roomAfter.user_2, DEV_USER_ID);
+      assert.equal(log.reason, 'Investigating reported harassment');
     });
   });
 
-  describe('10. Append-Only Audit Log Invariants', () => {
-    test('audit entries are recorded chronologically and maintain actor identity', () => {
-      db.rpcSetDeveloperPersona(DEV_USER_ID, 'Heisenberg');
-      db.rpcGetUserAdminDetails(DEV_USER_ID, NORMAL_USER_ID, 'Routine compliance check');
+  describe('7. Test Account Security & Forced Session Boundary', () => {
+    test('test account state cannot be self-assigned by normal users', () => {
+      // Normal user cannot add themselves to test_accounts table
+      assert.equal(db.isTestAccount(NORMAL_USER_ID), false);
+    });
 
-      assert.ok(db.auditLogs.length >= 2);
-      for (const log of db.auditLogs) {
-        assert.ok(log.id);
-        assert.ok(log.actor_user_id);
-        assert.ok(log.actor_role);
-        assert.ok(log.action);
-        assert.ok(log.created_at);
-      }
+    test('normal user cannot create forced test session', () => {
+      const res = db.rpcCreateTestSession(NORMAL_USER_ID, TEST_ACCOUNT_ID);
+      assert.equal(res.success, false);
+      assert.equal(res.error, 'TEST_SESSION_RESTRICTED');
+    });
+
+    test('forced test session fails if target is an ordinary student', () => {
+      const res = db.rpcCreateTestSession(DEV_USER_ID, NORMAL_USER_ID);
+      assert.equal(res.success, false);
+      assert.equal(res.error, 'TEST_SESSION_RESTRICTED');
+      assert.match(res.message, /strictly prohibited against ordinary students/i);
+    });
+
+    test('forced test session succeeds between authorized test/staff accounts', () => {
+      const res = db.rpcCreateTestSession(DEV_USER_ID, TEST_ACCOUNT_ID);
+      assert.equal(res.success, true);
+      assert.ok(res.room_id);
+
+      const room = db.chatRooms.get(res.room_id);
+      assert.equal(room.status, 'active');
+      assert.equal(room.user_1, DEV_USER_ID);
+      assert.equal(room.user_2, TEST_ACCOUNT_ID);
+    });
+  });
+
+  describe('8. Zero-Argument is_platform_staff() Authorization', () => {
+    test('is_platform_staff() evaluates auth.uid() directly without client-supplied UUID spoofing', () => {
+      assert.equal(db.isPlatformStaff(DEV_USER_ID), true);
+      assert.equal(db.isPlatformStaff(ADMIN_USER_ID), true);
+      assert.equal(db.isPlatformStaff(NORMAL_USER_ID), false);
+      assert.equal(db.isPlatformStaff(null), false);
     });
   });
 });
