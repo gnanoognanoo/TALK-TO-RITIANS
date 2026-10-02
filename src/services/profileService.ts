@@ -369,16 +369,13 @@ export class ProfileService {
         };
       }
 
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          gender: trimmed,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', currentUserId);
+      // 3. Call server-side RPC procedure save_gender
+      const { data, error } = await supabase.rpc('save_gender', {
+        p_gender: trimmed,
+      });
 
       if (error) {
-        console.warn('[ProfileService] saveGender update error:', error);
+        console.warn('[ProfileService] save_gender RPC error:', error);
         if (!isSupabaseConfigured) {
           return {
             success: true,
@@ -386,19 +383,42 @@ export class ProfileService {
             error: null,
           };
         }
+        const isLocked =
+          error.message?.includes('GENDER_ALREADY_LOCKED') ||
+          error.code === 'GENDER_ALREADY_LOCKED';
         return {
           success: false,
           data: null,
           error: {
-            code: error.code || 'SAVE_FAILED',
-            message: error.message || 'Failed to save gender on server.',
+            code: isLocked ? 'GENDER_ALREADY_LOCKED' : (error.code || 'SAVE_FAILED'),
+            message: isLocked
+              ? 'Gender has already been chosen and cannot be modified.'
+              : (error.message || 'Failed to save gender on server.'),
+          },
+        };
+      }
+
+      const response = data as {
+        success?: boolean;
+        error?: string;
+        message?: string;
+        gender?: string;
+      } | null;
+
+      if (response && response.success === false) {
+        return {
+          success: false,
+          data: null,
+          error: {
+            code: response.error || 'SAVE_REJECTED',
+            message: response.message || 'Unable to save gender selection.',
           },
         };
       }
 
       return {
         success: true,
-        data: { gender: trimmed },
+        data: { gender: response?.gender || trimmed },
         error: null,
       };
     } catch (err: unknown) {

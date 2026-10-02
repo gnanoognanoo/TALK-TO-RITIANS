@@ -10,6 +10,7 @@ import React from 'react';
 import { Navigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../context';
 import { Spinner } from './Spinner';
+import { IncomingChatRequestManager } from './IncomingChatRequestManager';
 
 export interface ProtectedRouteProps {
   children?: React.ReactNode;
@@ -43,7 +44,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     return <Navigate to="/settings" replace />;
   }
 
-  return children ? <>{children}</> : <Outlet />;
+  return (
+    <>
+      <IncomingChatRequestManager />
+      {children ? <>{children}</> : <Outlet />}
+    </>
+  );
 };
 
 export default ProtectedRoute;

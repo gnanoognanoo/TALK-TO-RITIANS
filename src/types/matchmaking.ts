@@ -69,5 +69,7 @@ export interface MatchmakingResponse {
   expiresAt?: string;
   peer?: MatchedPeerPersona;
   message?: string;
+  hasPendingRequest?: boolean;
+  requestId?: string;
 }
 

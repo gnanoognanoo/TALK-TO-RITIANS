@@ -85,11 +85,38 @@ export const VerifyCollegePage: React.FC = () => {
   const [legacyExtractedFields, setLegacyExtractedFields] = useState<ExtractedLegacyCardFields | null>(null);
   const [parsedResult, setParsedResult] = useState<ParsedCollegeQrResult | null>(null);
 
-  // Success State & Gender setup
+  // Success State & Gender setup (Choose Once & Freeze)
+  const isGenderLocked = Boolean(profile?.gender_locked_at || (profile?.gender && profile.gender.trim() !== ''));
   const [verifiedData, setVerifiedData] = useState<CollegeIdentityVerificationResult | null>(null);
   const [selectedGender, setSelectedGender] = useState<string | null>(profile?.gender || null);
+  const [genderToConfirm, setGenderToConfirm] = useState<string | null>(null);
   const [isSavingGender, setIsSavingGender] = useState<boolean>(false);
   const [genderError, setGenderError] = useState<string | null>(null);
+
+  // Sync selectedGender if profile updates
+  React.useEffect(() => {
+    if (profile?.gender) {
+      setSelectedGender(profile.gender);
+    }
+  }, [profile?.gender]);
+
+  const handleConfirmGender = async () => {
+    if (!genderToConfirm) return;
+    setIsSavingGender(true);
+    setGenderError(null);
+
+    const res = await profileService.saveGender(genderToConfirm);
+    setIsSavingGender(false);
+
+    if (!res.success) {
+      setGenderError(res.error?.message || 'Failed to save gender preference.');
+      return;
+    }
+
+    setSelectedGender(genderToConfirm);
+    setGenderToConfirm(null);
+    await refreshProfile();
+  };
 
   // Unlink modal
   const [showUnlinkModal, setShowUnlinkModal] = useState<boolean>(false);
@@ -635,14 +662,14 @@ export const VerifyCollegePage: React.FC = () => {
                 </p>
               </div>
 
-              {/* Verified Credentials Summary */}
+              {/* Verified Student Information (Permanently Immutable) */}
               <div className="rounded-xl bg-gray-50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700 p-4 text-left text-xs space-y-2.5 shadow-sm">
                 <div className="flex items-center justify-between pb-2 border-b border-gray-200 dark:border-slate-700">
                   <span className="font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider text-[11px]">
-                    Verified Credentials
+                    Verified Student Information
                   </span>
                   <Badge variant="success" size="sm" withDot>
-                    Verified
+                    Verified &bull; Immutable
                   </Badge>
                 </div>
 
@@ -652,7 +679,7 @@ export const VerifyCollegePage: React.FC = () => {
                       <User className="h-3.5 w-3.5 text-gray-400" />
                       Name:
                     </span>
-                    <span className="font-semibold text-gray-900 dark:text-white">
+                    <span className="font-bold text-gray-900 dark:text-white">
                       {String(verifiedData?.name || parsedResult?.fields?.name || legacyExtractedFields?.name)}
                     </span>
                   </div>
@@ -691,39 +718,53 @@ export const VerifyCollegePage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Manual Gender Selection (Never inferred) */}
+              {/* Gender Selection & Freeze (Choose Once & Frozen) */}
               <div className="rounded-xl bg-gray-50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700 p-4 text-left text-xs space-y-3 shadow-sm">
                 <div className="flex items-center justify-between pb-1.5 border-b border-gray-200 dark:border-slate-700">
                   <span className="font-semibold text-gray-700 dark:text-slate-300 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
                     <Users className="h-3.5 w-3.5 text-brand-600 dark:text-brand-400" />
-                    Select Your Gender
+                    Private Gender
                   </span>
-                  <Badge variant="brand" size="sm">
-                    Required
-                  </Badge>
+                  {isGenderLocked ? (
+                    <Badge variant="success" size="sm" withDot>
+                      Confirmed &amp; Locked
+                    </Badge>
+                  ) : (
+                    <Badge variant="brand" size="sm">
+                      Choose Once
+                    </Badge>
+                  )}
                 </div>
-                <p className="text-[11px] text-gray-500 dark:text-slate-400 leading-relaxed">
-                  Please select your gender manually. We never infer or guess this from your name or card credentials.
-                </p>
-                <div className="grid grid-cols-2 gap-2 pt-1">
-                  {GENDER_OPTIONS.map((gOption) => (
-                    <button
-                      key={gOption}
-                      type="button"
-                      onClick={() => {
-                        setSelectedGender(gOption);
-                        setGenderError(null);
-                      }}
-                      className={`p-2.5 rounded-lg border text-xs font-semibold text-center transition-all ${
-                        selectedGender === gOption
-                          ? 'bg-brand-50 dark:bg-brand-950/60 border-brand-600 text-brand-700 dark:text-brand-300 shadow-sm ring-1 ring-brand-500'
-                          : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 hover:border-gray-300 hover:bg-gray-50'
-                      }`}
-                    >
-                      {gOption}
-                    </button>
-                  ))}
-                </div>
+
+                {isGenderLocked ? (
+                  <div className="p-3 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 flex items-center justify-between">
+                    <span className="text-xs text-gray-600 dark:text-slate-300">
+                      Gender: <strong className="text-gray-900 dark:text-white font-bold">{profile?.gender || selectedGender}</strong>
+                    </span>
+                    <span className="text-[11px] text-gray-400 dark:text-slate-500">Read-only</span>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-[11px] text-gray-500 dark:text-slate-400 leading-relaxed">
+                      Please select your gender manually. We never infer or guess this from your card credentials. Once confirmed, this cannot be modified.
+                    </p>
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      {GENDER_OPTIONS.map((gOption) => (
+                        <button
+                          key={gOption}
+                          type="button"
+                          onClick={() => {
+                            setGenderToConfirm(gOption);
+                            setGenderError(null);
+                          }}
+                          className="p-2.5 rounded-lg border text-xs font-semibold text-center transition-all bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 hover:border-brand-500 hover:bg-gray-50"
+                        >
+                          {gOption}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
                 {genderError && (
                   <p className="text-[11px] text-rose-600 font-medium">{genderError}</p>
                 )}
@@ -747,14 +788,7 @@ export const VerifyCollegePage: React.FC = () => {
                     type="button"
                     variant="primary"
                     fullWidth
-                    isLoading={isSavingGender}
-                    loadingText="Saving..."
                     onClick={async () => {
-                      if (selectedGender) {
-                        setIsSavingGender(true);
-                        await profileService.saveGender(selectedGender);
-                        setIsSavingGender(false);
-                      }
                       await refreshProfile();
                       navigate('/settings');
                     }}
@@ -769,11 +803,6 @@ export const VerifyCollegePage: React.FC = () => {
                     variant="secondary"
                     fullWidth
                     onClick={async () => {
-                      if (selectedGender) {
-                        setIsSavingGender(true);
-                        await profileService.saveGender(selectedGender);
-                        setIsSavingGender(false);
-                      }
                       await refreshProfile();
                       navigate('/home');
                     }}
@@ -787,9 +816,6 @@ export const VerifyCollegePage: React.FC = () => {
                   <button
                     type="button"
                     onClick={async () => {
-                      if (selectedGender) {
-                        await profileService.saveGender(selectedGender);
-                      }
                       await refreshProfile();
                       navigate('/username');
                     }}
@@ -856,6 +882,57 @@ export const VerifyCollegePage: React.FC = () => {
               onClick={handleUnlink}
             >
               Confirm Unlink
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Confirm Your Gender Modal (Choose Once & Freeze) */}
+      <Modal
+        isOpen={Boolean(genderToConfirm)}
+        onClose={() => setGenderToConfirm(null)}
+        title="Confirm your gender"
+        maxWidth="sm"
+      >
+        <div className="space-y-4">
+          <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700 space-y-1">
+            <span className="text-xs text-gray-500 dark:text-slate-400 block">Selected:</span>
+            <span className="text-base font-bold text-gray-900 dark:text-white block">
+              {genderToConfirm}
+            </span>
+          </div>
+
+          <p className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed">
+            You won't be able to change this after confirming.
+          </p>
+
+          {genderError && (
+            <ErrorMessage
+              title="Gender Save Error"
+              message={genderError}
+              onDismiss={() => setGenderError(null)}
+            />
+          )}
+
+          <div className="flex gap-3 justify-end pt-2">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={isSavingGender}
+              onClick={() => setGenderToConfirm(null)}
+            >
+              Back
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              isLoading={isSavingGender}
+              loadingText="Confirming..."
+              onClick={handleConfirmGender}
+            >
+              Confirm
             </Button>
           </div>
         </div>

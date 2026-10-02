@@ -21,19 +21,16 @@ import {
 } from 'lucide-react';
 import { Button, Card, Avatar } from '../components';
 import { useAuth } from '../context';
+import { getEffectivePersona } from '../utils/persona';
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
 
-  const isVerified = Boolean(profile?.college_identity_linked);
-  const displayUsername = profile?.display_username || 'Unknown User';
-  const initials = displayUsername
-    .split(' ')
-    .map((w) => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
+  const effectivePersona = getEffectivePersona(profile);
+  const isVerified = effectivePersona.isVerified;
+  const displayUsername = effectivePersona.displayUsername;
+  const initials = effectivePersona.initials;
 
   return (
     <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-10 space-y-6 animate-in fade-in">
@@ -130,7 +127,7 @@ export const HomePage: React.FC = () => {
           <div className="md:col-span-4 flex flex-col items-center justify-center p-6 rounded-2xl bg-gray-50/80 dark:bg-slate-800/60 border border-gray-200/80 dark:border-slate-700 text-center space-y-3">
             <Avatar
               size="xl"
-              avatarConfig={profile?.avatar_config as any}
+              avatarConfig={effectivePersona.avatarConfig}
               initials={initials}
               presence="online"
               shape="circle"

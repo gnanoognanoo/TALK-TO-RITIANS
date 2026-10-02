@@ -29,16 +29,18 @@ import {
 import { useAuth } from '../context';
 import { getRandomShortAlias } from '../services/aliasPool';
 import { profileService } from '../services/profileService';
+import { getEffectivePersona } from '../utils/persona';
 
 export const UsernameSelectionPage: React.FC = () => {
   const navigate = useNavigate();
   const { profile, refreshProfile } = useAuth();
 
-  const isVerified = Boolean(profile?.college_identity_linked);
+  const effectivePersona = getEffectivePersona(profile);
+  const isVerified = effectivePersona.isVerified;
 
   // Initialize ONE curated short alias
   const [candidateAlias, setCandidateAlias] = useState<string>(() => {
-    if (profile?.display_username && !profile.display_username.startsWith('Unknown User')) {
+    if (isVerified && profile?.display_username && !profile.display_username.startsWith('Unknown User')) {
       return profile.display_username;
     }
     return getRandomShortAlias();
@@ -113,7 +115,7 @@ export const UsernameSelectionPage: React.FC = () => {
             <p className="text-xs text-gray-600 leading-relaxed">
               Your account currently displays as{' '}
               <span className="font-semibold text-brand-600">
-                {profile?.display_username || 'Unknown Student'}
+                {effectivePersona.displayUsername}
               </span>
               . You must link your student ID card to customize your anonymous profile.
             </p>

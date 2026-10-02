@@ -26,6 +26,7 @@ import {
   Edit2,
   RefreshCw,
   CreditCard,
+  MessageSquare,
 } from 'lucide-react';
 import {
   Button,
@@ -44,18 +45,21 @@ import { useAuth, useTheme } from '../context';
 import { GENDER_OPTIONS } from '../config/profileConfig';
 import { profileService } from '../services/profileService';
 import { getRandomShortAlias } from '../services/aliasPool';
+import { getEffectivePersona } from '../utils/persona';
+import { presenceService } from '../services/presenceService';
 
 export const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, profile, refreshProfile, unlinkCollegeIdentity, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
 
-  const isVerified = Boolean(profile?.college_identity_linked);
-  const displayUsername = profile?.display_username || 'Unknown User';
+  const effectivePersona = getEffectivePersona(profile);
+  const isVerified = effectivePersona.isVerified;
+  const displayUsername = effectivePersona.displayUsername;
 
   // Short random alias reroll state (Change 4: No manual text entry, unlimited rerolls)
   const [aliasCandidate, setAliasCandidate] = useState<string>(() => {
-    if (profile?.display_username && !profile.display_username.startsWith('Unknown User')) {
+    if (isVerified && profile?.display_username && !profile.display_username.startsWith('Unknown User')) {
       return profile.display_username;
     }
     return getRandomShortAlias();
@@ -100,25 +104,45 @@ export const SettingsPage: React.FC = () => {
     setTimeout(() => setAliasSuccessMessage(null), 3000);
   };
 
-  // Gender selection state
+  // Gender selection & freeze state
+  const isGenderLocked = Boolean(profile?.gender_locked_at || (profile?.gender && profile.gender.trim() !== ''));
   const [selectedGender, setSelectedGender] = useState<string | null>(profile?.gender || null);
+  const [genderToConfirm, setGenderToConfirm] = useState<string | null>(null);
   const [isSavingGender, setIsSavingGender] = useState<boolean>(false);
   const [genderSuccessMessage, setGenderSuccessMessage] = useState<string | null>(null);
   const [genderError, setGenderError] = useState<string | null>(null);
+
+  // Random chat request preference state (Phase 3 Fix)
+  const [chatRequestsEnabled, setChatRequestsEnabled] = useState<boolean>(() =>
+    presenceService.isChatRequestsEnabled()
+  );
+
+  const handleToggleChatRequests = () => {
+    const nextVal = !chatRequestsEnabled;
+    setChatRequestsEnabled(nextVal);
+    presenceService.setChatRequestsEnabled(nextVal);
+  };
+
+  // Sync selectedGender if profile updates
+  useEffect(() => {
+    if (profile?.gender) {
+      setSelectedGender(profile.gender);
+    }
+  }, [profile?.gender]);
 
   // Unlink modal state
   const [showUnlinkModal, setShowUnlinkModal] = useState<boolean>(false);
   const [isUnlinking, setIsUnlinking] = useState<boolean>(false);
   const [unlinkError, setUnlinkError] = useState<string | null>(null);
 
-  // Save private gender
-  const handleGenderSave = async (gender: string) => {
-    setSelectedGender(gender);
+  // Save and lock private gender
+  const handleConfirmGender = async () => {
+    if (!genderToConfirm) return;
     setIsSavingGender(true);
     setGenderError(null);
     setGenderSuccessMessage(null);
 
-    const res = await profileService.saveGender(gender);
+    const res = await profileService.saveGender(genderToConfirm);
     setIsSavingGender(false);
 
     if (!res.success) {
@@ -126,8 +150,10 @@ export const SettingsPage: React.FC = () => {
       return;
     }
 
+    setSelectedGender(genderToConfirm);
+    setGenderToConfirm(null);
     await refreshProfile();
-    setGenderSuccessMessage('Gender saved privately.');
+    setGenderSuccessMessage('Gender confirmed & locked.');
     setTimeout(() => setGenderSuccessMessage(null), 3000);
   };
 
@@ -305,8 +331,8 @@ export const SettingsPage: React.FC = () => {
                 <div className="flex items-center gap-4">
                   <Avatar
                     size="lg"
-                    avatarConfig={profile?.avatar_config as any}
-                    initials={displayUsername.slice(0, 2)}
+                    avatarConfig={effectivePersona.avatarConfig}
+                    initials={effectivePersona.initials}
                     shape="circle"
                   />
                   <div className="space-y-1">
@@ -331,7 +357,7 @@ export const SettingsPage: React.FC = () => {
                 </Button>
               </div>
 
-              {/* Private Gender Selection */}
+              {/* Private Gender Selection & Freeze */}
               <div className="pt-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
@@ -339,7 +365,7 @@ export const SettingsPage: React.FC = () => {
                       Private Gender
                     </span>
                     <p className="text-[11px] text-gray-500 dark:text-slate-400">
-                      Never shown to strangers. Manually chosen and permanently private.
+                      Never shown to strangers. Manually chosen once and permanently frozen.
                     </p>
                   </div>
                   {genderSuccessMessage && (
@@ -349,53 +375,70 @@ export const SettingsPage: React.FC = () => {
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
-                  {GENDER_OPTIONS.map((gOption) => {
-                    const isSelected = selectedGender === gOption;
-                    return (
+                {isGenderLocked ? (
+                  <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700 flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="text-gray-500 dark:text-slate-400">Gender:</span>
+                      <span className="font-bold text-gray-900 dark:text-white">
+                        {profile?.gender || selectedGender}
+                      </span>
+                    </div>
+                    <Badge variant="success" size="sm" withDot>
+                      Confirmed &amp; Locked
+                    </Badge>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                    {GENDER_OPTIONS.map((gOption) => (
                       <button
                         key={gOption}
                         type="button"
-                        disabled={isSavingGender}
-                        onClick={() => handleGenderSave(gOption)}
-                        className={`p-2.5 rounded-xl border text-xs font-semibold text-center transition-all ${
-                          isSelected
-                            ? 'bg-brand-50 dark:bg-[#101A12] border-brand-600 dark:border-[#8FAF56] text-brand-700 dark:text-[#A8C96A] shadow-sm ring-1 ring-brand-500 dark:ring-[#8FAF56]'
-                            : 'bg-white dark:bg-[#0D150F] border-gray-200 dark:border-[rgba(120,160,100,0.18)] text-gray-700 dark:text-[#AEB9AE] hover:border-gray-300 dark:hover:border-[rgba(140,170,110,0.3)] hover:bg-gray-50 dark:hover:bg-[#101A12]'
-                        }`}
+                        onClick={() => setGenderToConfirm(gOption)}
+                        className="p-2.5 rounded-xl border border-gray-200 dark:border-[rgba(120,160,100,0.18)] bg-white dark:bg-[#0D150F] text-xs font-semibold hover:border-brand-500 hover:bg-gray-50 transition-all text-gray-700 dark:text-slate-200"
                       >
                         {gOption}
                       </button>
-                    );
-                  })}
-                </div>
+                    ))}
+                  </div>
+                )}
                 {genderError && (
                   <p className="text-xs text-rose-600 dark:text-rose-400">{genderError}</p>
                 )}
               </div>
 
-              {/* Private Cohort Setup */}
-              <div className="pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="space-y-1">
+              {/* Verified Student Information (Permanently Immutable) */}
+              <div className="pt-4 space-y-2.5">
+                <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">
-                    Academic Details
+                    Verified Student Information
                   </span>
-                  <p className="text-xs text-gray-900 dark:text-white font-medium">
-                    Dept: <span className="font-semibold text-brand-600 dark:text-brand-400">{profile?.department || 'RIT'}</span>
-                    {profile?.batch && ` • Batch: ${profile.batch}`}
-                    {profile?.section && ` • Section: ${profile.section}`}
-                  </p>
-                  <p className="text-[11px] text-gray-500 dark:text-slate-400">
-                    Stored privately. Never exposed to strangers in chat.
-                  </p>
+                  <Badge variant="success" size="sm" withDot>
+                    Verified &bull; Immutable
+                  </Badge>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigate('/profile/setup')}
-                >
-                  Edit Details
-                </Button>
+                <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700/80 space-y-2 text-xs">
+                  <div className="flex items-center justify-between py-1 border-b border-gray-200/60 dark:border-slate-700/60">
+                    <span className="text-gray-500 dark:text-slate-400">Name</span>
+                    <span className="font-bold text-gray-900 dark:text-white">
+                      {profile?.name || profile?.full_name || 'Verified Student'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between py-1 border-b border-gray-200/60 dark:border-slate-700/60">
+                    <span className="text-gray-500 dark:text-slate-400">Department</span>
+                    <span className="font-semibold text-brand-600 dark:text-brand-400">
+                      {profile?.department || 'RIT'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between py-1">
+                    <span className="text-gray-500 dark:text-slate-400">Batch</span>
+                    <span className="font-mono font-semibold text-gray-800 dark:text-slate-200">
+                      {profile?.batch || '—'}
+                    </span>
+                  </div>
+                </div>
+                <p className="text-[11px] text-gray-400 dark:text-slate-500">
+                  Institutional credentials from your verified ID. Permanently immutable and never editable.
+                </p>
               </div>
             </div>
           )}
@@ -572,7 +615,47 @@ export const SettingsPage: React.FC = () => {
       </Card>
 
       {/* =========================================================================
-          SECTION D: ACCOUNT / LOGOUT
+          SECTION D: CHAT PREFERENCES (Random Chat Requests Toggle)
+          ========================================================================= */}
+      <Card className="border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-card">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5 text-brand-600 dark:text-brand-400" />
+            <CardTitle className="text-lg sm:text-xl text-gray-900 dark:text-white">
+              Chat Preferences
+            </CardTitle>
+          </div>
+          <CardDescription className="text-xs sm:text-sm text-gray-500 dark:text-slate-400">
+            Control incoming random chat requests from fellow online students.
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent>
+          <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <h4 className="text-sm font-bold text-gray-900 dark:text-white">
+                Receive random chat requests
+              </h4>
+              <p className="text-xs text-gray-500 dark:text-slate-400 max-w-md leading-relaxed">
+                Allow other online RITians to invite you to a 7-minute chat even when you are not actively searching.
+              </p>
+            </div>
+
+            <Button
+              type="button"
+              variant={chatRequestsEnabled ? 'primary' : 'secondary'}
+              size="sm"
+              onClick={handleToggleChatRequests}
+              className="shrink-0 font-semibold"
+            >
+              {chatRequestsEnabled ? 'Enabled (ON)' : 'Disabled (OFF)'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* =========================================================================
+          SECTION E: ACCOUNT / LOGOUT
           ========================================================================= */}
       <Card className="border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-card">
         <CardHeader>
@@ -661,6 +744,57 @@ export const SettingsPage: React.FC = () => {
               onClick={handleUnlink}
             >
               Confirm Unlink
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Confirm Your Gender Modal (Choose Once & Freeze) */}
+      <Modal
+        isOpen={Boolean(genderToConfirm)}
+        onClose={() => setGenderToConfirm(null)}
+        title="Confirm your gender"
+        maxWidth="sm"
+      >
+        <div className="space-y-4">
+          <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700 space-y-1">
+            <span className="text-xs text-gray-500 dark:text-slate-400 block">Selected:</span>
+            <span className="text-base font-bold text-gray-900 dark:text-white block">
+              {genderToConfirm}
+            </span>
+          </div>
+
+          <p className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed">
+            You won't be able to change this after confirming.
+          </p>
+
+          {genderError && (
+            <ErrorMessage
+              title="Gender Save Error"
+              message={genderError}
+              onDismiss={() => setGenderError(null)}
+            />
+          )}
+
+          <div className="flex gap-3 justify-end pt-2">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={isSavingGender}
+              onClick={() => setGenderToConfirm(null)}
+            >
+              Back
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              isLoading={isSavingGender}
+              loadingText="Confirming..."
+              onClick={handleConfirmGender}
+            >
+              Confirm
             </Button>
           </div>
         </div>

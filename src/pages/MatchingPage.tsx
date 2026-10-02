@@ -30,6 +30,8 @@ export const MatchingPage: React.FC = () => {
   const [matchingError, setMatchingError] = useState<string | null>(null);
   const [isMatchingResolved, setIsMatchingResolved] = useState<boolean>(false);
   const [isLeaving, setIsLeaving] = useState<boolean>(false);
+  const [hasPendingRequest, setHasPendingRequest] = useState<boolean>(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   // Existing room dialog state
   const [existingRoomId, setExistingRoomId] = useState<string | null>(null);
@@ -168,6 +170,11 @@ export const MatchingPage: React.FC = () => {
         return;
       }
 
+      if (res.data?.hasPendingRequest) {
+        setHasPendingRequest(true);
+        setStatusMessage(res.data.message || 'Waiting for a RITian to respond...');
+      }
+
       // 3. Setup periodic heartbeat (every 3.5s) to detect match and maintain presence
       heartbeatTimerRef.current = setInterval(async () => {
         if (isResolvedRef.current) return;
@@ -177,6 +184,14 @@ export const MatchingPage: React.FC = () => {
 
         if (hbRes.success && hbRes.data?.status === 'matched' && hbRes.data.roomId) {
           handleMatchSuccess(hbRes.data.roomId, hbRes.data.peer, hbRes.data.expiresAt);
+          return;
+        }
+
+        if (hbRes.success && hbRes.data?.hasPendingRequest !== undefined) {
+          setHasPendingRequest(hbRes.data.hasPendingRequest);
+          if (hbRes.data.message) {
+            setStatusMessage(hbRes.data.message);
+          }
         }
       }, 3500);
     };
@@ -240,10 +255,14 @@ export const MatchingPage: React.FC = () => {
         {/* Header Titles */}
         <div className="space-y-2">
           <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-[#F2F5F2] tracking-tight">
-            Finding Your Next Conversation...
+            {hasPendingRequest
+              ? statusMessage || 'Waiting for a RITian to respond...'
+              : 'Finding Your Next Conversation...'}
           </h1>
           <p className="text-sm text-gray-500 dark:text-[#AEB9AE]">
-            Connecting you with a random RITian
+            {hasPendingRequest
+              ? 'Request sent to an active online student'
+              : 'Connecting you with a random RITian'}
           </p>
         </div>
 

@@ -16,4 +16,6 @@ export * from './Logo';
 export * from './HeisenbergSignature';
 export * from './CreatorSplashScreen';
 export * from './DarkChemicalBackdrop';
+export * from './IncomingChatRequestModal';
+export * from './IncomingChatRequestManager';
 export * from '../features/avatar';

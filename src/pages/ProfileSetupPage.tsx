@@ -9,7 +9,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  BookOpen,
   GraduationCap,
   ShieldCheck,
   Calendar,
@@ -18,7 +17,6 @@ import {
   ArrowLeft,
   CheckCircle2,
   Lock,
-  Edit2,
   Users,
 } from 'lucide-react';
 import {
@@ -28,13 +26,12 @@ import {
   CardFooter,
   Badge,
   ErrorMessage,
+  Modal,
 } from '../components';
 import { useAuth } from '../context';
 import {
-  INSTITUTIONAL_DEPARTMENTS,
   SECTION_OPTIONS,
   CLASS_OPTIONS,
-  BATCH_OPTIONS,
   GRADUATION_YEAR_OPTIONS,
   GENDER_OPTIONS,
   normalizeDepartment,
@@ -50,6 +47,7 @@ export const ProfileSetupPage: React.FC = () => {
   const { profile, refreshProfile } = useAuth();
 
   const isCollegeVerified = Boolean(profile?.college_identity_linked);
+  const isGenderLocked = Boolean(profile?.gender_locked_at || (profile?.gender && profile.gender.trim() !== ''));
 
   // Determine QR-supplied initial values
   const qrDeptCode = normalizeDepartment(profile?.department);
@@ -68,27 +66,12 @@ export const ProfileSetupPage: React.FC = () => {
     return derived || 2027;
   });
   const [gender, setGender] = useState<string>(profile?.gender || 'Prefer not to say');
-
-  // Editability toggles for QR-supplied fields
-  const [isDeptLocked, setIsDeptLocked] = useState<boolean>(Boolean(qrDeptCode));
-  const [isBatchLocked, setIsBatchLocked] = useState<boolean>(Boolean(qrBatchNorm));
+  const [genderToConfirm, setGenderToConfirm] = useState<string | null>(null);
 
   // Validation & Submission State
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof ProfileSetupFormValues, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-
-  // Automatically sync graduation year when batch changes
-  const handleBatchChange = (newBatch: string) => {
-    setBatch(newBatch);
-    const derivedGradYear = deriveGraduationYearFromBatch(newBatch);
-    if (derivedGradYear) {
-      setGraduationYear(derivedGradYear);
-    }
-    if (fieldErrors.batch) {
-      setFieldErrors((prev) => ({ ...prev, batch: undefined }));
-    }
-  };
 
   // Synchronize when profile updates from context
   useEffect(() => {
@@ -96,14 +79,14 @@ export const ProfileSetupPage: React.FC = () => {
       const detectedDept = normalizeDepartment(profile.department);
       if (detectedDept) {
         setDepartment(detectedDept);
-        setIsDeptLocked(true);
       }
       const detectedBatch = normalizeBatch(profile.batch);
       if (detectedBatch) {
         setBatch(detectedBatch);
-        setIsBatchLocked(true);
         const derived = deriveGraduationYearFromBatch(detectedBatch);
-        if (derived) setGraduationYear(derived);
+        if (derived && (!profile.graduation_year || profile.graduation_year < 2024)) {
+          setGraduationYear(derived);
+        }
       }
       if (profile.section) setSection(profile.section);
       if (profile.class_name) setClassName(profile.class_name);
@@ -112,10 +95,55 @@ export const ProfileSetupPage: React.FC = () => {
     }
   }, [profile]);
 
+  const executeSave = async (confirmedGender: string) => {
+    if (!isCollegeVerified) {
+      setSubmitError('You must verify your college ID before completing your profile.');
+      return;
+    }
+
+    setFieldErrors({});
+    setSubmitError(null);
+    setIsSubmitting(true);
+
+    try {
+      if (!isGenderLocked) {
+        const genderRes = await profileService.saveGender(confirmedGender);
+        if (!genderRes.success && genderRes.error?.code !== 'GENDER_ALREADY_LOCKED') {
+          setIsSubmitting(false);
+          setSubmitError(genderRes.error?.message || 'Failed to save gender.');
+          return;
+        }
+      }
+
+      const res = await profileService.saveProfileData({
+        department,
+        section,
+        className,
+        batch,
+        graduationYear: Number(graduationYear),
+        gender: confirmedGender,
+      });
+
+      if (!res.success) {
+        setIsSubmitting(false);
+        setSubmitError(res.error?.message || 'Failed to save profile. Please try again.');
+        return;
+      }
+
+      await refreshProfile();
+      setIsSubmitting(false);
+      navigate('/settings');
+    } catch (err: unknown) {
+      setIsSubmitting(false);
+      const msg = err instanceof Error ? err.message : 'An unexpected error occurred.';
+      setSubmitError(msg);
+    }
+  };
+
   /**
    * Handle Form Submission
    */
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!isCollegeVerified) {
@@ -140,36 +168,10 @@ export const ProfileSetupPage: React.FC = () => {
       return;
     }
 
-    setFieldErrors({});
-    setSubmitError(null);
-    setIsSubmitting(true);
-
-    try {
-      const res = await profileService.saveProfileData({
-        department,
-        section,
-        className,
-        batch,
-        graduationYear: Number(graduationYear),
-        gender,
-      });
-
-      if (!res.success) {
-        setIsSubmitting(false);
-        setSubmitError(res.error?.message || 'Failed to save profile. Please try again.');
-        return;
-      }
-
-      // Refresh auth profile state to sync profile_completed = true
-      await refreshProfile();
-
-      setIsSubmitting(false);
-      // Route to /settings
-      navigate('/settings');
-    } catch (err: unknown) {
-      setIsSubmitting(false);
-      const msg = err instanceof Error ? err.message : 'An unexpected error occurred.';
-      setSubmitError(msg);
+    if (!isGenderLocked) {
+      setGenderToConfirm(gender);
+    } else {
+      executeSave(profile?.gender || gender);
     }
   };
 
@@ -247,67 +249,45 @@ export const ProfileSetupPage: React.FC = () => {
                 />
               )}
 
-              {/* Field 1: Department */}
-              <div className="space-y-1.5">
+              {/* Verified Student Information (Read-Only & Immutable) */}
+              <div className="rounded-xl border border-gray-200 bg-gray-50/80 p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <label
-                    htmlFor="department-select"
-                    className="block text-xs font-semibold text-gray-700 flex items-center gap-1.5"
-                  >
-                    <BookOpen className="h-3.5 w-3.5 text-brand-600" />
-                    <span>Department</span>
-                    <span className="text-rose-500">*</span>
-                  </label>
-                  {isDeptLocked ? (
-                    <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-medium">
-                        <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                        Verified from ID Card
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setIsDeptLocked(false)}
-                        className="text-[11px] text-brand-600 hover:text-brand-700 flex items-center gap-1 font-medium transition-colors"
-                      >
-                        <Edit2 className="h-3 w-3" />
-                        Edit
-                      </button>
-                    </div>
-                  ) : (
-                    <span className="text-[11px] text-gray-400">Official RIT Departments</span>
-                  )}
+                  <span className="text-xs font-semibold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
+                    <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                    Verified Student Information
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-medium">
+                    <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                    Verified &bull; Immutable
+                  </span>
                 </div>
-
-                <select
-                  id="department-select"
-                  value={department}
-                  disabled={isDeptLocked}
-                  onChange={(e) => {
-                    setDepartment(e.target.value);
-                    if (fieldErrors.department) {
-                      setFieldErrors((prev) => ({ ...prev, department: undefined }));
-                    }
-                  }}
-                  className={`
-                    w-full bg-white text-gray-900 rounded-xl border px-4 py-2.5 text-sm transition-all
-                    focus-visible:outline-none focus-visible:border-brand-600 focus-visible:ring-4 focus-visible:ring-brand-500/10
-                    ${isDeptLocked ? 'opacity-85 cursor-not-allowed bg-gray-50 border-gray-200' : 'border-gray-200 hover:border-gray-300'}
-                    ${fieldErrors.department ? 'border-rose-300 text-rose-900' : ''}
-                  `.trim()}
-                >
-                  {INSTITUTIONAL_DEPARTMENTS.map((dept) => (
-                    <option key={dept.code} value={dept.code} className="text-gray-900">
-                      {dept.code} &mdash; {dept.name}
-                    </option>
-                  ))}
-                </select>
-                {fieldErrors.department && (
-                  <p className="text-xs text-rose-600 mt-1">{fieldErrors.department}</p>
-                )}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  <div className="p-3 bg-white rounded-lg border border-gray-200">
+                    <span className="text-gray-500 block text-[11px]">Name</span>
+                    <span className="font-bold text-gray-900 truncate block mt-0.5">
+                      {profile?.name || profile?.full_name || 'Verified Student'}
+                    </span>
+                  </div>
+                  <div className="p-3 bg-white rounded-lg border border-gray-200">
+                    <span className="text-gray-500 block text-[11px]">Department</span>
+                    <span className="font-semibold text-brand-600 block mt-0.5">
+                      {department}
+                    </span>
+                  </div>
+                  <div className="p-3 bg-white rounded-lg border border-gray-200">
+                    <span className="text-gray-500 block text-[11px]">Batch</span>
+                    <span className="font-mono font-semibold text-gray-800 block mt-0.5">
+                      {batch}
+                    </span>
+                  </div>
+                </div>
+                <p className="text-[11px] text-gray-400">
+                  Institutional credentials from your verified ID. Permanently immutable and cannot be edited.
+                </p>
               </div>
 
-              {/* Grid for Class, Year/Batch, Section */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Grid for Class and Section */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Field 2: Academic Year / Class */}
                 <div className="space-y-1.5">
                   <label
@@ -340,51 +320,7 @@ export const ProfileSetupPage: React.FC = () => {
                   )}
                 </div>
 
-                {/* Field 3: Academic Batch */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label
-                      htmlFor="batch-select"
-                      className="block text-xs font-semibold text-gray-700 flex items-center gap-1.5"
-                    >
-                      <Calendar className="h-3.5 w-3.5 text-brand-600" />
-                      <span>Year / Batch</span>
-                      <span className="text-rose-500">*</span>
-                    </label>
-                    {isBatchLocked && (
-                      <button
-                        type="button"
-                        onClick={() => setIsBatchLocked(false)}
-                        className="text-[11px] text-brand-600 hover:text-brand-700 font-medium"
-                      >
-                        Edit
-                      </button>
-                    )}
-                  </div>
-                  <select
-                    id="batch-select"
-                    value={batch}
-                    disabled={isBatchLocked}
-                    onChange={(e) => handleBatchChange(e.target.value)}
-                    className={`
-                      w-full bg-white text-gray-900 rounded-xl border px-4 py-2.5 text-sm transition-all
-                      focus-visible:outline-none focus-visible:border-brand-600 focus-visible:ring-4 focus-visible:ring-brand-500/10
-                      ${isBatchLocked ? 'opacity-85 cursor-not-allowed bg-gray-50 border-gray-200' : 'border-gray-200 hover:border-gray-300'}
-                      ${fieldErrors.batch ? 'border-rose-300 text-rose-900' : ''}
-                    `.trim()}
-                  >
-                    {BATCH_OPTIONS.map((b) => (
-                      <option key={b} value={b} className="text-gray-900">
-                        {b}
-                      </option>
-                    ))}
-                  </select>
-                  {fieldErrors.batch && (
-                    <p className="text-xs text-rose-600 mt-1">{fieldErrors.batch}</p>
-                  )}
-                </div>
-
-                {/* Field 4: Section */}
+                {/* Field 3: Section */}
                 <div className="space-y-1.5">
                   <label
                     htmlFor="section-select"
@@ -419,7 +355,7 @@ export const ProfileSetupPage: React.FC = () => {
 
               {/* Grid for Graduation Year & Gender */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Field 5: Expected Graduation Year */}
+                {/* Field 4: Expected Graduation Year */}
                 <div className="space-y-1.5">
                   <label
                     htmlFor="grad-year-select"
@@ -451,36 +387,55 @@ export const ProfileSetupPage: React.FC = () => {
                   )}
                 </div>
 
-                {/* Field 6: Gender */}
+                {/* Field 5: Gender */}
                 <div className="space-y-1.5">
-                  <label
-                    htmlFor="gender-select"
-                    className="block text-xs font-semibold text-gray-700 flex items-center gap-1.5"
-                  >
-                    <Users className="h-3.5 w-3.5 text-brand-600" />
-                    <span>Gender</span>
-                    <span className="text-rose-500">*</span>
-                  </label>
-                  <select
-                    id="gender-select"
-                    value={gender}
-                    onChange={(e) => {
-                      setGender(e.target.value);
-                      if (fieldErrors.gender) {
-                        setFieldErrors((prev) => ({ ...prev, gender: undefined }));
-                      }
-                    }}
-                    className="w-full bg-white text-gray-900 rounded-xl border border-gray-200 hover:border-gray-300 px-4 py-2.5 text-sm focus-visible:outline-none focus-visible:border-brand-600 focus-visible:ring-4 focus-visible:ring-brand-500/10"
-                  >
-                    {GENDER_OPTIONS.map((g) => (
-                      <option key={g} value={g} className="text-gray-900">
-                        {g}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="flex items-center justify-between">
+                    <label
+                      htmlFor="gender-select"
+                      className="block text-xs font-semibold text-gray-700 flex items-center gap-1.5"
+                    >
+                      <Users className="h-3.5 w-3.5 text-brand-600" />
+                      <span>Gender</span>
+                      <span className="text-rose-500">*</span>
+                    </label>
+                    {isGenderLocked && (
+                      <span className="inline-flex items-center gap-1 text-[11px] text-gray-500 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded-full font-medium">
+                        <Lock className="h-3 w-3 text-gray-500" />
+                        Locked
+                      </span>
+                    )}
+                  </div>
+                  {isGenderLocked ? (
+                    <div className="w-full bg-gray-50 text-gray-800 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold">
+                      {profile?.gender || gender}
+                    </div>
+                  ) : (
+                    <select
+                      id="gender-select"
+                      value={gender}
+                      onChange={(e) => {
+                        setGender(e.target.value);
+                        if (fieldErrors.gender) {
+                          setFieldErrors((prev) => ({ ...prev, gender: undefined }));
+                        }
+                      }}
+                      className="w-full bg-white text-gray-900 rounded-xl border border-gray-200 hover:border-gray-300 px-4 py-2.5 text-sm focus-visible:outline-none focus-visible:border-brand-600 focus-visible:ring-4 focus-visible:ring-brand-500/10"
+                    >
+                      {GENDER_OPTIONS.map((g) => (
+                        <option key={g} value={g} className="text-gray-900">
+                          {g}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                   {fieldErrors.gender && (
                     <p className="text-xs text-rose-600 mt-1">{fieldErrors.gender}</p>
                   )}
+                  <p className="text-[11px] text-gray-400">
+                    {isGenderLocked
+                      ? 'Gender is frozen and permanently immutable.'
+                      : 'You will choose gender once, after which it cannot be modified.'}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -510,6 +465,49 @@ export const ProfileSetupPage: React.FC = () => {
           </form>
         </Card>
       )}
+
+      {/* Confirm Your Gender Modal */}
+      <Modal
+        isOpen={Boolean(genderToConfirm)}
+        onClose={() => setGenderToConfirm(null)}
+        title="Confirm your gender"
+        maxWidth="sm"
+      >
+        <div className="space-y-4">
+          <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200 space-y-1">
+            <span className="text-xs text-gray-500 block">Selected:</span>
+            <span className="text-base font-bold text-gray-900 block">
+              {genderToConfirm}
+            </span>
+          </div>
+
+          <p className="text-xs text-gray-500 leading-relaxed">
+            You won't be able to change this after confirming.
+          </p>
+
+          <div className="flex gap-3 justify-end pt-2">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={isSubmitting}
+              onClick={() => setGenderToConfirm(null)}
+            >
+              Back
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              isLoading={isSubmitting}
+              loadingText="Confirming..."
+              onClick={() => genderToConfirm && executeSave(genderToConfirm)}
+            >
+              Confirm
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

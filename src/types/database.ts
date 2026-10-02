@@ -24,12 +24,15 @@ export interface Database {
           avatar_config: Json;
           profile_completed: boolean;
           college_identity_linked: boolean;
+          name: string | null;
+          full_name: string | null;
           department: string | null;
           section: string | null;
           class_name: string | null;
           batch: string | null;
           graduation_year: number | null;
           gender: string | null;
+          gender_locked_at: string | null;
           verification_method: string | null;
           verified_at: string | null;
           created_at: string;
@@ -41,12 +44,15 @@ export interface Database {
           avatar_config?: Json;
           profile_completed?: boolean;
           college_identity_linked?: boolean;
+          name?: string | null;
+          full_name?: string | null;
           department?: string | null;
           section?: string | null;
           class_name?: string | null;
           batch?: string | null;
           graduation_year?: number | null;
           gender?: string | null;
+          gender_locked_at?: string | null;
           verification_method?: string | null;
           verified_at?: string | null;
           created_at?: string;
@@ -58,12 +64,15 @@ export interface Database {
           avatar_config?: Json;
           profile_completed?: boolean;
           college_identity_linked?: boolean;
+          name?: string | null;
+          full_name?: string | null;
           department?: string | null;
           section?: string | null;
           class_name?: string | null;
           batch?: string | null;
           graduation_year?: number | null;
           gender?: string | null;
+          gender_locked_at?: string | null;
           verification_method?: string | null;
           verified_at?: string | null;
           created_at?: string;
@@ -242,6 +251,69 @@ export interface Database {
         };
         Relationships: [];
       };
+      user_presence: {
+        Row: {
+          user_id: string;
+          last_seen_at: string;
+          is_online: boolean;
+          available_for_chat_requests: boolean;
+          current_page: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          last_seen_at?: string;
+          is_online?: boolean;
+          available_for_chat_requests?: boolean;
+          current_page?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          last_seen_at?: string;
+          is_online?: boolean;
+          available_for_chat_requests?: boolean;
+          current_page?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      chat_requests: {
+        Row: {
+          id: string;
+          requester_id: string;
+          recipient_id: string;
+          status: string;
+          room_id: string | null;
+          created_at: string;
+          expires_at: string;
+          responded_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          requester_id: string;
+          recipient_id: string;
+          status?: string;
+          room_id?: string | null;
+          created_at?: string;
+          expires_at?: string;
+          responded_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          requester_id?: string;
+          recipient_id?: string;
+          status?: string;
+          room_id?: string | null;
+          created_at?: string;
+          expires_at?: string;
+          responded_at?: string | null;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       public_anonymous_profiles: {
@@ -305,12 +377,50 @@ export interface Database {
         };
         Returns: Json;
       };
+      save_gender: {
+        Args: {
+          p_gender: string;
+        };
+        Returns: Json;
+      };
+      update_user_presence: {
+        Args: {
+          p_is_online?: boolean;
+          p_available?: boolean;
+          p_current_page?: string;
+        };
+        Returns: Json;
+      };
+      get_pending_chat_request: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      accept_chat_request: {
+        Args: {
+          p_request_id: string;
+        };
+        Returns: Json;
+      };
+      reject_chat_request: {
+        Args: {
+          p_request_id: string;
+        };
+        Returns: Json;
+      };
+      cancel_chat_request: {
+        Args: {
+          p_request_id: string;
+        };
+        Returns: Json;
+      };
       join_matchmaking: {
         Args: Record<PropertyKey, never>;
         Returns: Json;
       };
       heartbeat_matchmaking: {
-        Args: Record<PropertyKey, never>;
+        Args: {
+          p_queue_id: string;
+        };
         Returns: Json;
       };
       leave_matchmaking: {
@@ -378,3 +488,11 @@ export type MatchmakingQueueUpdate = Database['public']['Tables']['matchmaking_q
 export type ChatMessageRow = Database['public']['Tables']['chat_messages']['Row'];
 export type ChatMessageInsert = Database['public']['Tables']['chat_messages']['Insert'];
 export type ChatMessageUpdate = Database['public']['Tables']['chat_messages']['Update'];
+
+export type UserPresenceRow = Database['public']['Tables']['user_presence']['Row'];
+export type UserPresenceInsert = Database['public']['Tables']['user_presence']['Insert'];
+export type UserPresenceUpdate = Database['public']['Tables']['user_presence']['Update'];
+
+export type ChatRequestRow = Database['public']['Tables']['chat_requests']['Row'];
+export type ChatRequestInsert = Database['public']['Tables']['chat_requests']['Insert'];
+export type ChatRequestUpdate = Database['public']['Tables']['chat_requests']['Update'];

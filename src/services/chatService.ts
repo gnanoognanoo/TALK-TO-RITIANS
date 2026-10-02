@@ -23,6 +23,7 @@ import {
   GetRoomPeerResult,
   MatchedPeerPersona,
   MAX_MESSAGE_LENGTH,
+  DEFAULT_AVATAR_CONFIG,
 } from '../types';
 
 // In-memory simulation registry for offline local development
@@ -220,7 +221,10 @@ export class ChatService {
           endReason: res.end_reason,
           peer: {
             anonymousUsername: res.peer?.anonymous_username || 'Anonymous RITian',
-            avatarConfig: res.peer?.avatar_config || {},
+            avatarConfig:
+              res.peer?.avatar_config && Object.keys(res.peer.avatar_config).length > 0
+                ? res.peer.avatar_config
+                : DEFAULT_AVATAR_CONFIG,
           },
         },
         error: null,

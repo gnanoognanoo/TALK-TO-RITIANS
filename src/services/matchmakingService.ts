@@ -18,6 +18,7 @@ import {
   MatchmakingResponse,
   MatchedPeerPersona,
   AvatarConfig,
+  DEFAULT_AVATAR_CONFIG,
 } from '../types';
 
 // In-memory simulation registry for local development fallback when Supabase is offline
@@ -129,7 +130,10 @@ export class MatchmakingService {
             expiresAt: res.expires_at,
             peer: {
               anonymousUsername: res.peer?.anonymous_username || 'Anonymous RITian',
-              avatarConfig: res.peer?.avatar_config || ({} as AvatarConfig),
+              avatarConfig:
+                res.peer?.avatar_config && Object.keys(res.peer.avatar_config).length > 0
+                  ? res.peer.avatar_config
+                  : DEFAULT_AVATAR_CONFIG,
             },
           },
           error: null,
@@ -141,6 +145,8 @@ export class MatchmakingService {
         data: {
           status: 'searching',
           queueId: res?.queue_id,
+          hasPendingRequest: Boolean((res as any)?.has_pending_request),
+          message: (res as any)?.message,
         },
         error: null,
       };
@@ -216,7 +222,10 @@ export class MatchmakingService {
             expiresAt: res.expires_at,
             peer: {
               anonymousUsername: res.peer?.anonymous_username || 'Anonymous RITian',
-              avatarConfig: res.peer?.avatar_config || ({} as AvatarConfig),
+              avatarConfig:
+                res.peer?.avatar_config && Object.keys(res.peer.avatar_config).length > 0
+                  ? res.peer.avatar_config
+                  : DEFAULT_AVATAR_CONFIG,
             },
           },
           error: null,
@@ -228,6 +237,8 @@ export class MatchmakingService {
         data: {
           status: (res?.status as any) || 'searching',
           queueId: res?.queue_id,
+          hasPendingRequest: Boolean((res as any)?.has_pending_request),
+          message: (res as any)?.message,
         },
         error: null,
       };
