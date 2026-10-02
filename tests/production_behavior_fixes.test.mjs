@@ -27,6 +27,7 @@ import {
   DEFAULT_AVATAR_CONFIG,
 } from '../src/utils/persona.ts';
 import { GENDER_OPTIONS } from '../src/config/profileConfig.ts';
+import { getTimerThresholdState, formatTimer } from '../src/utils/timer.ts';
 
 describe('Part 1: Effective Persona & Avatar Revocation Upon Unlink', () => {
   const verifiedUser = {
@@ -156,6 +157,8 @@ describe('Part 2: Verified Student Information Immutability & Gender Freeze', ()
       this.profiles.set(id, {
         id,
         college_identity_linked: false,
+        ever_verified_identity: false,
+        first_verified_at: null,
         name: null,
         full_name: null,
         department: null,
@@ -171,12 +174,27 @@ describe('Part 2: Verified Student Information Immutability & Gender Freeze', ()
       this.inTrustedVerification = true;
       const profile = this.profiles.get(userId);
       profile.college_identity_linked = true;
+      profile.ever_verified_identity = true;
+      if (!profile.first_verified_at) {
+        profile.first_verified_at = new Date().toISOString();
+      }
       profile.name = verificationData.name;
       profile.full_name = verificationData.fullName || verificationData.name;
       profile.department = verificationData.department;
       profile.batch = verificationData.batch;
       profile.verified_at = new Date().toISOString();
       this.inTrustedVerification = false;
+      return { success: true, profile };
+    }
+
+    // Simulation of unlink_college_identity RPC: sets college_identity_linked = false,
+    // but persistent ever_verified_identity, first_verified_at, and stored fields remain intact
+    unlinkCollegeIdentity(userId) {
+      const profile = this.profiles.get(userId);
+      if (!profile) return { success: false, error: 'NOT_FOUND' };
+      profile.college_identity_linked = false;
+      profile.verification_method = null;
+      profile.verified_at = null;
       return { success: true };
     }
 
@@ -186,25 +204,39 @@ describe('Part 2: Verified Student Information Immutability & Gender Freeze', ()
       if (!old) return { success: false, error: 'NOT_FOUND' };
 
       // Trigger logic simulation: protect_immutable_profile_fields
-      if (old.college_identity_linked && !this.inTrustedVerification) {
+      // If executed inside trusted verification procedure, allow writing authoritative fields
+      if (this.inTrustedVerification) {
+        Object.assign(old, fields);
+        return { success: true, profile: old };
+      }
+
+      // Check persistent verified-identity state (protects even when college_identity_linked = false)
+      const hasBeenVerified = Boolean(
+        old.ever_verified_identity ||
+        old.first_verified_at ||
+        old.college_identity_linked ||
+        old.verified_at
+      );
+
+      if (hasBeenVerified) {
         if (fields.department !== undefined && fields.department !== old.department) {
-          throw new Error('IMMUTABLE_FIELD_MODIFICATION: department cannot be modified after verification');
+          throw new Error('IMMUTABLE_FIELD_MODIFICATION: department cannot be manually modified after verification');
         }
         if (fields.batch !== undefined && fields.batch !== old.batch) {
-          throw new Error('IMMUTABLE_FIELD_MODIFICATION: batch cannot be modified after verification');
+          throw new Error('IMMUTABLE_FIELD_MODIFICATION: batch cannot be manually modified after verification');
         }
         if (fields.name !== undefined && fields.name !== old.name) {
-          throw new Error('IMMUTABLE_FIELD_MODIFICATION: name cannot be modified after verification');
+          throw new Error('IMMUTABLE_FIELD_MODIFICATION: name cannot be manually modified after verification');
         }
         if (fields.full_name !== undefined && fields.full_name !== old.full_name) {
-          throw new Error('IMMUTABLE_FIELD_MODIFICATION: full_name cannot be modified after verification');
+          throw new Error('IMMUTABLE_FIELD_MODIFICATION: full_name cannot be manually modified after verification');
         }
       }
 
-      // Gender immutability trigger simulation
+      // Gender immutability trigger simulation: unlinking must NOT unlock gender
       if (old.gender_locked_at || (old.gender && old.gender.trim() !== '')) {
         if (fields.gender !== undefined && fields.gender !== old.gender) {
-          throw new Error('GENDER_ALREADY_LOCKED');
+          throw new Error('GENDER_ALREADY_LOCKED: Gender cannot be modified once confirmed');
         }
       }
 
@@ -283,6 +315,70 @@ describe('Part 2: Verified Student Information Immutability & Gender Freeze', ()
     assert.equal(afterAttempts.batch, '2025-2029');
   });
 
+  test('verified name locked after unlink', () => {
+    // Verify physical ID
+    db.trustedVerificationUpdate(userId, {
+      name: 'GNANESHWAR R',
+      department: 'CSE',
+      batch: '2025-2029',
+    });
+
+    // Unlink ID
+    db.unlinkCollegeIdentity(userId);
+    const profile = db.profiles.get(userId);
+    assert.equal(profile.college_identity_linked, false);
+    assert.equal(profile.ever_verified_identity, true);
+
+    // Attempt direct authenticated update on name while unlinked
+    assert.throws(
+      () => db.updateProfileDirect(userId, { name: 'Fake Name' }),
+      /IMMUTABLE_FIELD_MODIFICATION/
+    );
+    assert.equal(profile.name, 'GNANESHWAR R');
+  });
+
+  test('verified department locked after unlink', () => {
+    // Verify physical ID
+    db.trustedVerificationUpdate(userId, {
+      name: 'GNANESHWAR R',
+      department: 'CSE',
+      batch: '2025-2029',
+    });
+
+    // Unlink ID
+    db.unlinkCollegeIdentity(userId);
+    const profile = db.profiles.get(userId);
+    assert.equal(profile.college_identity_linked, false);
+
+    // Attempt direct authenticated update on department while unlinked
+    assert.throws(
+      () => db.updateProfileDirect(userId, { department: 'FAKE' }),
+      /IMMUTABLE_FIELD_MODIFICATION/
+    );
+    assert.equal(profile.department, 'CSE');
+  });
+
+  test('verified batch locked after unlink', () => {
+    // Verify physical ID
+    db.trustedVerificationUpdate(userId, {
+      name: 'GNANESHWAR R',
+      department: 'CSE',
+      batch: '2025-2029',
+    });
+
+    // Unlink ID
+    db.unlinkCollegeIdentity(userId);
+    const profile = db.profiles.get(userId);
+    assert.equal(profile.college_identity_linked, false);
+
+    // Attempt direct authenticated update on batch while unlinked
+    assert.throws(
+      () => db.updateProfileDirect(userId, { batch: '9999-9999' }),
+      /IMMUTABLE_FIELD_MODIFICATION/
+    );
+    assert.equal(profile.batch, '2025-2029');
+  });
+
   test('gender: first write succeeds and records gender_locked_at', () => {
     const res1 = db.saveGender(userId, 'Male');
     assert.equal(res1.success, true);
@@ -312,6 +408,76 @@ describe('Part 2: Verified Student Information Immutability & Gender Freeze', ()
     // Remains locked at first choice
     const profile = db.profiles.get(userId);
     assert.equal(profile.gender, 'Female');
+  });
+
+  test('gender remains locked after unlink', () => {
+    // 1. Verify physical ID and choose gender
+    db.trustedVerificationUpdate(userId, {
+      name: 'GNANESHWAR R',
+      department: 'CSE',
+      batch: '2025-2029',
+    });
+    const res1 = db.saveGender(userId, 'Male');
+    assert.equal(res1.success, true);
+
+    // 2. Unlink ID
+    db.unlinkCollegeIdentity(userId);
+    const profile = db.profiles.get(userId);
+    assert.equal(profile.college_identity_linked, false);
+    assert.equal(profile.gender, 'Male');
+    assert.ok(profile.gender_locked_at);
+
+    // 3. Attempt to change gender after unlink via saveGender RPC
+    const res2 = db.saveGender(userId, 'Female');
+    assert.equal(res2.success, false);
+    assert.equal(res2.error, 'GENDER_ALREADY_LOCKED');
+
+    // 4. Attempt to change gender after unlink via direct update
+    assert.throws(
+      () => db.updateProfileDirect(userId, { gender: 'Female' }),
+      /GENDER_ALREADY_LOCKED/
+    );
+    assert.equal(profile.gender, 'Male');
+  });
+
+  test('trusted re-verification can update authoritative fields', () => {
+    // Initial verification with CSE
+    db.trustedVerificationUpdate(userId, {
+      name: 'GNANESHWAR R',
+      department: 'CSE',
+      batch: '2025-2029',
+    });
+    assert.equal(db.profiles.get(userId).department, 'CSE');
+
+    // Legitimate re-verification in trusted context (e.g. branch change to AI&DS)
+    const reverifyRes = db.trustedVerificationUpdate(userId, {
+      name: 'GNANESHWAR R',
+      department: 'AI&DS',
+      batch: '2025-2029',
+    });
+    assert.equal(reverifyRes.success, true);
+    assert.equal(db.profiles.get(userId).department, 'AI&DS');
+  });
+
+  test('ordinary client cannot update authoritative fields', () => {
+    db.trustedVerificationUpdate(userId, {
+      name: 'GNANESHWAR R',
+      department: 'CSE',
+      batch: '2025-2029',
+    });
+
+    assert.throws(
+      () => db.updateProfileDirect(userId, { department: 'ECE' }),
+      /IMMUTABLE_FIELD_MODIFICATION/
+    );
+    assert.throws(
+      () => db.updateProfileDirect(userId, { batch: '2020-2024' }),
+      /IMMUTABLE_FIELD_MODIFICATION/
+    );
+    assert.throws(
+      () => db.updateProfileDirect(userId, { name: 'Changed Name' }),
+      /IMMUTABLE_FIELD_MODIFICATION/
+    );
   });
 });
 
@@ -594,5 +760,57 @@ describe('Part 3: Random Online Chat Requests Architecture', () => {
     // Exactly one room exists for User A
     assert.equal(sys.activeRooms.get(userA), matchmakingRoomId);
     assert.equal(sys.activeRooms.has(userB), false);
+  });
+});
+
+describe('Part 4: 7-Minute Chat Timer Warning Thresholds', () => {
+  test('warning starts at 01:00 (remainingSeconds <= 60 && remainingSeconds > 10)', () => {
+    // 01:01 (61s) -> still normal
+    assert.equal(getTimerThresholdState(61), 'normal');
+    assert.equal(formatTimer(61), '01:01');
+
+    // 01:00 (60s) -> amber warning starts!
+    assert.equal(getTimerThresholdState(60), 'amber');
+    assert.equal(formatTimer(60), '01:00');
+
+    // 00:30 (30s) -> amber warning
+    assert.equal(getTimerThresholdState(30), 'amber');
+    assert.equal(formatTimer(30), '00:30');
+
+    // 00:11 (11s) -> last second of amber warning
+    assert.equal(getTimerThresholdState(11), 'amber');
+    assert.equal(formatTimer(11), '00:11');
+  });
+
+  test('red state starts at 00:10 (remainingSeconds <= 10 && remainingSeconds >= 0)', () => {
+    // 00:10 (10s) -> red final warning starts!
+    assert.equal(getTimerThresholdState(10), 'red');
+    assert.equal(formatTimer(10), '00:10');
+
+    // 00:05 (5s) -> red final warning
+    assert.equal(getTimerThresholdState(5), 'red');
+    assert.equal(formatTimer(5), '00:05');
+
+    // 00:01 (1s) -> red final warning
+    assert.equal(getTimerThresholdState(1), 'red');
+    assert.equal(formatTimer(1), '00:01');
+
+    // 00:00 (0s) -> red final warning / auto-expiry
+    assert.equal(getTimerThresholdState(0), 'red');
+    assert.equal(formatTimer(0), '00:00');
+  });
+
+  test('timer normal state for remainingSeconds > 60', () => {
+    // 07:00 (420s) -> initial session state
+    assert.equal(getTimerThresholdState(420), 'normal');
+    assert.equal(formatTimer(420), '07:00');
+
+    // 05:00 (300s) -> mid-session
+    assert.equal(getTimerThresholdState(300), 'normal');
+    assert.equal(formatTimer(300), '05:00');
+
+    // 02:00 (120s) -> normal (NOT amber)
+    assert.equal(getTimerThresholdState(120), 'normal');
+    assert.equal(formatTimer(120), '02:00');
   });
 });

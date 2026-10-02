@@ -42,6 +42,7 @@ import {
   MatchedPeerPersona,
   MAX_MESSAGE_LENGTH,
 } from '../types';
+import { formatTimer, getTimerThresholdState } from '../utils/timer';
 
 export const ChatPage: React.FC = () => {
   const { roomId } = useParams<{ roomId: string }>();
@@ -103,16 +104,6 @@ export const ChatPage: React.FC = () => {
     const diff = Math.floor((new Date(initialExpiresAt).getTime() - Date.now()) / 1000);
     return Math.max(0, diff);
   });
-
-  /**
-   * Helper to format seconds as MM:SS
-   */
-  const formatTimer = (seconds: number | null): string => {
-    if (seconds === null || isNaN(seconds)) return '07:00';
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
 
   /**
    * 7-Minute Countdown Timer & Expiration Trigger
@@ -685,9 +676,9 @@ export const ChatPage: React.FC = () => {
             <div
               id="chat-header-timer"
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold tabular-nums tracking-wide transition-colors ${
-                (remainingSeconds ?? 420) <= 10
+                getTimerThresholdState(remainingSeconds) === 'red'
                   ? 'bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-400 border-red-300 dark:border-red-800 font-bold ring-2 ring-red-400/30 animate-pulse'
-                  : (remainingSeconds ?? 420) <= 60
+                  : getTimerThresholdState(remainingSeconds) === 'amber'
                   ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-800 font-bold ring-2 ring-amber-400/30 animate-pulse'
                   : 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-[#101A12] dark:text-[#A8C96A] dark:border-[rgba(140,170,110,0.25)]'
               }`}

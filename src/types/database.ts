@@ -33,6 +33,8 @@ export interface Database {
           graduation_year: number | null;
           gender: string | null;
           gender_locked_at: string | null;
+          ever_verified_identity: boolean;
+          first_verified_at: string | null;
           verification_method: string | null;
           verified_at: string | null;
           created_at: string;
@@ -53,6 +55,8 @@ export interface Database {
           graduation_year?: number | null;
           gender?: string | null;
           gender_locked_at?: string | null;
+          ever_verified_identity?: boolean;
+          first_verified_at?: string | null;
           verification_method?: string | null;
           verified_at?: string | null;
           created_at?: string;
@@ -73,6 +77,8 @@ export interface Database {
           graduation_year?: number | null;
           gender?: string | null;
           gender_locked_at?: string | null;
+          ever_verified_identity?: boolean;
+          first_verified_at?: string | null;
           verification_method?: string | null;
           verified_at?: string | null;
           created_at?: string;

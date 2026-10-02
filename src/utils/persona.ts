@@ -68,6 +68,8 @@ export interface PersonaProfileInput {
   display_username?: string | null;
   avatar_config?: unknown;
   college_identity_linked?: boolean | null;
+  ever_verified_identity?: boolean | null;
+  first_verified_at?: string | null;
   name?: string | null;
   full_name?: string | null;
 }

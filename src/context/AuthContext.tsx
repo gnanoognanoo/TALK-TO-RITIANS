@@ -109,6 +109,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           graduation_year: null,
           gender: null,
           gender_locked_at: null,
+          ever_verified_identity: false,
+          first_verified_at: null,
           verification_method: null,
           verified_at: null,
           created_at: new Date().toISOString(),
