@@ -25,6 +25,8 @@ import {
   Unlink,
   AlertCircle,
   Clock,
+  Pause,
+  Play,
 } from 'lucide-react';
 import {
   Button,
@@ -48,7 +50,7 @@ export const ChatPage: React.FC = () => {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, isDeveloper } = useAuth();
 
   // State
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -60,6 +62,11 @@ export const ChatPage: React.FC = () => {
   const [connectionStatus, setConnectionStatus] = useState<ChatConnectionStatus>('connecting');
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState<boolean>(false);
   const [duplicateTabWarning, setDuplicateTabWarning] = useState<boolean>(false);
+
+  // Developer Chat Timer Freeze / Resume State
+  const [timerPausedAt, setTimerPausedAt] = useState<string | null>(null);
+  const [isTogglingFreeze, setIsTogglingFreeze] = useState<boolean>(false);
+  const isTimerFrozen = Boolean(timerPausedAt);
 
   const graceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const heartbeatTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -108,9 +115,10 @@ export const ChatPage: React.FC = () => {
   /**
    * 7-Minute Countdown Timer & Expiration Trigger
    * Starts at 07:00, warns at 01:00 remaining, and automatically ends at 00:00.
+   * If isTimerFrozen is true, the timer is paused and does NOT decrement or expire!
    */
   useEffect(() => {
-    if (!expiresAt || roomStatus !== 'active') return;
+    if (!expiresAt || roomStatus !== 'active' || isTimerFrozen) return;
 
     const tick = () => {
       const remaining = Math.max(0, Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000));
@@ -150,7 +158,7 @@ export const ChatPage: React.FC = () => {
     tick();
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, [expiresAt, roomStatus, roomId]);
+  }, [expiresAt, roomStatus, roomId, isTimerFrozen]);
 
   /**
    * Auto-scroll when messages update
@@ -180,15 +188,21 @@ export const ChatPage: React.FC = () => {
         if (res.data.peer) {
           setPeer(res.data.peer);
         }
-        if (res.data.expiresAt) {
-          setExpiresAt(res.data.expiresAt);
-          const diff = Math.floor((new Date(res.data.expiresAt).getTime() - Date.now()) / 1000);
-          setRemainingSeconds(Math.max(0, diff));
-          if (diff <= 0) {
-            setRoomStatus('ended');
-            setEndReason('time_limit');
-            setConnectionStatus('stranger disconnected');
-            return;
+        if (res.data.timerPausedAt) {
+          setTimerPausedAt(res.data.timerPausedAt);
+          setRemainingSeconds(res.data.timerRemainingSeconds ?? 420);
+        } else {
+          setTimerPausedAt(null);
+          if (res.data.expiresAt) {
+            setExpiresAt(res.data.expiresAt);
+            const diff = Math.floor((new Date(res.data.expiresAt).getTime() - Date.now()) / 1000);
+            setRemainingSeconds(Math.max(0, diff));
+            if (diff <= 0) {
+              setRoomStatus('ended');
+              setEndReason('time_limit');
+              setConnectionStatus('stranger disconnected');
+              return;
+            }
           }
         }
         if (res.data.endReason) {
@@ -329,7 +343,19 @@ export const ChatPage: React.FC = () => {
           async (payload) => {
             if (!isMounted) return;
             const updatedRoom = payload.new as any;
-            if (updatedRoom.expires_at) {
+            if (updatedRoom.timer_paused_at) {
+              setTimerPausedAt(updatedRoom.timer_paused_at);
+              if (updatedRoom.timer_remaining_seconds !== undefined && updatedRoom.timer_remaining_seconds !== null) {
+                setRemainingSeconds(updatedRoom.timer_remaining_seconds);
+              }
+            } else if (updatedRoom.timer_paused_at === null) {
+              setTimerPausedAt(null);
+              if (updatedRoom.expires_at) {
+                setExpiresAt(updatedRoom.expires_at);
+                const diff = Math.max(0, Math.floor((new Date(updatedRoom.expires_at).getTime() - Date.now()) / 1000));
+                setRemainingSeconds(diff);
+              }
+            } else if (updatedRoom.expires_at) {
               setExpiresAt(updatedRoom.expires_at);
             }
             if (updatedRoom.persona_updated_at) {
@@ -519,6 +545,70 @@ export const ChatPage: React.FC = () => {
   }, [roomId]);
 
   /**
+   * Privileged Developer Action: Freeze Chat Timer
+   */
+  const handleFreezeTimer = useCallback(async () => {
+    if (!roomId || isTogglingFreeze || roomStatus !== 'active' || isTimerFrozen) return;
+    setIsTogglingFreeze(true);
+    try {
+      const res = await chatService.freezeChatTimer(roomId);
+      if (res.success && res.data) {
+        setTimerPausedAt(res.data.pausedAt);
+        setRemainingSeconds(res.data.remainingSeconds);
+      } else {
+        console.warn('[ChatPage] Freeze timer failed:', res.error);
+      }
+    } catch (err) {
+      console.warn('[ChatPage] Freeze timer error:', err);
+    } finally {
+      setIsTogglingFreeze(false);
+    }
+  }, [roomId, isTogglingFreeze, roomStatus, isTimerFrozen]);
+
+  /**
+   * Privileged Developer Action: Resume Chat Timer
+   */
+  const handleResumeTimer = useCallback(async () => {
+    if (!roomId || isTogglingFreeze || roomStatus !== 'active' || !isTimerFrozen) return;
+    setIsTogglingFreeze(true);
+    try {
+      const res = await chatService.resumeChatTimer(roomId);
+      if (res.success && res.data) {
+        setTimerPausedAt(null);
+        setExpiresAt(res.data.expiresAt);
+        setRemainingSeconds(res.data.remainingSeconds);
+      } else {
+        console.warn('[ChatPage] Resume timer failed:', res.error);
+      }
+    } catch (err) {
+      console.warn('[ChatPage] Resume timer error:', err);
+    } finally {
+      setIsTogglingFreeze(false);
+    }
+  }, [roomId, isTogglingFreeze, roomStatus, isTimerFrozen]);
+
+  /**
+   * Developer Keyboard Shortcut: Ctrl/Cmd + Shift + P
+   */
+  useEffect(() => {
+    if (!isDeveloper || roomStatus !== 'active') return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'P' || e.key === 'p')) {
+        e.preventDefault();
+        if (isTimerFrozen) {
+          handleResumeTimer();
+        } else {
+          handleFreezeTimer();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isDeveloper, roomStatus, isTimerFrozen, handleResumeTimer, handleFreezeTimer]);
+
+  /**
    * Handle Sending Messages
    */
   const handleSendMessage = async (e?: React.FormEvent) => {
@@ -673,19 +763,72 @@ export const ChatPage: React.FC = () => {
         {/* Right Header Action: Timer and Leave */}
         <div className="flex items-center gap-2 sm:gap-3">
           {roomStatus === 'active' && (
-            <div
-              id="chat-header-timer"
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold tabular-nums tracking-wide transition-colors ${
-                getTimerThresholdState(remainingSeconds) === 'red'
-                  ? 'bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-400 border-red-300 dark:border-red-800 font-bold ring-2 ring-red-400/30 animate-pulse'
-                  : getTimerThresholdState(remainingSeconds) === 'amber'
-                  ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-800 font-bold ring-2 ring-amber-400/30 animate-pulse'
-                  : 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-[#101A12] dark:text-[#A8C96A] dark:border-[rgba(140,170,110,0.25)]'
-              }`}
-              title="7-minute chat session timer"
-            >
-              <Clock className="h-3.5 w-3.5" />
-              <span>{formatTimer(remainingSeconds)}</span>
+            <div className="flex items-center gap-1.5">
+              {isTimerFrozen ? (
+                /* FROZEN STATE: Distinct paused badge without pulsing warnings */
+                <div
+                  id="chat-header-timer"
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold tabular-nums tracking-wide bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border-sky-300 dark:border-sky-800 shadow-sm"
+                  title={isDeveloper ? 'Timer frozen by developer' : 'Timer paused'}
+                >
+                  <Pause className="h-3.5 w-3.5 text-sky-600 dark:text-sky-400" />
+                  <span>
+                    {formatTimer(remainingSeconds)}{' '}
+                    {isDeveloper ? '— FROZEN' : '(Timer paused)'}
+                  </span>
+                </div>
+              ) : (
+                /* RUNNING STATE: Standard 7-minute timer with warning colors */
+                <div
+                  id="chat-header-timer"
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold tabular-nums tracking-wide transition-colors ${
+                    getTimerThresholdState(remainingSeconds) === 'red'
+                      ? 'bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-400 border-red-300 dark:border-red-800 font-bold ring-2 ring-red-400/30 animate-pulse'
+                      : getTimerThresholdState(remainingSeconds) === 'amber'
+                      ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-800 font-bold ring-2 ring-amber-400/30 animate-pulse'
+                      : 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-[#101A12] dark:text-[#A8C96A] dark:border-[rgba(140,170,110,0.25)]'
+                  }`}
+                  title="7-minute chat session timer"
+                >
+                  <Clock className="h-3.5 w-3.5" />
+                  <span>{formatTimer(remainingSeconds)}</span>
+                </div>
+              )}
+
+              {/* Privileged Developer Only: Freeze / Resume Control */}
+              {isDeveloper && (
+                isTimerFrozen ? (
+                  <Button
+                    id="developer-resume-timer-btn"
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    onClick={handleResumeTimer}
+                    isLoading={isTogglingFreeze}
+                    disabled={isTogglingFreeze}
+                    leftIcon={<Play className="h-3.5 w-3.5" />}
+                    className="text-xs h-7 px-2.5 font-semibold bg-emerald-600 hover:bg-emerald-700 text-white border-0 shadow-sm"
+                    title="Resume countdown timer (Ctrl+Shift+P)"
+                  >
+                    Resume
+                  </Button>
+                ) : (
+                  <Button
+                    id="developer-freeze-timer-btn"
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleFreezeTimer}
+                    isLoading={isTogglingFreeze}
+                    disabled={isTogglingFreeze}
+                    leftIcon={<Pause className="h-3.5 w-3.5 text-sky-600 dark:text-sky-400" />}
+                    className="text-xs h-7 px-2.5 font-semibold border-sky-300 hover:border-sky-400 text-sky-800 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/40 shadow-sm"
+                    title="Freeze countdown timer (Ctrl+Shift+P)"
+                  >
+                    Freeze
+                  </Button>
+                )
+              )}
             </div>
           )}
 
@@ -702,8 +845,8 @@ export const ChatPage: React.FC = () => {
         </div>
       </header>
 
-      {/* 01:00 Remaining Warning Banner */}
-      {roomStatus === 'active' && remainingSeconds !== null && remainingSeconds <= 60 && remainingSeconds > 0 && (
+      {/* 01:00 Remaining Warning Banner (Suppressed while timer is frozen) */}
+      {roomStatus === 'active' && !isTimerFrozen && remainingSeconds !== null && remainingSeconds <= 60 && remainingSeconds > 0 && (
         <div
           id="chat-time-warning-banner"
           role="alert"

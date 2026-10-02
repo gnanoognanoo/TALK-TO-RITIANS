@@ -24,6 +24,8 @@ import {
   MatchedPeerPersona,
   MAX_MESSAGE_LENGTH,
   DEFAULT_AVATAR_CONFIG,
+  FreezeTimerResult,
+  ResumeTimerResult,
 } from '../types';
 
 // In-memory simulation registry for offline local development
@@ -219,6 +221,8 @@ export class ChatService {
           createdAt: res.created_at,
           expiresAt: res.expires_at,
           endReason: res.end_reason,
+          timerPausedAt: res.timer_paused_at || null,
+          timerRemainingSeconds: res.timer_remaining_seconds ?? null,
           peer: {
             anonymousUsername: res.peer?.anonymous_username || 'Anonymous RITian',
             avatarConfig:
@@ -613,6 +617,8 @@ export class ChatService {
     createdAt?: string;
     expiresAt?: string;
     endReason?: ChatEndReason | string | null;
+    timerPausedAt?: string | null;
+    timerRemainingSeconds?: number | null;
   }>> {
     try {
       const [peerRes, msgRes] = await Promise.all([
@@ -637,6 +643,8 @@ export class ChatService {
           createdAt: peerRes.data.createdAt,
           expiresAt: peerRes.data.expiresAt,
           endReason: peerRes.data.endReason,
+          timerPausedAt: peerRes.data.timerPausedAt || null,
+          timerRemainingSeconds: peerRes.data.timerRemainingSeconds ?? null,
         },
         error: null,
       };
@@ -646,6 +654,142 @@ export class ChatService {
         success: false,
         data: null,
         error: { code: 'RECONNECT_ERROR', message },
+      };
+    }
+  }
+
+  /**
+   * Freezes the countdown timer for an active room.
+   * Privileged developer action: Server checks is_platform_staff() and caller membership.
+   */
+  async freezeChatTimer(roomId: string): Promise<ApiResponse<FreezeTimerResult>> {
+    try {
+      if (!isSupabaseConfigured) {
+        const local = localDevRooms.get(roomId);
+        if (local) {
+          const now = Date.now();
+          const rem = local.expiresAt
+            ? Math.max(0, Math.floor((new Date(local.expiresAt).getTime() - now) / 1000))
+            : 420;
+          return {
+            success: true,
+            data: {
+              roomId,
+              status: 'active',
+              timerPaused: true,
+              remainingSeconds: rem,
+              pausedAt: new Date(now).toISOString(),
+              pausedBy: 'local-dev',
+            },
+            error: null,
+          };
+        }
+      }
+
+      const { data, error } = await supabase.rpc('freeze_chat_timer', {
+        p_room_id: roomId,
+      });
+
+      if (error) {
+        return {
+          success: false,
+          data: null,
+          error: { code: error.code || 'FREEZE_FAILED', message: error.message },
+        };
+      }
+
+      const res = data as any;
+      if (!res?.success) {
+        return {
+          success: false,
+          data: null,
+          error: { code: res?.error || 'FREEZE_FAILED', message: res?.message || 'Failed to freeze chat timer.' },
+        };
+      }
+
+      return {
+        success: true,
+        data: {
+          roomId: res.room_id || roomId,
+          status: res.status || 'active',
+          timerPaused: Boolean(res.timer_paused),
+          remainingSeconds: res.remaining_seconds ?? 0,
+          pausedAt: res.paused_at,
+          pausedBy: res.paused_by,
+        },
+        error: null,
+      };
+    } catch (err: unknown) {
+      return {
+        success: false,
+        data: null,
+        error: { code: 'CLIENT_ERROR', message: err instanceof Error ? err.message : 'Unknown freeze error' },
+      };
+    }
+  }
+
+  /**
+   * Resumes the countdown timer for a paused room.
+   * Privileged developer action: Server checks is_platform_staff() and caller membership.
+   */
+  async resumeChatTimer(roomId: string): Promise<ApiResponse<ResumeTimerResult>> {
+    try {
+      if (!isSupabaseConfigured) {
+        const local = localDevRooms.get(roomId);
+        if (local) {
+          return {
+            success: true,
+            data: {
+              roomId,
+              status: 'active',
+              timerPaused: false,
+              remainingSeconds: 420,
+              expiresAt: new Date(Date.now() + 420 * 1000).toISOString(),
+              pausedDurationSeconds: 0,
+            },
+            error: null,
+          };
+        }
+      }
+
+      const { data, error } = await supabase.rpc('resume_chat_timer', {
+        p_room_id: roomId,
+      });
+
+      if (error) {
+        return {
+          success: false,
+          data: null,
+          error: { code: error.code || 'RESUME_FAILED', message: error.message },
+        };
+      }
+
+      const res = data as any;
+      if (!res?.success) {
+        return {
+          success: false,
+          data: null,
+          error: { code: res?.error || 'RESUME_FAILED', message: res?.message || 'Failed to resume chat timer.' },
+        };
+      }
+
+      return {
+        success: true,
+        data: {
+          roomId: res.room_id || roomId,
+          status: res.status || 'active',
+          timerPaused: false,
+          remainingSeconds: res.remaining_seconds ?? 0,
+          expiresAt: res.expires_at,
+          pausedDurationSeconds: res.paused_duration_seconds ?? 0,
+        },
+        error: null,
+      };
+    } catch (err: unknown) {
+      return {
+        success: false,
+        data: null,
+        error: { code: 'CLIENT_ERROR', message: err instanceof Error ? err.message : 'Unknown resume error' },
       };
     }
   }

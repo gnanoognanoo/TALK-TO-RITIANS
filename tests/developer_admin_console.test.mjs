@@ -510,6 +510,254 @@ class SimulatedDatabase {
       expires_at: room.expires_at,
     };
   }
+
+  // RPC: freeze_chat_timer(p_room_id)
+  rpcFreezeChatTimer(callerId, roomId, customNow = new Date()) {
+    if (!callerId) {
+      return { success: false, error: 'UNAUTHENTICATED' };
+    }
+    if (!this.isPlatformStaff(callerId)) {
+      return {
+        success: false,
+        error: 'DEVELOPER_REQUIRED',
+        message: 'Only active platform developers can freeze chat timers.',
+      };
+    }
+    const room = this.chatRooms.get(roomId);
+    if (!room) {
+      return { success: false, error: 'ROOM_NOT_FOUND' };
+    }
+    if (room.user_1 !== callerId && room.user_2 !== callerId) {
+      return {
+        success: false,
+        error: 'NOT_ROOM_PARTICIPANT',
+        message: 'Developer must be an active participant in this room to freeze its timer.',
+      };
+    }
+    if (room.status !== 'active') {
+      return {
+        success: false,
+        error: 'ROOM_NOT_ACTIVE',
+        message: 'Cannot freeze timer on an inactive conversation.',
+      };
+    }
+    const nowTime = customNow.getTime();
+    const expTime = new Date(room.expires_at).getTime();
+    if (!room.timer_paused_at && room.expires_at && nowTime >= expTime) {
+      room.status = 'ended';
+      room.end_reason = 'time_limit';
+      return {
+        success: false,
+        error: 'ROOM_EXPIRED',
+        message: 'Room timer has already expired.',
+      };
+    }
+    if (room.timer_paused_at) {
+      return {
+        success: false,
+        error: 'TIMER_ALREADY_PAUSED',
+        message: 'Timer is already paused.',
+        remaining_seconds: room.timer_remaining_seconds,
+        paused_at: room.timer_paused_at,
+      };
+    }
+
+    const remainingSeconds = Math.max(0, Math.floor((expTime - nowTime) / 1000));
+    room.timer_paused_at = customNow.toISOString();
+    room.timer_remaining_seconds = remainingSeconds;
+    room.timer_paused_by = callerId;
+
+    this.logAdminAction(
+      callerId,
+      'FREEZE_CHAT_TIMER',
+      room.user_1 === callerId ? room.user_2 : room.user_1,
+      roomId,
+      'Developer froze chat timer',
+      {
+        room_id: roomId,
+        remaining_seconds: remainingSeconds,
+        paused_at: customNow.toISOString(),
+      }
+    );
+
+    return {
+      success: true,
+      room_id: roomId,
+      status: 'active',
+      timer_paused: true,
+      remaining_seconds: remainingSeconds,
+      paused_at: customNow.toISOString(),
+      paused_by: callerId,
+    };
+  }
+
+  // RPC: resume_chat_timer(p_room_id)
+  rpcResumeChatTimer(callerId, roomId, customNow = new Date()) {
+    if (!callerId) {
+      return { success: false, error: 'UNAUTHENTICATED' };
+    }
+    if (!this.isPlatformStaff(callerId)) {
+      return {
+        success: false,
+        error: 'DEVELOPER_REQUIRED',
+        message: 'Only active platform developers can resume chat timers.',
+      };
+    }
+    const room = this.chatRooms.get(roomId);
+    if (!room) {
+      return { success: false, error: 'ROOM_NOT_FOUND' };
+    }
+    if (room.user_1 !== callerId && room.user_2 !== callerId) {
+      return {
+        success: false,
+        error: 'NOT_ROOM_PARTICIPANT',
+        message: 'Developer must be an active participant in this room to resume its timer.',
+      };
+    }
+    if (room.status !== 'active') {
+      return {
+        success: false,
+        error: 'ROOM_NOT_ACTIVE',
+        message: 'Cannot resume timer on an inactive conversation.',
+      };
+    }
+    if (!room.timer_paused_at) {
+      return {
+        success: false,
+        error: 'TIMER_NOT_PAUSED',
+        message: 'Timer is not currently paused.',
+      };
+    }
+
+    const remainingSeconds = room.timer_remaining_seconds ?? 0;
+    const nowTime = customNow.getTime();
+    const newExpiresAt = new Date(nowTime + remainingSeconds * 1000).toISOString();
+    const pausedDuration = Math.max(
+      0,
+      Math.floor((nowTime - new Date(room.timer_paused_at).getTime()) / 1000)
+    );
+
+    room.expires_at = newExpiresAt;
+    room.timer_paused_at = null;
+    room.timer_remaining_seconds = null;
+    room.timer_paused_by = null;
+    room.total_paused_seconds = (room.total_paused_seconds || 0) + pausedDuration;
+
+    this.logAdminAction(
+      callerId,
+      'RESUME_CHAT_TIMER',
+      room.user_1 === callerId ? room.user_2 : room.user_1,
+      roomId,
+      'Developer resumed chat timer',
+      {
+        room_id: roomId,
+        remaining_seconds: remainingSeconds,
+        paused_duration_seconds: pausedDuration,
+        new_expires_at: newExpiresAt,
+      }
+    );
+
+    return {
+      success: true,
+      room_id: roomId,
+      status: 'active',
+      timer_paused: false,
+      remaining_seconds: remainingSeconds,
+      expires_at: newExpiresAt,
+      paused_duration_seconds: pausedDuration,
+    };
+  }
+
+  // RPC: send_chat_message(p_room_id, p_content)
+  rpcSendChatMessage(callerId, roomId, content, customNow = new Date()) {
+    if (!callerId) {
+      return { success: false, error: 'UNAUTHENTICATED' };
+    }
+    const room = this.chatRooms.get(roomId);
+    if (!room || (room.user_1 !== callerId && room.user_2 !== callerId)) {
+      return { success: false, error: 'UNAUTHORIZED_ROOM_ACCESS' };
+    }
+    if (room.status !== 'active') {
+      return { success: false, error: 'ROOM_INACTIVE' };
+    }
+
+    // Server-Authoritative Expiration Check:
+    // Paused rooms (timer_paused_at IS NOT NULL) MUST NOT expire and must permit messages!
+    const nowTime = customNow.getTime();
+    if (!room.timer_paused_at && room.expires_at && nowTime >= new Date(room.expires_at).getTime()) {
+      room.status = 'ended';
+      room.end_reason = 'time_limit';
+      return { success: false, error: 'ROOM_EXPIRED' };
+    }
+
+    const msgId = `msg-${Date.now()}-${Math.random()}`;
+    const msg = {
+      id: msgId,
+      room_id: roomId,
+      sender_id: callerId,
+      content: content.trim(),
+      created_at: customNow.toISOString(),
+      message_type: 'text',
+    };
+    this.chatMessages.set(msgId, msg);
+
+    return { success: true, message: msg };
+  }
+
+  // RPC: end_chat_room(p_room_id, p_reason)
+  rpcEndChatRoom(callerId, roomId, reason = 'leave', customNow = new Date()) {
+    if (!callerId) return { success: false, error: 'UNAUTHENTICATED' };
+    const room = this.chatRooms.get(roomId);
+    if (!room) return { success: false, error: 'ROOM_NOT_FOUND' };
+    if (room.user_1 !== callerId && room.user_2 !== callerId) {
+      return { success: false, error: 'UNAUTHORIZED' };
+    }
+    if (room.status === 'ended') {
+      return { success: true, room_id: roomId, status: 'ended', end_reason: room.end_reason, already_ended: true };
+    }
+    room.status = 'ended';
+    room.ended_at = customNow.toISOString();
+    room.end_reason = reason;
+    room.timer_paused_at = null;
+    room.timer_remaining_seconds = null;
+    room.timer_paused_by = null;
+    return { success: true, room_id: roomId, status: 'ended', end_reason: reason, already_ended: false };
+  }
+
+  // RPC: get_room_peer(p_room_id)
+  rpcGetRoomPeer(callerId, roomId, customNow = new Date()) {
+    if (!callerId) return { success: false, error: 'UNAUTHENTICATED' };
+    const room = this.chatRooms.get(roomId);
+    if (!room || (room.user_1 !== callerId && room.user_2 !== callerId)) {
+      return { success: false, error: 'NOT_A_PARTICIPANT' };
+    }
+    const nowTime = customNow.getTime();
+    if (room.status === 'active' && !room.timer_paused_at && room.expires_at && nowTime >= new Date(room.expires_at).getTime()) {
+      room.status = 'ended';
+      room.end_reason = 'time_limit';
+    }
+    const peerId = room.user_1 === callerId ? room.user_2 : room.user_1;
+    const prof = this.profiles.get(peerId) || {};
+    return {
+      success: true,
+      room_id: roomId,
+      room_status: room.status,
+      created_at: room.created_at,
+      expires_at: room.expires_at,
+      end_reason: room.end_reason,
+      timer_paused_at: room.timer_paused_at || null,
+      timer_remaining_seconds: room.timer_remaining_seconds ?? null,
+      peer: {
+        anonymous_username: prof.display_username || 'Unknown User',
+        avatar_config: prof.avatar_config || DEFAULT_AVATAR_CONFIG,
+      },
+    };
+  }
+
+  // Client-side direct table operation simulation on public.chat_rooms (Blocked)
+  clientUpdateChatRoom(callerId, roomId, updates) {
+    return { success: false, error: '42501: permission denied for table chat_rooms' };
+  }
 }
 
 describe('TALK TO RITIANS — Single DEVELOPER Role & Test Account Security Suite', () => {
@@ -943,6 +1191,261 @@ describe('TALK TO RITIANS — Single DEVELOPER Role & Test Account Security Suit
 
     test('developer cannot promote another user via client table write', () => {
       assert.equal(db.clientInsertPlatformStaff(DEV_USER_ID, NORMAL_USER_ID, 'developer').success, false);
+    });
+  });
+
+  describe('8. Developer-Only Chat Timer Freeze & Resume (Server-Authoritative)', () => {
+    let testRoomId;
+    let roomStartTime;
+    let originalExpiryTime;
+
+    beforeEach(() => {
+      testRoomId = 'room-freeze-001';
+      roomStartTime = new Date('2026-10-02T12:00:00.000Z');
+      originalExpiryTime = new Date('2026-10-02T12:07:00.000Z'); // 7 minutes = 420s
+
+      db.chatRooms.set(testRoomId, {
+        id: testRoomId,
+        user_1: DEV_USER_ID,
+        user_2: NORMAL_USER_ID,
+        status: 'active',
+        created_at: roomStartTime.toISOString(),
+        expires_at: originalExpiryTime.toISOString(),
+        timer_paused_at: null,
+        timer_remaining_seconds: null,
+        timer_paused_by: null,
+        total_paused_seconds: 0,
+      });
+    });
+
+    test('8.1 Basic freeze: developer freezes at 05:13 remaining -> stores ~313s remaining and pauses expiry', () => {
+      // 12:01:47 -> 313 seconds remaining
+      const freezeTime = new Date('2026-10-02T12:01:47.000Z');
+      const res = db.rpcFreezeChatTimer(DEV_USER_ID, testRoomId, freezeTime);
+
+      assert.equal(res.success, true);
+      assert.equal(res.status, 'active');
+      assert.equal(res.timer_paused, true);
+      assert.equal(res.remaining_seconds, 313);
+      assert.equal(res.paused_at, freezeTime.toISOString());
+      assert.equal(res.paused_by, DEV_USER_ID);
+
+      const room = db.chatRooms.get(testRoomId);
+      assert.equal(room.timer_paused_at, freezeTime.toISOString());
+      assert.equal(room.timer_remaining_seconds, 313);
+      assert.equal(room.timer_paused_by, DEV_USER_ID);
+    });
+
+    test('8.2 Long freeze: advance simulated server time by 20 minutes -> room remains active, timer remains 300s', () => {
+      // Freeze at 05:00 remaining (12:02:00)
+      const freezeTime = new Date('2026-10-02T12:02:00.000Z');
+      const freezeRes = db.rpcFreezeChatTimer(DEV_USER_ID, testRoomId, freezeTime);
+      assert.equal(freezeRes.success, true);
+      assert.equal(freezeRes.remaining_seconds, 300);
+
+      // Advance time by 20 minutes to 12:22:00 (well past original 12:07:00 expiry)
+      const futureTime = new Date('2026-10-02T12:22:00.000Z');
+      const peerRes = db.rpcGetRoomPeer(DEV_USER_ID, testRoomId, futureTime);
+
+      assert.equal(peerRes.success, true);
+      assert.equal(peerRes.room_status, 'active');
+      assert.notEqual(peerRes.end_reason, 'time_limit');
+      assert.equal(peerRes.timer_remaining_seconds, 300);
+      assert.equal(peerRes.timer_paused_at, freezeTime.toISOString());
+    });
+
+    test('8.3 Resume: new expires_at = resume time + stored remaining seconds (frozen duration not penalized)', () => {
+      // Freeze at 12:02:00 (300s remaining)
+      const freezeTime = new Date('2026-10-02T12:02:00.000Z');
+      db.rpcFreezeChatTimer(DEV_USER_ID, testRoomId, freezeTime);
+
+      // Advance by 10 minutes to 12:12:00, then resume
+      const resumeTime = new Date('2026-10-02T12:12:00.000Z');
+      const resumeRes = db.rpcResumeChatTimer(DEV_USER_ID, testRoomId, resumeTime);
+
+      assert.equal(resumeRes.success, true);
+      assert.equal(resumeRes.status, 'active');
+      assert.equal(resumeRes.timer_paused, false);
+      assert.equal(resumeRes.remaining_seconds, 300);
+      assert.equal(resumeRes.paused_duration_seconds, 600); // 10 minutes paused
+      // New expiry must be 12:12:00 + 300s = 12:17:00
+      assert.equal(resumeRes.expires_at, new Date('2026-10-02T12:17:00.000Z').toISOString());
+
+      const room = db.chatRooms.get(testRoomId);
+      assert.equal(room.timer_paused_at, null);
+      assert.equal(room.timer_remaining_seconds, null);
+      assert.equal(room.total_paused_seconds, 600);
+    });
+
+    test('8.4 Normal participant cannot freeze timer -> DEVELOPER_REQUIRED', () => {
+      const res = db.rpcFreezeChatTimer(NORMAL_USER_ID, testRoomId);
+      assert.equal(res.success, false);
+      assert.equal(res.error, 'DEVELOPER_REQUIRED');
+    });
+
+    test('8.5 Developer cannot freeze room they are NOT participating in -> NOT_ROOM_PARTICIPANT', () => {
+      const otherRoomId = 'room-student-only-002';
+      db.chatRooms.set(otherRoomId, {
+        id: otherRoomId,
+        user_1: NORMAL_USER_ID,
+        user_2: NORMAL_USER_2_ID,
+        status: 'active',
+        created_at: roomStartTime.toISOString(),
+        expires_at: originalExpiryTime.toISOString(),
+        timer_paused_at: null,
+      });
+
+      const res = db.rpcFreezeChatTimer(DEV_USER_ID, otherRoomId);
+      assert.equal(res.success, false);
+      assert.equal(res.error, 'NOT_ROOM_PARTICIPANT');
+    });
+
+    test('8.6 Messages continue working during freeze, even after original expires_at has passed', () => {
+      // Freeze at 12:02:00 (300s remaining)
+      const freezeTime = new Date('2026-10-02T12:02:00.000Z');
+      db.rpcFreezeChatTimer(DEV_USER_ID, testRoomId, freezeTime);
+
+      // Try sending a message at 12:15:00 (original expiry was 12:07:00)
+      const messageTime = new Date('2026-10-02T12:15:00.000Z');
+
+      // Developer sends message
+      const devMsgRes = db.rpcSendChatMessage(DEV_USER_ID, testRoomId, 'Testing while timer is frozen', messageTime);
+      assert.equal(devMsgRes.success, true);
+      assert.ok(devMsgRes.message.id);
+
+      // Student sends message
+      const studentMsgRes = db.rpcSendChatMessage(NORMAL_USER_ID, testRoomId, 'Student reply while frozen', messageTime);
+      assert.equal(studentMsgRes.success, true);
+      assert.ok(studentMsgRes.message.id);
+    });
+
+    test('8.7 Reconnect / refresh during freeze restores frozen state and exact remaining seconds without recalculating', () => {
+      // Freeze at 04:28 remaining (268 seconds)
+      const freezeTime = new Date('2026-10-02T12:02:32.000Z');
+      db.rpcFreezeChatTimer(DEV_USER_ID, testRoomId, freezeTime);
+
+      // Simulate client refresh at 12:08:00
+      const refreshTime = new Date('2026-10-02T12:08:00.000Z');
+      const devPeer = db.rpcGetRoomPeer(DEV_USER_ID, testRoomId, refreshTime);
+      const studentPeer = db.rpcGetRoomPeer(NORMAL_USER_ID, testRoomId, refreshTime);
+
+      assert.equal(devPeer.room_status, 'active');
+      assert.equal(devPeer.timer_remaining_seconds, 268);
+      assert.equal(devPeer.timer_paused_at, freezeTime.toISOString());
+
+      assert.equal(studentPeer.room_status, 'active');
+      assert.equal(studentPeer.timer_remaining_seconds, 268);
+      assert.equal(studentPeer.timer_paused_at, freezeTime.toISOString());
+    });
+
+    test('8.8 Resume then expiry: timer counts down to 00:00 -> room ends with time_limit', () => {
+      // Freeze with 5 seconds remaining
+      const freezeTime = new Date('2026-10-02T12:06:55.000Z'); // 5s remaining
+      db.rpcFreezeChatTimer(DEV_USER_ID, testRoomId, freezeTime);
+
+      // Resume at 12:15:00
+      const resumeTime = new Date('2026-10-02T12:15:00.000Z');
+      const resumeRes = db.rpcResumeChatTimer(DEV_USER_ID, testRoomId, resumeTime);
+      assert.equal(resumeRes.expires_at, new Date('2026-10-02T12:15:05.000Z').toISOString());
+
+      // Advance by 6 seconds (12:15:06)
+      const expiredTime = new Date('2026-10-02T12:15:06.000Z');
+      const peerRes = db.rpcGetRoomPeer(DEV_USER_ID, testRoomId, expiredTime);
+      assert.equal(peerRes.room_status, 'ended');
+      assert.equal(peerRes.end_reason, 'time_limit');
+    });
+
+    test('8.9 Leave during freeze terminates room immediately with end_reason = "leave" and clears paused state', () => {
+      db.rpcFreezeChatTimer(DEV_USER_ID, testRoomId);
+      const leaveRes = db.rpcEndChatRoom(NORMAL_USER_ID, testRoomId, 'leave');
+
+      assert.equal(leaveRes.success, true);
+      assert.equal(leaveRes.status, 'ended');
+      assert.equal(leaveRes.end_reason, 'leave');
+
+      const room = db.chatRooms.get(testRoomId);
+      assert.equal(room.status, 'ended');
+      assert.equal(room.timer_paused_at, null);
+      assert.equal(room.timer_remaining_seconds, null);
+    });
+
+    test('8.10 Skip during freeze terminates room immediately with end_reason = "skip" and clears paused state', () => {
+      db.rpcFreezeChatTimer(DEV_USER_ID, testRoomId);
+      const skipRes = db.rpcEndChatRoom(DEV_USER_ID, testRoomId, 'skip');
+
+      assert.equal(skipRes.success, true);
+      assert.equal(skipRes.status, 'ended');
+      assert.equal(skipRes.end_reason, 'skip');
+
+      const room = db.chatRooms.get(testRoomId);
+      assert.equal(room.status, 'ended');
+      assert.equal(room.timer_paused_at, null);
+      assert.equal(room.timer_remaining_seconds, null);
+    });
+
+    test('8.11 Normal 7-minute rooms between two ordinary students remain completely unchanged', () => {
+      const studentRoomId = 'room-standard-students-001';
+      db.chatRooms.set(studentRoomId, {
+        id: studentRoomId,
+        user_1: NORMAL_USER_ID,
+        user_2: NORMAL_USER_2_ID,
+        status: 'active',
+        created_at: roomStartTime.toISOString(),
+        expires_at: originalExpiryTime.toISOString(),
+        timer_paused_at: null,
+        timer_remaining_seconds: null,
+      });
+
+      // Normal student calling freeze fails
+      const freezeRes = db.rpcFreezeChatTimer(NORMAL_USER_ID, studentRoomId);
+      assert.equal(freezeRes.success, false);
+      assert.equal(freezeRes.error, 'DEVELOPER_REQUIRED');
+
+      // Room expires normally at 12:07:01
+      const pastExpiry = new Date('2026-10-02T12:07:01.000Z');
+      const peerRes = db.rpcGetRoomPeer(NORMAL_USER_ID, studentRoomId, pastExpiry);
+      assert.equal(peerRes.room_status, 'ended');
+      assert.equal(peerRes.end_reason, 'time_limit');
+    });
+
+    test('8.12 Audit trail records FREEZE_CHAT_TIMER and RESUME_CHAT_TIMER with accurate metadata', () => {
+      const freezeTime = new Date('2026-10-02T12:01:47.000Z');
+      db.rpcFreezeChatTimer(DEV_USER_ID, testRoomId, freezeTime);
+
+      const freezeLog = db.auditLogs.find((l) => l.action === 'FREEZE_CHAT_TIMER');
+      assert.ok(freezeLog);
+      assert.equal(freezeLog.actor_user_id, DEV_USER_ID);
+      assert.equal(freezeLog.actor_role, 'developer');
+      assert.equal(freezeLog.room_id, testRoomId);
+      assert.equal(freezeLog.metadata.remaining_seconds, 313);
+
+      const resumeTime = new Date('2026-10-02T12:06:47.000Z');
+      db.rpcResumeChatTimer(DEV_USER_ID, testRoomId, resumeTime);
+
+      const resumeLog = db.auditLogs.find((l) => l.action === 'RESUME_CHAT_TIMER');
+      assert.ok(resumeLog);
+      assert.equal(resumeLog.actor_user_id, DEV_USER_ID);
+      assert.equal(resumeLog.metadata.paused_duration_seconds, 300);
+      assert.ok(resumeLog.metadata.new_expires_at);
+    });
+
+    test('8.13 Direct client writes to chat_rooms table are strictly blocked', () => {
+      const res = db.clientUpdateChatRoom(NORMAL_USER_ID, testRoomId, { expires_at: '2099-01-01' });
+      assert.equal(res.success, false);
+      assert.match(res.error, /permission denied for table chat_rooms/i);
+    });
+
+    test('8.14 Double Freeze protection returns TIMER_ALREADY_PAUSED', () => {
+      db.rpcFreezeChatTimer(DEV_USER_ID, testRoomId);
+      const secondFreeze = db.rpcFreezeChatTimer(DEV_USER_ID, testRoomId);
+      assert.equal(secondFreeze.success, false);
+      assert.equal(secondFreeze.error, 'TIMER_ALREADY_PAUSED');
+    });
+
+    test('8.15 Double Resume protection returns TIMER_NOT_PAUSED', () => {
+      const res = db.rpcResumeChatTimer(DEV_USER_ID, testRoomId);
+      assert.equal(res.success, false);
+      assert.equal(res.error, 'TIMER_NOT_PAUSED');
     });
   });
 });

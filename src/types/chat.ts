@@ -55,6 +55,10 @@ export interface ChatRoom {
   expiresAt?: string;             // ISO 8601 7-minute expiration timestamp
   endedAt?: string | null;        // ISO 8601 completion timestamp
   endReason?: ChatEndReason | string | null;
+  timerPausedAt?: string | null;  // ISO 8601 freeze timestamp
+  timerRemainingSeconds?: number | null; // Stored frozen seconds
+  timerPausedBy?: string | null;  // Developer UUID who froze timer
+  totalPausedSeconds?: number;    // Accumulated paused seconds
 }
 
 /**
@@ -86,6 +90,26 @@ export interface GetRoomPeerResult {
   createdAt?: string;
   expiresAt?: string;
   endReason?: ChatEndReason | string | null;
+  timerPausedAt?: string | null;
+  timerRemainingSeconds?: number | null;
   peer: MatchedPeerPersona;
+}
+
+export interface FreezeTimerResult {
+  roomId: string;
+  status: string;
+  timerPaused: boolean;
+  remainingSeconds: number;
+  pausedAt: string;
+  pausedBy: string;
+}
+
+export interface ResumeTimerResult {
+  roomId: string;
+  status: string;
+  timerPaused: boolean;
+  remainingSeconds: number;
+  expiresAt: string;
+  pausedDurationSeconds: number;
 }
 

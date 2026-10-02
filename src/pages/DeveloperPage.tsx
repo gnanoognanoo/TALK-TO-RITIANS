@@ -953,10 +953,18 @@ export const DeveloperPage: React.FC = () => {
 
                           {/* Remaining */}
                           <td className="py-3 px-4">
-                            <span className="inline-flex items-center gap-1 font-mono font-bold text-amber-600 dark:text-amber-400">
-                              <Clock className="h-3 w-3" />
-                              {formatSeconds(r.remaining_seconds)}
-                            </span>
+                            {r.timer_paused_at ? (
+                              <span className="inline-flex items-center gap-1 font-mono font-bold text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/50 px-2 py-0.5 rounded border border-sky-200 dark:border-sky-800">
+                                <span>⏸</span>
+                                <span>{formatSeconds(r.remaining_seconds)}</span>
+                                <span className="text-[10px] uppercase tracking-wider font-semibold ml-0.5">PAUSED</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 font-mono font-bold text-amber-600 dark:text-amber-400">
+                                <Clock className="h-3 w-3" />
+                                {formatSeconds(r.remaining_seconds)}
+                              </span>
+                            )}
                           </td>
 
                           {/* Started At */}
@@ -1322,11 +1330,29 @@ export const DeveloperPage: React.FC = () => {
                 </div>
 
                 <div className="flex justify-between py-1 border-b border-gray-200/60 dark:border-slate-700/60">
+                  <span className="text-gray-500 dark:text-slate-400">Timer</span>
+                  {roomDetails.timer_paused_at ? (
+                    <Badge variant="warning" size="sm">PAUSED</Badge>
+                  ) : (
+                    <Badge variant="success" size="sm">RUNNING</Badge>
+                  )}
+                </div>
+
+                <div className="flex justify-between py-1 border-b border-gray-200/60 dark:border-slate-700/60">
                   <span className="text-gray-500 dark:text-slate-400">Remaining Time</span>
                   <span className="font-mono font-bold text-amber-600 dark:text-amber-400">
                     {formatSeconds(roomDetails.remaining_seconds)}
                   </span>
                 </div>
+
+                {roomDetails.timer_paused_at && (
+                  <div className="flex justify-between py-1 border-b border-gray-200/60 dark:border-slate-700/60">
+                    <span className="text-gray-500 dark:text-slate-400">Paused At</span>
+                    <span className="font-mono text-gray-700 dark:text-slate-300">
+                      {new Date(roomDetails.timer_paused_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                    </span>
+                  </div>
+                )}
 
                 <div className="flex justify-between py-1 border-b border-gray-200/60 dark:border-slate-700/60">
                   <span className="text-gray-500 dark:text-slate-400">Total Messages</span>

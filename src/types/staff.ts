@@ -79,6 +79,9 @@ export interface AdminActiveRoom {
   created_at: string;
   expires_at: string;
   remaining_seconds: number;
+  timer_paused_at?: string | null;
+  timer_remaining_seconds?: number | null;
+  timer_paused_by?: string | null;
   participant_a_id: string;
   participant_a_username: string;
   participant_a_avatar: Record<string, unknown>;
@@ -96,6 +99,9 @@ export interface AdminRoomDetails {
   ended_at: string | null;
   end_reason: string | null;
   remaining_seconds: number;
+  timer_paused_at?: string | null;
+  timer_remaining_seconds?: number | null;
+  timer_paused_by?: string | null;
   user_1: string;
   user_2: string;
   user_1_heartbeat_at: string | null;

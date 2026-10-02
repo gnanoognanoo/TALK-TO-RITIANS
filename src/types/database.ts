@@ -171,6 +171,10 @@ export interface Database {
           persona_updated_at?: string | null;
           user_1_heartbeat_at?: string | null;
           user_2_heartbeat_at?: string | null;
+          timer_paused_at?: string | null;
+          timer_remaining_seconds?: number | null;
+          timer_paused_by?: string | null;
+          total_paused_seconds?: number;
         };
         Insert: {
           id?: string;
@@ -184,6 +188,10 @@ export interface Database {
           persona_updated_at?: string | null;
           user_1_heartbeat_at?: string | null;
           user_2_heartbeat_at?: string | null;
+          timer_paused_at?: string | null;
+          timer_remaining_seconds?: number | null;
+          timer_paused_by?: string | null;
+          total_paused_seconds?: number;
         };
         Update: {
           id?: string;
@@ -197,6 +205,10 @@ export interface Database {
           persona_updated_at?: string | null;
           user_1_heartbeat_at?: string | null;
           user_2_heartbeat_at?: string | null;
+          timer_paused_at?: string | null;
+          timer_remaining_seconds?: number | null;
+          timer_paused_by?: string | null;
+          total_paused_seconds?: number;
         };
         Relationships: [];
       };
@@ -454,6 +466,18 @@ export interface Database {
         Returns: Json;
       };
       heartbeat_chat_room: {
+        Args: {
+          p_room_id: string;
+        };
+        Returns: Json;
+      };
+      freeze_chat_timer: {
+        Args: {
+          p_room_id: string;
+        };
+        Returns: Json;
+      };
+      resume_chat_timer: {
         Args: {
           p_room_id: string;
         };
