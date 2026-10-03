@@ -31,6 +31,7 @@ export const QrScanner: React.FC<QrScannerProps> = ({ onScan, onError, disabled 
   const containerId = 'rit-qr-scanner-viewport';
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
   const isRunningRef = useRef<boolean>(false);
+  const isProcessingRef = useRef<boolean>(false);
 
   const [status, setStatus] = useState<CameraStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string>('');
@@ -57,6 +58,7 @@ export const QrScanner: React.FC<QrScannerProps> = ({ onScan, onError, disabled 
    */
   const startScanner = useCallback(async () => {
     if (disabled) return;
+    isProcessingRef.current = false;
 
     // 1. Check browser mediaDevices support
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -101,6 +103,10 @@ export const QrScanner: React.FC<QrScannerProps> = ({ onScan, onError, disabled 
           aspectRatio: 1.0,
         },
         async (decodedText) => {
+          // Lock scanning immediately to prevent duplicate detections across video frames
+          if (isProcessingRef.current) return;
+          isProcessingRef.current = true;
+
           // Scan success callback
           setStatus('scan_success');
           isRunningRef.current = false;

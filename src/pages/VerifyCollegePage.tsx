@@ -13,7 +13,7 @@
  * - Raw register numbers are never exposed in anonymous chats.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ShieldCheck,
@@ -123,10 +123,13 @@ export const VerifyCollegePage: React.FC = () => {
   const [isUnlinking, setIsUnlinking] = useState<boolean>(false);
   const [unlinkError, setUnlinkError] = useState<string | null>(null);
 
+  const isProcessingScanRef = useRef<boolean>(false);
+
   /**
    * Resets all verification states.
    */
   const handleResetToIdle = () => {
+    isProcessingScanRef.current = false;
     setPhysicalError(null);
     setLegacyQrValue('');
     setLegacyExtractedFields(null);
@@ -139,69 +142,78 @@ export const VerifyCollegePage: React.FC = () => {
    * Auto-detects Newer IMS URL vs Older Numeric QR vs Unsupported.
    */
   const handleQrCaptured = async (decodedText: string) => {
+    if (isProcessingScanRef.current) return;
+    isProcessingScanRef.current = true;
     setPhysicalError(null);
 
-    // 1. Check if candidate is an Older/Senior RIT ID card with numeric register number in QR
-    if (isLegacyNumericRitQr(decodedText)) {
-      setLegacyQrValue(decodedText.trim());
-      setStep('legacy_prompt');
-      return;
-    }
+    try {
+      // 1. Check if candidate is an Older/Senior RIT ID card with numeric register number in QR
+      if (isLegacyNumericRitQr(decodedText)) {
+        setLegacyQrValue(decodedText.trim());
+        setStep('legacy_prompt');
+        return;
+      }
 
-    // 2. Parse standard college QR structures (including official ims.ritchennai.edu.in URL)
-    const result = parseCollegeQr(decodedText);
+      // 2. Parse standard college QR structures (including official ims.ritchennai.edu.in URL)
+      const result = parseCollegeQr(decodedText);
 
-    if (result.formatDetected === 'rit_official_url') {
-      setIsVerifyingPhysical(true);
-      const res = await verificationService.verifyRitQrUrl(decodedText);
-      setIsVerifyingPhysical(false);
+      if (result.formatDetected === 'rit_official_url') {
+        setIsVerifyingPhysical(true);
+        const res = await verificationService.verifyRitQrUrl(decodedText);
+        setIsVerifyingPhysical(false);
 
-      if (!res.success || !res.data) {
+        if (!res.success || !res.data) {
+          setPhysicalError(
+            res.error?.message ||
+              'Failed to verify student ID with the official RIT portal. Please try again.'
+          );
+          return;
+        }
+
+        setVerifiedData(res.data);
+        setParsedResult({
+          ...result,
+          fields: {
+            name: res.data.name,
+            department: res.data.department,
+            batch: res.data.batch,
+          },
+        });
+        await refreshProfile();
+        setStep('success');
+        return;
+      }
+
+      if (!result.validStructure) {
         setPhysicalError(
-          res.error?.message ||
-            'Failed to verify student ID with the official RIT portal. Please try again.'
+          "This doesn't appear to be a valid RIT ID QR code."
         );
         return;
       }
 
-      setVerifiedData(res.data);
-      setParsedResult({
-        ...result,
-        fields: {
-          name: res.data.name,
-          department: res.data.department,
-          batch: res.data.batch,
-        },
-      });
+      // Mock/Dev format fallback
+      setParsedResult(result);
+      setIsVerifyingPhysical(true);
+      const linkRes = await verificationService.linkCollegeIdentity(result);
+      setIsVerifyingPhysical(false);
+
+      if (!linkRes.success || !linkRes.data) {
+        setPhysicalError(
+          linkRes.error?.message ||
+            'Failed to verify student ID. Please try scanning your ID card again.'
+        );
+        return;
+      }
+
+      setVerifiedData(linkRes.data);
       await refreshProfile();
       setStep('success');
-      return;
+    } finally {
+      // On recoverable failure, allow retry after a 1.5s cooldown
+      setTimeout(() => {
+        isProcessingScanRef.current = false;
+      }, 1500);
     }
-
-    if (!result.validStructure) {
-      setPhysicalError(
-        "We couldn't read the QR code. Please ensure good lighting and align the QR code clearly."
-      );
-      return;
-    }
-
-    // Mock/Dev format fallback
-    setParsedResult(result);
-    setIsVerifyingPhysical(true);
-    const linkRes = await verificationService.linkCollegeIdentity(result);
-    setIsVerifyingPhysical(false);
-
-    if (!linkRes.success || !linkRes.data) {
-      setPhysicalError(
-        linkRes.error?.message ||
-          'Failed to verify student ID. Please try scanning your ID card again.'
-      );
-      return;
-    }
-
-    setVerifiedData(linkRes.data);
-    await refreshProfile();
-    setStep('success');
   };
 
   /**

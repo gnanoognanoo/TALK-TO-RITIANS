@@ -94,8 +94,8 @@ export class VerificationService {
           success: false,
           data: null,
           error: {
-            code: 'UNAUTHENTICATED',
-            message: 'You must be signed in with your personal account to link a college identity.',
+            code: 'AUTH_REQUIRED',
+            message: 'Your session expired. Please sign in again.',
           },
         };
       }
@@ -114,30 +114,36 @@ export class VerificationService {
           try {
             const ctx = (error as any).context;
             if (typeof ctx?.json === 'function') {
-              edgeErrorData = await ctx.json();
+              edgeErrorData = await ctx.clone?.().json().catch(() => ctx.json());
             }
           } catch {
             // Ignore context parsing failure
           }
         }
 
-        const errorCode = edgeErrorData?.error || (error as any)?.code || 'VERIFICATION_FAILED';
+        const errorCode = edgeErrorData?.error || (error as any)?.code || 'EDGE_FUNCTION_UNAVAILABLE';
         let userMessage = edgeErrorData?.message || error.message || 'College ID verification failed.';
 
-        if (errorCode === 'CARD_ALREADY_LINKED' || userMessage.includes('already linked')) {
-          userMessage = 'This college identity is already linked to another account.';
+        if (errorCode === 'IDENTITY_ALREADY_LINKED' || errorCode === 'CARD_ALREADY_LINKED' || userMessage.includes('already linked')) {
+          userMessage = 'This RIT ID is already linked to another account.';
+        } else if (errorCode === 'AUTH_REQUIRED' || errorCode === 'UNAUTHENTICATED') {
+          userMessage = 'Your session expired. Please sign in again.';
         } else if (errorCode === 'UNSUPPORTED_COURSE_FORMAT') {
           userMessage = "We verified your RIT identity, but we couldn't recognize your course format yet. Please try again later.";
-        } else if (errorCode === 'UNSUPPORTED_DOMAIN' || errorCode === 'INVALID_RIT_DOMAIN') {
-          userMessage = 'This QR does not point to the official RIT verification service.';
-        } else if (errorCode === 'RIT_PAGE_UNAVAILABLE' || errorCode === 'RIT_PAGE_FETCH_FAILED') {
-          userMessage = 'RIT verification is temporarily unavailable. Please try again.';
-        } else if (errorCode === 'INVALID_RIT_PAGE' || errorCode === 'RIT_PAGE_FORMAT_UNSUPPORTED') {
-          userMessage = 'The RIT verification page did not contain the expected student information.';
-        } else if (errorCode === 'INSUFFICIENT_IDENTITY_DATA') {
-          userMessage = 'Could not extract a valid student identifier from the official RIT page. Please try scanning again.';
-        } else if (errorCode === 'INVALID_QR' || errorCode === 'QR_DECODE_FAILED') {
-          userMessage = 'This QR is not a recognized RIT student ID.';
+        } else if (errorCode === 'INVALID_RIT_QR' || errorCode === 'INVALID_QR' || errorCode === 'UNSUPPORTED_DOMAIN' || errorCode === 'INVALID_RIT_DOMAIN' || errorCode === 'INSECURE_PROTOCOL') {
+          userMessage = "This doesn't appear to be a valid RIT ID QR code.";
+        } else if (errorCode === 'IMS_TIMEOUT') {
+          userMessage = 'Official RIT verification portal timed out. Please try again.';
+        } else if (errorCode === 'IMS_FETCH_FAILED' || errorCode === 'RIT_PAGE_UNAVAILABLE' || errorCode === 'RIT_PAGE_FETCH_FAILED') {
+          userMessage = 'RIT verification service is temporarily unavailable. Please try again shortly.';
+        } else if (errorCode === 'IMS_PAGE_CHANGED' || errorCode === 'INVALID_RIT_PAGE' || errorCode === 'RIT_PAGE_FORMAT_UNSUPPORTED') {
+          userMessage = "We couldn't read this RIT ID. Please try again later.";
+        } else if (errorCode === 'IMS_STUDENT_NOT_FOUND') {
+          userMessage = 'Student record could not be found on the official RIT portal.';
+        } else if (errorCode === 'DATABASE_LINK_FAILED') {
+          userMessage = 'Failed to link your student identity. Please try again.';
+        } else if (errorCode === 'EDGE_FUNCTION_UNAVAILABLE' || errorCode === 'NETWORK_ERROR' || errorCode === 'SERVER_ERROR') {
+          userMessage = 'RIT verification service is temporarily unavailable. Please try again shortly.';
         }
 
         return {
@@ -170,19 +176,26 @@ export class VerificationService {
       } | null;
 
       if (!response || response.success === false) {
-        const isDuplicate = response?.error === 'CARD_ALREADY_LINKED';
-        const isUnsupportedCourse = response?.error === 'UNSUPPORTED_COURSE_FORMAT';
+        const errorCode = response?.error || 'VERIFICATION_FAILED';
         let errorMessage = response?.message || 'Verification could not be completed.';
-        if (isDuplicate) {
-          errorMessage = 'This college identity is already linked to another account.';
-        } else if (isUnsupportedCourse) {
+        if (errorCode === 'IDENTITY_ALREADY_LINKED' || errorCode === 'CARD_ALREADY_LINKED') {
+          errorMessage = 'This RIT ID is already linked to another account.';
+        } else if (errorCode === 'UNSUPPORTED_COURSE_FORMAT') {
           errorMessage = "We verified your RIT identity, but we couldn't recognize your course format yet. Please try again later.";
+        } else if (errorCode === 'IMS_PAGE_CHANGED') {
+          errorMessage = "We couldn't read this RIT ID. Please try again later.";
+        } else if (errorCode === 'IMS_STUDENT_NOT_FOUND') {
+          errorMessage = 'Student record could not be found on the official RIT portal.';
+        } else if (errorCode === 'IMS_FETCH_FAILED') {
+          errorMessage = 'RIT verification service is temporarily unavailable. Please try again shortly.';
+        } else if (errorCode === 'AUTH_REQUIRED' || errorCode === 'UNAUTHENTICATED') {
+          errorMessage = 'Your session expired. Please sign in again.';
         }
         return {
           success: false,
           data: null,
           error: {
-            code: response?.error || 'VERIFICATION_FAILED',
+            code: errorCode,
             message: errorMessage,
           },
         };
@@ -211,7 +224,7 @@ export class VerificationService {
       return {
         success: false,
         data: null,
-        error: { code: 'NETWORK_ERROR', message: 'Verification service is temporarily unavailable.' },
+        error: { code: 'EDGE_FUNCTION_UNAVAILABLE', message: 'RIT verification service is temporarily unavailable. Please try again shortly.' },
       };
     }
   }
@@ -253,8 +266,8 @@ export class VerificationService {
           success: false,
           data: null,
           error: {
-            code: 'UNAUTHENTICATED',
-            message: 'You must be signed in with your personal account to link a college identity.',
+            code: 'AUTH_REQUIRED',
+            message: 'Your session expired. Please sign in again.',
           },
         };
       }
@@ -293,12 +306,12 @@ export class VerificationService {
         }
 
         if (edgeData && edgeData.success === false) {
-          const isDuplicate = edgeData.error === 'CARD_ALREADY_LINKED';
+          const isDuplicate = edgeData.error === 'IDENTITY_ALREADY_LINKED' || edgeData.error === 'CARD_ALREADY_LINKED';
           return {
             success: false,
             data: null,
             error: {
-              code: edgeData.error || 'VERIFICATION_REJECTED',
+              code: isDuplicate ? 'IDENTITY_ALREADY_LINKED' : (edgeData.error || 'VERIFICATION_REJECTED'),
               message: isDuplicate
                 ? 'This college identity is already linked to another account.'
                 : edgeData.message || 'Verification could not be completed.',

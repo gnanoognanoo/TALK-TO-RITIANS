@@ -364,6 +364,8 @@ export interface RitStructuralDiagnostics {
   httpStatus: number;
   contentType: string;
   htmlLength: number;
+  tableFound: boolean;
+  rowCount: number;
   hasStudentNameLabel: boolean;
   hasRegisterNumberLabel: boolean;
   hasCourseLabel: boolean;
@@ -385,6 +387,7 @@ function parseRitHtml(
   success: boolean;
   data?: { name: string; registerNumber: string; course: string; batch: string };
   error?: string;
+  errorCode?: string;
   diagnostics: RitStructuralDiagnostics;
 } {
   const cleanHtml = html
@@ -567,19 +570,25 @@ function parseRitHtml(
     !placeholderValues.has(cleanRegNo.toLowerCase())
   );
 
+  const tableFound = Boolean(/<table\b/i.test(cleanHtml) || trMatches.length > 0);
+  const rowCount = trMatches.length;
+
   // Build diagnostics for safe server-side logging (no PII) matching Step 2 specification
   const diagnostics: RitStructuralDiagnostics = {
     httpStatus: options.httpStatus ?? 200,
     contentType: options.contentType ?? "text/html",
     htmlLength: html.length,
-    hasStudentNameLabel: Boolean(/student\s*name/i.test(html)),
+    tableFound,
+    rowCount,
+    hasStudentNameLabel: Boolean(/student\s*name|candidate\s*name|full\s*name/i.test(html)),
     hasRegisterNumberLabel: Boolean(
       /register\s*(?:no|number)/i.test(html) ||
       /reg[d.]?\s*(?:no|number)/i.test(html) ||
-      /registration\s*(?:no|number)/i.test(html)
+      /registration\s*(?:no|number)/i.test(html) ||
+      /roll\s*(?:no|number)/i.test(html)
     ),
-    hasCourseLabel: Boolean(/course/i.test(html)),
-    hasBatchLabel: Boolean(/batch/i.test(html)),
+    hasCourseLabel: Boolean(/course|degree|branch|programme/i.test(html)),
+    hasBatchLabel: Boolean(/batch|academic\s*year|year\s*of\s*(?:admission|join)/i.test(html)),
     registerNumberExtracted: isValidRegNo,
     registerNumberLength: cleanRegNo ? cleanRegNo.length : 0,
     registerNumberNumericOnly: Boolean(cleanRegNo && /^\d+$/.test(cleanRegNo)),
@@ -589,9 +598,20 @@ function parseRitHtml(
   // Other fields use safe fallback defaults if extraction failed.
   if (!isValidRegNo) {
     console.warn("[verify-rit-id] Structural Diagnostics (invalid or missing registerNumber):", JSON.stringify(diagnostics));
+
+    if (/no\s*record(?:s)?\s*found|student\s*not\s*found|record\s*not\s*found|invalid\s*student/i.test(html)) {
+      return {
+        success: false,
+        errorCode: "IMS_STUDENT_NOT_FOUND",
+        error: "Student record could not be found on the official RIT portal.",
+        diagnostics,
+      };
+    }
+
     return {
       success: false,
-      error: "Could not extract a valid student identifier from the official RIT page. Please try scanning again.",
+      errorCode: "IMS_PAGE_CHANGED",
+      error: "We couldn't read this RIT ID. The official portal page structure may have changed.",
       diagnostics,
     };
   }
@@ -631,8 +651,14 @@ async function fetchOfficialRitPage(targetUrl: string): Promise<{ success: boole
       const response = await fetch(currentUrl, {
         method: "GET",
         headers: {
-          "User-Agent": "TalkToRITians-Verifier/1.0",
-          "Accept": "text/html,application/xhtml+xml",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.9",
+          "Sec-Fetch-Dest": "document",
+          "Sec-Fetch-Mode": "navigate",
+          "Sec-Fetch-Site": "none",
+          "Sec-Fetch-User": "?1",
+          "Upgrade-Insecure-Requests": "1",
         },
         redirect: "manual",
         signal: controller.signal,
@@ -647,7 +673,7 @@ async function fetchOfficialRitPage(targetUrl: string): Promise<{ success: boole
       if ([301, 302, 303, 307, 308].includes(response.status)) {
         const location = response.headers.get("Location");
         if (!location) {
-          return { success: false, errorCode: "RIT_PAGE_UNAVAILABLE", error: "Received redirect with missing Location header.", status, contentType };
+          return { success: false, errorCode: "IMS_FETCH_FAILED", error: "Received redirect with missing Location header.", status, contentType };
         }
 
         const nextUrl = new URL(location, currentUrl).toString();
@@ -662,30 +688,47 @@ async function fetchOfficialRitPage(targetUrl: string): Promise<{ success: boole
       }
 
       if (!response.ok) {
-        return { success: false, errorCode: "RIT_PAGE_UNAVAILABLE", error: `Official RIT page returned HTTP status ${response.status}.`, status, contentType };
+        if (status === 403) {
+          return { success: false, errorCode: "IMS_FETCH_FAILED", error: "Official RIT portal restricted access (HTTP 403).", status, contentType };
+        }
+        if (status === 429) {
+          return { success: false, errorCode: "IMS_FETCH_FAILED", error: "Official RIT portal is busy. Please try again in a few moments (HTTP 429).", status, contentType };
+        }
+        if (status >= 500 && status <= 599) {
+          return { success: false, errorCode: "IMS_FETCH_FAILED", error: `Official RIT portal is temporarily down (HTTP ${status}).`, status, contentType };
+        }
+        return { success: false, errorCode: "IMS_FETCH_FAILED", error: `Official RIT page returned HTTP status ${status}.`, status, contentType };
       }
 
       if (!contentType.includes("text/html")) {
-        return { success: false, errorCode: "INVALID_RIT_PAGE", error: "Official RIT verification did not return an HTML webpage.", status, contentType };
+        return { success: false, errorCode: "IMS_INVALID_RESPONSE", error: "Official RIT verification did not return an HTML webpage.", status, contentType };
       }
 
       // Read text with size limit
       const text = await response.text();
       if (text.length > MAX_PAGE_BYTES) {
-        return { success: false, errorCode: "INVALID_RIT_PAGE", error: "RIT verification page exceeded maximum allowed size.", status, contentType };
+        return { success: false, errorCode: "IMS_INVALID_RESPONSE", error: "RIT verification page exceeded maximum allowed size.", status, contentType };
+      }
+
+      // Explicitly detect HTML login page / captive portal
+      if (
+        (/<form\b[^>]*\b(?:login|auth|signin)\b/i.test(text) || (text.includes("password") && !/register\s*(?:no|number)/i.test(text))) &&
+        !/register\s*(?:no|number)/i.test(text)
+      ) {
+        return { success: false, errorCode: "IMS_PAGE_CHANGED", error: "Official RIT portal requires staff/student login.", status, contentType };
       }
 
       return { success: true, html: text, status, contentType };
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : String(err);
       if (errMsg.includes("abort") || errMsg.includes("timeout")) {
-        return { success: false, errorCode: "RIT_PAGE_UNAVAILABLE", error: "Official RIT verification timed out. Please try again." };
+        return { success: false, errorCode: "IMS_TIMEOUT", error: "Official RIT verification timed out. Please try again." };
       }
-      return { success: false, errorCode: "RIT_PAGE_UNAVAILABLE", error: "Unable to connect to the official RIT verification portal." };
+      return { success: false, errorCode: "IMS_FETCH_FAILED", error: "Unable to connect to the official RIT verification portal." };
     }
   }
 
-  return { success: false, errorCode: "RIT_PAGE_UNAVAILABLE", error: "Too many redirects during official RIT verification." };
+  return { success: false, errorCode: "IMS_FETCH_FAILED", error: "Too many redirects during official RIT verification." };
 }
 
 serve(async (req: Request) => {
@@ -707,8 +750,8 @@ serve(async (req: Request) => {
       return new Response(
         JSON.stringify({
           success: false,
-          error: "UNAUTHENTICATED",
-          message: "You must be signed in with your personal account to link a college identity.",
+          error: "AUTH_REQUIRED",
+          message: "Your session expired. Please sign in again.",
         }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -726,8 +769,8 @@ serve(async (req: Request) => {
       return new Response(
         JSON.stringify({
           success: false,
-          error: "UNAUTHENTICATED",
-          message: "You must be signed in with your personal account to link a college identity.",
+          error: "AUTH_REQUIRED",
+          message: "Your session expired. Please sign in again.",
         }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -815,8 +858,8 @@ serve(async (req: Request) => {
         return new Response(
           JSON.stringify({
             success: false,
-            error: "VERIFICATION_FAILED",
-            message: linkError.message || "Failed to link identity on server.",
+            error: "DATABASE_LINK_FAILED",
+            message: "Failed to link college identity in the database.",
           }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
@@ -837,7 +880,7 @@ serve(async (req: Request) => {
         return new Response(
           JSON.stringify({
             success: false,
-            error: rpcResponse.error || "VERIFICATION_REJECTED",
+            error: isDuplicate ? "IDENTITY_ALREADY_LINKED" : (rpcResponse.error || "VERIFICATION_REJECTED"),
             message: isDuplicate
               ? "This college identity is already linked to another account."
               : rpcResponse.message || "Verification rejected.",
@@ -887,7 +930,11 @@ serve(async (req: Request) => {
     const fetchResult = await fetchOfficialRitPage(qrUrl);
     if (!fetchResult.success || !fetchResult.html) {
       return new Response(
-        JSON.stringify({ success: false, error: fetchResult.errorCode || "RIT_PAGE_UNAVAILABLE", message: fetchResult.error }),
+        JSON.stringify({
+          success: false,
+          error: fetchResult.errorCode || "IMS_FETCH_FAILED",
+          message: fetchResult.error || "RIT verification service is temporarily unavailable. Please try again shortly.",
+        }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -901,8 +948,8 @@ serve(async (req: Request) => {
       return new Response(
         JSON.stringify({
           success: false,
-          error: "INSUFFICIENT_IDENTITY_DATA",
-          message: parseResult.error || "Could not extract a valid student identifier from the official RIT page. Please try scanning again.",
+          error: parseResult.errorCode || "IMS_PAGE_CHANGED",
+          message: parseResult.error || "We couldn't read this RIT ID. The official portal page structure may have changed.",
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -944,8 +991,8 @@ serve(async (req: Request) => {
       return new Response(
         JSON.stringify({
           success: false,
-          error: "VERIFICATION_FAILED",
-          message: linkError.message || "Failed to link identity on server.",
+          error: "DATABASE_LINK_FAILED",
+          message: "Failed to link college identity in the database.",
         }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -966,7 +1013,7 @@ serve(async (req: Request) => {
       return new Response(
         JSON.stringify({
           success: false,
-          error: rpcResponse.error || "VERIFICATION_REJECTED",
+          error: isDuplicate ? "IDENTITY_ALREADY_LINKED" : (rpcResponse.error || "VERIFICATION_REJECTED"),
           message: isDuplicate
             ? "This college identity is already linked to another account."
             : rpcResponse.message || "Verification rejected.",
