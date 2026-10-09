@@ -700,11 +700,11 @@ export const ChatPage: React.FC = () => {
   return (
     <div
       id="chat-page-root"
-      className="h-[100dvh] max-h-[100dvh] w-full flex flex-col overflow-hidden bg-gray-50 dark:bg-[#050806]"
+      className="h-[100dvh] max-h-[100dvh] w-full flex flex-col overflow-hidden bg-[#050805]"
     >
       <div
         id="chat-page-container"
-        className="flex-1 flex flex-col h-full max-w-4xl mx-auto w-full bg-white dark:bg-[#070B08] sm:border-x sm:border-gray-200 dark:border-[rgba(120,160,100,0.16)] overflow-hidden"
+        className="flex-1 flex flex-col h-full max-w-4xl mx-auto w-full bg-[#050805] sm:border-x sm:border-[rgba(141,168,82,0.15)] overflow-hidden"
       >
         {/* =========================================================================
             TOP BAR (Fixed Header: flex-shrink: 0)
@@ -715,9 +715,9 @@ export const ChatPage: React.FC = () => {
             ========================================================================= */}
         <header
           id="chat-header"
-          className="px-4 sm:px-6 py-3 border-b border-gray-200 dark:border-[rgba(130,160,100,0.14)] bg-white dark:bg-[#080D09] flex items-center justify-between gap-3 shrink-0"
+          className="px-3.5 sm:px-6 py-2.5 sm:py-3 border-b border-[rgba(141,168,82,0.18)] bg-[#091009]/95 backdrop-blur-xl flex items-center justify-between gap-2.5 shrink-0"
         >
-          <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             <Avatar
               size="md"
               avatarConfig={peer.avatarConfig as any}
@@ -733,7 +733,7 @@ export const ChatPage: React.FC = () => {
             <div className="min-w-0">
               <h1
                 id="chat-peer-username"
-                className="font-bold text-sm sm:text-base text-gray-900 dark:text-[#F2F5F2] truncate"
+                className="font-bold text-sm sm:text-base text-[#F4F6F1] truncate"
               >
                 {peer.anonymousUsername}
               </h1>
@@ -741,13 +741,13 @@ export const ChatPage: React.FC = () => {
                 <span
                   className={`h-2 w-2 rounded-full ${
                     connectionStatus === 'connected'
-                      ? 'bg-emerald-500 animate-pulse'
+                      ? 'bg-[#8DA852] animate-pulse shadow-[0_0_8px_rgba(141,168,82,0.6)]'
                       : isDisconnected
-                      ? 'bg-gray-400'
+                      ? 'bg-[#6F796D]'
                       : 'bg-amber-400 animate-pulse'
                   }`}
                 />
-                <span className="text-gray-500 dark:text-[#AEB9AE] text-[11px] font-medium">
+                <span className="text-[#9DA89A] text-[11px] font-medium">
                   {connectionStatus === 'connected'
                     ? 'Online'
                     : isDisconnected
@@ -760,335 +760,326 @@ export const ChatPage: React.FC = () => {
             </div>
           </div>
 
-        {/* Right Header Action: Timer and Leave */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          {roomStatus === 'active' && (
-            <div className="flex items-center gap-1.5">
-              {isTimerFrozen ? (
-                /* FROZEN STATE: Distinct paused badge without pulsing warnings */
-                <div
-                  id="chat-header-timer"
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold tabular-nums tracking-wide bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border-sky-300 dark:border-sky-800 shadow-sm"
-                  title={isDeveloper ? 'Timer frozen by developer' : 'Timer paused'}
-                >
-                  <Pause className="h-3.5 w-3.5 text-sky-600 dark:text-sky-400" />
-                  <span>
-                    {formatTimer(remainingSeconds)}{' '}
-                    {isDeveloper ? '— FROZEN' : '(Timer paused)'}
-                  </span>
-                </div>
-              ) : (
-                /* RUNNING STATE: Standard 7-minute timer with warning colors */
-                <div
-                  id="chat-header-timer"
-                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold tabular-nums tracking-wide transition-colors ${
-                    getTimerThresholdState(remainingSeconds) === 'red'
-                      ? 'bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-400 border-red-300 dark:border-red-800 font-bold ring-2 ring-red-400/30 animate-pulse'
-                      : getTimerThresholdState(remainingSeconds) === 'amber'
-                      ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-800 font-bold ring-2 ring-amber-400/30 animate-pulse'
-                      : 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-[#101A12] dark:text-[#A8C96A] dark:border-[rgba(140,170,110,0.25)]'
-                  }`}
-                  title="7-minute chat session timer"
-                >
-                  <Clock className="h-3.5 w-3.5" />
-                  <span>{formatTimer(remainingSeconds)}</span>
-                </div>
-              )}
-
-              {/* Privileged Developer Only: Freeze / Resume Control */}
-              {isDeveloper && (
-                isTimerFrozen ? (
-                  <Button
-                    id="developer-resume-timer-btn"
-                    type="button"
-                    variant="primary"
-                    size="sm"
-                    onClick={handleResumeTimer}
-                    isLoading={isTogglingFreeze}
-                    disabled={isTogglingFreeze}
-                    leftIcon={<Play className="h-3.5 w-3.5" />}
-                    className="text-xs h-7 px-2.5 font-semibold bg-emerald-600 hover:bg-emerald-700 text-white border-0 shadow-sm"
-                    title="Resume countdown timer (Ctrl+Shift+P)"
+          {/* Right Header Action: Timer and Leave */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {roomStatus === 'active' && (
+              <div className="flex items-center gap-1.5">
+                {isTimerFrozen ? (
+                  /* FROZEN STATE: Distinct paused badge without pulsing warnings */
+                  <div
+                    id="chat-header-timer"
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold tabular-nums tracking-wide bg-sky-950/60 text-sky-300 border-sky-500/40 shadow-sm"
+                    title={isDeveloper ? 'Timer frozen by developer' : 'Timer paused'}
                   >
-                    Resume
-                  </Button>
+                    <Pause className="h-3.5 w-3.5 text-sky-400" />
+                    <span>
+                      {formatTimer(remainingSeconds)}{' '}
+                      {isDeveloper ? '— FROZEN' : '(Timer paused)'}
+                    </span>
+                  </div>
                 ) : (
-                  <Button
-                    id="developer-freeze-timer-btn"
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={handleFreezeTimer}
-                    isLoading={isTogglingFreeze}
-                    disabled={isTogglingFreeze}
-                    leftIcon={<Pause className="h-3.5 w-3.5 text-sky-600 dark:text-sky-400" />}
-                    className="text-xs h-7 px-2.5 font-semibold border-sky-300 hover:border-sky-400 text-sky-800 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/40 shadow-sm"
-                    title="Freeze countdown timer (Ctrl+Shift+P)"
+                  /* RUNNING STATE: Standard 7-minute timer with warning colors */
+                  <div
+                    id="chat-header-timer"
+                    className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full border text-xs font-semibold tabular-nums tracking-wide transition-all ${
+                      getTimerThresholdState(remainingSeconds) === 'red'
+                        ? 'bg-red-950/70 text-red-300 border-red-500/70 font-bold ring-2 ring-red-500/30 animate-pulse shadow-[0_0_12px_rgba(239,68,68,0.3)]'
+                        : getTimerThresholdState(remainingSeconds) === 'amber'
+                        ? 'bg-amber-950/70 text-amber-300 border-amber-500/60 font-bold ring-2 ring-amber-500/30 animate-pulse shadow-[0_0_12px_rgba(227,163,41,0.25)]'
+                        : 'bg-[#101A12] text-[#A2BD63] border-[rgba(141,168,82,0.3)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]'
+                    }`}
+                    title="7-minute chat session timer"
                   >
-                    Freeze
-                  </Button>
-                )
-              )}
-            </div>
-          )}
+                    <Clock className="h-3.5 w-3.5 shrink-0" />
+                    <span>{formatTimer(remainingSeconds)}</span>
+                  </div>
+                )}
 
-          <Button
-            type="button"
-            variant="danger"
-            size="sm"
-            onClick={() => setIsLeaveModalOpen(true)}
-            leftIcon={<LogOut className="h-4 w-4" />}
-            className="border border-red-200 font-medium"
+                {/* Privileged Developer Only: Freeze / Resume Control */}
+                {isDeveloper && (
+                  isTimerFrozen ? (
+                    <Button
+                      id="developer-resume-timer-btn"
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      onClick={handleResumeTimer}
+                      isLoading={isTogglingFreeze}
+                      disabled={isTogglingFreeze}
+                      leftIcon={<Play className="h-3.5 w-3.5" />}
+                      className="text-xs h-7 px-2.5 font-semibold bg-[#526C34] hover:bg-[#688a42] text-white border-0 shadow-sm rounded-full"
+                      title="Resume countdown timer (Ctrl+Shift+P)"
+                    >
+                      Resume
+                    </Button>
+                  ) : (
+                    <Button
+                      id="developer-freeze-timer-btn"
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={handleFreezeTimer}
+                      isLoading={isTogglingFreeze}
+                      disabled={isTogglingFreeze}
+                      leftIcon={<Pause className="h-3.5 w-3.5 text-sky-400" />}
+                      className="text-xs h-7 px-2.5 font-semibold border-sky-500/40 text-sky-300 bg-sky-950/40 hover:bg-sky-950/60 shadow-sm rounded-full"
+                      title="Freeze countdown timer (Ctrl+Shift+P)"
+                    >
+                      Freeze
+                    </Button>
+                  )
+                )}
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setIsLeaveModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-rose-300 hover:text-rose-200 bg-rose-950/25 border border-rose-500/35 hover:bg-rose-950/50 active:scale-95 transition-all"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span>Leave</span>
+            </button>
+          </div>
+        </header>
+
+        {/* 01:00 Remaining Warning Banner (Suppressed while timer is frozen) */}
+        {roomStatus === 'active' && !isTimerFrozen && remainingSeconds !== null && remainingSeconds <= 60 && remainingSeconds > 0 && (
+          <div
+            id="chat-time-warning-banner"
+            role="alert"
+            aria-live="polite"
+            className="px-4 py-2 bg-amber-950/70 border-b border-amber-500/40 text-amber-200 text-xs font-medium flex items-center justify-between gap-3 shrink-0"
           >
-            Leave
-          </Button>
-        </div>
-      </header>
-
-      {/* 01:00 Remaining Warning Banner (Suppressed while timer is frozen) */}
-      {roomStatus === 'active' && !isTimerFrozen && remainingSeconds !== null && remainingSeconds <= 60 && remainingSeconds > 0 && (
-        <div
-          id="chat-time-warning-banner"
-          role="alert"
-          aria-live="polite"
-          className="px-4 py-2.5 bg-amber-50 dark:bg-amber-950/60 border-b border-amber-200 dark:border-amber-900/60 text-amber-900 dark:text-amber-200 text-xs font-medium flex items-center justify-between gap-3"
-        >
-          <div className="flex items-center gap-2 min-w-0">
-            <Clock className="h-4 w-4 shrink-0 text-amber-600 animate-pulse" />
-            <span className="truncate">
-              <strong className="font-semibold text-amber-950 dark:text-white">1 minute remaining</strong> — Wrap up your chat! Room automatically ends at 00:00.
+            <div className="flex items-center gap-2 min-w-0">
+              <Clock className="h-4 w-4 shrink-0 text-amber-400 animate-pulse" />
+              <span className="truncate">
+                <strong className="font-semibold text-white">1 minute remaining</strong> — Wrap up your chat! Room ends at 00:00.
+              </span>
+            </div>
+            <span className="shrink-0 tabular-nums font-bold text-amber-300 bg-amber-900/60 border border-amber-500/50 px-2.5 py-0.5 rounded-full text-xs">
+              {formatTimer(remainingSeconds)}
             </span>
           </div>
-          <span className="shrink-0 tabular-nums font-bold text-amber-800 dark:text-amber-200 bg-amber-100 dark:bg-amber-900/50 border border-amber-300 dark:border-amber-700 px-2.5 py-0.5 rounded-full text-xs">
-            {formatTimer(remainingSeconds)}
-          </span>
-        </div>
-      )}
+        )}
 
-      {/* Duplicate Tab Warning */}
-      {duplicateTabWarning && (
-        <div className="px-4 py-2 bg-amber-50 dark:bg-amber-950/50 border-b border-amber-200 dark:border-amber-900/60 text-amber-800 dark:text-amber-200 text-xs flex items-center gap-2">
-          <AlertCircle className="h-4 w-4 shrink-0 text-amber-600" />
-          <span>Active in multiple tabs. Messages sync automatically.</span>
-        </div>
-      )}
-
-      {/* =========================================================================
-          MAIN CHAT BODY OR DISCONNECTED SCREEN (Phase 12)
-          ========================================================================= */}
-      {isDisconnected ? (
-        endReason === 'time_limit' ? (
-          /* Time-Limit End Screen: "7-minute chat ended" */
-          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-gray-50/50 dark:bg-[#070B08]">
-            <div className="max-w-sm w-full bg-white dark:bg-[#0D150F] border border-gray-200 dark:border-[rgba(120,160,100,0.16)] rounded-2xl p-8 shadow-card space-y-6">
-              <div className="h-16 w-16 mx-auto rounded-full bg-purple-50 dark:bg-[#101A12] flex items-center justify-center text-[#6C4CF5] dark:text-[#8FAF56]">
-                <Clock className="h-8 w-8 stroke-[1.75]" />
-              </div>
-
-              <div className="space-y-1">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-[#F2F5F2]">
-                  Time's up!
-                </h2>
-                <p className="text-sm text-gray-500 dark:text-[#AEB9AE]">
-                  Your 7-minute conversation has ended.
-                </p>
-              </div>
-
-              {/* Action Buttons: [Find Another RITian] [Leave] */}
-              <div className="space-y-2.5 pt-2">
-                <Button
-                  id="chat-find-another-button"
-                  variant="primary"
-                  size="md"
-                  fullWidth
-                  onClick={() => navigate('/matching', { replace: true })}
-                  className="font-bold"
-                >
-                  Find Another RITian
-                </Button>
-                <Button
-                  id="chat-leave-button"
-                  variant="secondary"
-                  size="md"
-                  fullWidth
-                  onClick={async () => {
-                    await matchmakingService.leaveMatchmaking();
-                    navigate('/home', { replace: true });
-                  }}
-                >
-                  Leave
-                </Button>
-              </div>
-            </div>
+        {/* Duplicate Tab Warning */}
+        {duplicateTabWarning && (
+          <div className="px-4 py-2 bg-amber-950/50 border-b border-amber-500/30 text-amber-200 text-xs flex items-center gap-2 shrink-0">
+            <AlertCircle className="h-4 w-4 shrink-0 text-amber-400" />
+            <span>Active in multiple tabs. Messages sync automatically.</span>
           </div>
-        ) : (
-          /* Phase 12 - Disconnected Page / State */
-          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-gray-50/50 dark:bg-[#070B08]">
-            <div className="max-w-sm w-full bg-white dark:bg-[#0D150F] border border-gray-200 dark:border-[rgba(120,160,100,0.16)] rounded-2xl p-8 shadow-card space-y-6">
-              {/* Broken Link Icon */}
-              <div className="h-16 w-16 mx-auto rounded-full bg-gray-100 dark:bg-[#101A12] flex items-center justify-center text-gray-500 dark:text-[#8FAF56]">
-                <Unlink className="h-8 w-8 stroke-[1.75]" />
-              </div>
+        )}
 
-              <div className="space-y-1">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-[#F2F5F2]">
-                  Chat Ended
-                </h2>
-                <p className="text-sm text-gray-500 dark:text-[#AEB9AE]">
-                  The other user has disconnected.
-                </p>
-              </div>
+        {/* =========================================================================
+            MAIN CHAT BODY OR DISCONNECTED SCREEN (Phase 12)
+            ========================================================================= */}
+        {isDisconnected ? (
+          endReason === 'time_limit' ? (
+            /* Time-Limit End Screen: "7-minute chat ended" */
+            <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-[#050805]">
+              <div className="max-w-sm w-full bg-[#0D160E] border border-[rgba(141,168,82,0.22)] rounded-[28px] p-7 shadow-[0_8px_32px_rgba(0,0,0,0.5)] space-y-6">
+                <div className="h-16 w-16 mx-auto rounded-full bg-[#121E12] border border-[rgba(141,168,82,0.3)] flex items-center justify-center text-[#A2BD63]">
+                  <Clock className="h-8 w-8 stroke-[1.75]" />
+                </div>
 
-              {/* Action Buttons */}
-              <div className="space-y-2.5 pt-2">
-                <Button
-                  variant="primary"
-                  size="md"
-                  fullWidth
-                  onClick={() => navigate('/matching', { replace: true })}
-                  className="font-bold"
-                >
-                  Find a New Chat
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="md"
-                  fullWidth
-                  onClick={async () => {
-                    await matchmakingService.leaveMatchmaking();
-                    navigate('/home', { replace: true });
-                  }}
-                >
-                  Back to Home
-                </Button>
+                <div className="space-y-1">
+                  <h2 className="text-xl sm:text-2xl font-bold text-[#F4F6F1]">
+                    Time's up!
+                  </h2>
+                  <p className="text-sm text-[#9DA89A]">
+                    Your 7-minute conversation has ended.
+                  </p>
+                </div>
+
+                {/* Action Buttons: [Find Another RITian] [Leave] */}
+                <div className="space-y-2.5 pt-2">
+                  <button
+                    id="chat-find-another-button"
+                    type="button"
+                    onClick={() => navigate('/matching', { replace: true })}
+                    className="liquid-cta-btn w-full py-3 px-4 rounded-full font-bold text-sm text-white transition-all active:scale-95 shadow-[0_4px_16px_rgba(141,168,82,0.35)]"
+                  >
+                    Find Another RITian
+                  </button>
+                  <button
+                    id="chat-leave-button"
+                    type="button"
+                    onClick={async () => {
+                      await matchmakingService.leaveMatchmaking();
+                      navigate('/home', { replace: true });
+                    }}
+                    className="w-full py-3 px-4 rounded-full font-semibold text-sm text-[#9DA89A] hover:text-[#F4F6F1] bg-[#101A12] border border-[rgba(141,168,82,0.2)] hover:bg-[#142314] transition-all active:scale-95"
+                  >
+                    Leave
+                  </button>
+                </div>
               </div>
-            </div>
-          </div>
-        )
-      ) : (
-        /* Phase 10 - Message Stream (ONLY this area scrolls: flex: 1, min-height: 0, overflow-y: auto) */
-        <div
-          id="chat-messages-container"
-          className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-3 bg-[#FAFAFC] dark:bg-[#070B08]"
-        >
-          {messages.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center py-16 text-gray-400 space-y-2">
-              <div className="h-12 w-12 rounded-full bg-[#F5F3FF] dark:bg-[#101A12] flex items-center justify-center text-[#6C4CF5] dark:text-[#8FAF56]">
-                <ShieldCheck className="h-6 w-6" />
-              </div>
-              <p className="text-sm font-semibold text-gray-700 dark:text-[#F2F5F2]">
-                You're connected with a fellow RITian!
-              </p>
-              <p className="text-xs text-gray-400 dark:text-[#AEB9AE] max-w-xs">
-                Say hello to break the ice. Your real name, department, and roll number are completely confidential.
-              </p>
             </div>
           ) : (
-            messages.map((msg) => {
-              if (msg.isSystem) {
+            /* Phase 12 - Disconnected Page / State */
+            <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-[#050805]">
+              <div className="max-w-sm w-full bg-[#0D160E] border border-[rgba(141,168,82,0.22)] rounded-[28px] p-7 shadow-[0_8px_32px_rgba(0,0,0,0.5)] space-y-6">
+                {/* Broken Link Icon */}
+                <div className="h-16 w-16 mx-auto rounded-full bg-[#121E12] border border-[rgba(141,168,82,0.3)] flex items-center justify-center text-[#A2BD63]">
+                  <Unlink className="h-8 w-8 stroke-[1.75]" />
+                </div>
+
+                <div className="space-y-1">
+                  <h2 className="text-xl sm:text-2xl font-bold text-[#F4F6F1]">
+                    Chat Ended
+                  </h2>
+                  <p className="text-sm text-[#9DA89A]">
+                    The other user has disconnected.
+                  </p>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="space-y-2.5 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => navigate('/matching', { replace: true })}
+                    className="liquid-cta-btn w-full py-3 px-4 rounded-full font-bold text-sm text-white transition-all active:scale-95 shadow-[0_4px_16px_rgba(141,168,82,0.35)]"
+                  >
+                    Find a New Chat
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await matchmakingService.leaveMatchmaking();
+                      navigate('/home', { replace: true });
+                    }}
+                    className="w-full py-3 px-4 rounded-full font-semibold text-sm text-[#9DA89A] hover:text-[#F4F6F1] bg-[#101A12] border border-[rgba(141,168,82,0.2)] hover:bg-[#142314] transition-all active:scale-95"
+                  >
+                    Back to Home
+                  </button>
+                </div>
+              </div>
+            </div>
+          )
+        ) : (
+          /* Phase 10 - Message Stream (ONLY this area scrolls: flex: 1, min-height: 0, overflow-y: auto) */
+          <div
+            id="chat-messages-container"
+            className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-3 bg-[#050805]"
+          >
+            {messages.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-center py-16 text-[#6F796D] space-y-3">
+                <div className="h-12 w-12 rounded-full bg-[#101A12] border border-[rgba(141,168,82,0.22)] flex items-center justify-center text-[#8DA852] shadow-sm">
+                  <ShieldCheck className="h-6 w-6" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-[#F4F6F1]">
+                    You're connected with a fellow RITian!
+                  </p>
+                  <p className="text-xs text-[#9DA89A] max-w-xs leading-relaxed">
+                    Say hello to break the ice. Your real name, department, and roll number are completely confidential.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              messages.map((msg) => {
+                if (msg.isSystem) {
+                  return (
+                    <div key={msg.id} className="text-center py-1">
+                      <span className="inline-block px-3.5 py-1 rounded-full text-xs bg-[#101A12] text-[#9DA89A] border border-[rgba(141,168,82,0.18)] font-medium">
+                        {msg.content}
+                      </span>
+                    </div>
+                  );
+                }
+
+                const isMe = msg.senderId === user?.id;
+                const timeFormatted = new Date(msg.createdAt).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                });
+
                 return (
-                  <div key={msg.id} className="text-center py-1">
-                    <span className="inline-block px-3 py-1 rounded-full text-xs bg-gray-100 dark:bg-[#101A12] text-gray-500 dark:text-[#AEB9AE] border border-transparent dark:border-[rgba(120,160,100,0.14)] font-medium">
-                      {msg.content}
-                    </span>
+                  <div
+                    key={msg.id}
+                    className={`flex items-end gap-2 ${isMe ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`
+                        max-w-[82%] sm:max-w-md px-4 py-2.5 text-sm transition-all
+                        ${
+                          isMe
+                            ? 'bg-[#293B18] text-[#F4F6F1] font-medium rounded-2xl rounded-br-sm border border-[rgba(162,189,99,0.3)] shadow-[0_2px_10px_rgba(0,0,0,0.3)]'
+                            : 'bg-[#0E170E] text-[#F4F6F1] rounded-2xl rounded-bl-sm border border-[rgba(141,168,82,0.2)] shadow-[0_2px_10px_rgba(0,0,0,0.3)]'
+                        }
+                      `}
+                    >
+                      <p className="leading-relaxed break-words whitespace-pre-wrap">
+                        {msg.content}
+                      </p>
+                      <span
+                        className={`block text-[10px] mt-1 text-right ${
+                          isMe ? 'text-[#A2BD63]/80' : 'text-[#6F796D]'
+                        }`}
+                      >
+                        {timeFormatted}
+                      </span>
+                    </div>
                   </div>
                 );
-              }
+              })
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+        )}
 
-              const isMe = msg.senderId === user?.id;
-              const timeFormatted = new Date(msg.createdAt).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              });
+        {/* =========================================================================
+            BOTTOM CONTROLS BAR (Fixed Composer: flex-shrink: 0 / shrink-0)
+            Skip (secondary action)
+            Rounded liquid inset input field
+            Send button (liquid CTA)
+            Zero visible Block or Report buttons
+            ========================================================================= */}
+        {!isDisconnected && (
+          <div
+            id="chat-composer-container"
+            className="p-2.5 sm:p-3.5 border-t border-[rgba(141,168,82,0.18)] bg-[#091009]/95 backdrop-blur-xl shrink-0 pb-safe"
+          >
+            <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+              {/* Skip Button */}
+              <button
+                type="button"
+                onClick={handleSkip}
+                title="Skip to next RITian"
+                className="shrink-0 inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-full text-xs font-semibold bg-[#101A12] border border-[rgba(141,168,82,0.25)] text-[#A2BD63] hover:bg-[#142314] active:scale-95 transition-all"
+              >
+                <FastForward className="h-4 w-4 text-[#8DA852]" />
+                <span className="hidden sm:inline">Skip</span>
+              </button>
 
-              return (
-                <div
-                  key={msg.id}
-                  className={`flex items-end gap-2 ${isMe ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div
-                    className={`
-                      max-w-[80%] sm:max-w-md px-4 py-2.5 text-sm transition-all
-                      ${
-                        isMe
-                          ? 'bg-[#6C4CF5] dark:bg-[#78944D] text-white dark:text-[#050806] font-medium rounded-2xl rounded-br-none shadow-sm'
-                          : 'bg-gray-100 dark:bg-[#131A14] text-gray-900 dark:text-[#F2F5F2] border border-transparent dark:border-[rgba(120,160,100,0.16)] rounded-2xl rounded-bl-none'
-                      }
-                    `}
-                  >
-                    <p className="leading-relaxed break-words whitespace-pre-wrap">
-                      {msg.content}
-                    </p>
-                    <span
-                      className={`block text-[10px] mt-1 text-right ${
-                        isMe ? 'text-purple-200 dark:text-[#050806]/75' : 'text-gray-400 dark:text-[#758275]'
-                      }`}
-                    >
-                      {timeFormatted}
-                    </span>
-                  </div>
-                </div>
-              );
-            })
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-      )}
+              {/* Message Input: Liquid Inset */}
+              <input
+                ref={inputRef}
+                id="chat-message-input"
+                type="text"
+                value={inputMessage}
+                maxLength={MAX_MESSAGE_LENGTH}
+                disabled={roomStatus !== 'active'}
+                onChange={(e) => setInputMessage(e.target.value)}
+                placeholder="Type a message..."
+                className="liquid-inset flex-1 bg-[#060A06] text-[#F4F6F1] placeholder-[#6F796D] rounded-full border border-[rgba(141,168,82,0.22)] px-4 py-2 sm:py-2.5 text-sm focus:outline-none focus:border-[#8DA852] focus:ring-2 focus:ring-[#8DA852]/20 transition-all disabled:opacity-50"
+                autoComplete="off"
+              />
 
-      {/* =========================================================================
-          BOTTOM CONTROLS BAR (Fixed Composer: flex-shrink: 0 / shrink-0)
-          Skip (secondary purple action)
-          Rounded input field
-          Send button (solid purple)
-          Zero visible Block or Report buttons
-          ========================================================================= */}
-      {!isDisconnected && (
-        <div
-          id="chat-composer-container"
-          className="p-3 sm:p-4 border-t border-gray-200 dark:border-[rgba(130,160,100,0.14)] bg-white dark:bg-[#080D09] shrink-0"
-        >
-          <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-            {/* Skip Button: Secondary Purple Action */}
-            <Button
-              type="button"
-              variant="secondary"
-              size="md"
-              onClick={handleSkip}
-              leftIcon={<FastForward className="h-4 w-4 text-[#6C4CF5] dark:text-[#A8C96A]" />}
-              title="Skip to next RITian"
-              className="shrink-0 px-3 sm:px-4 border-purple-200 dark:border-[rgba(120,160,100,0.22)] text-[#6C4CF5] dark:text-[#A8C96A] hover:bg-[#F5F3FF] dark:hover:bg-[#101A12] dark:bg-[#0D150F]"
-            >
-              <span className="hidden sm:inline">Skip</span>
-            </Button>
-
-            {/* Message Input: Clean rounded input */}
-            <input
-              ref={inputRef}
-              id="chat-message-input"
-              type="text"
-              value={inputMessage}
-              maxLength={MAX_MESSAGE_LENGTH}
-              disabled={roomStatus !== 'active'}
-              onChange={(e) => setInputMessage(e.target.value)}
-              placeholder="Type a message..."
-              className="flex-1 bg-white dark:bg-[#0C120D] text-gray-900 dark:text-[#F2F5F2] placeholder-gray-400 dark:placeholder-[#758275] rounded-full border border-gray-300 dark:border-[rgba(140,170,110,0.18)] px-4 py-2.5 text-sm focus:outline-none focus:border-[#6C4CF5] dark:focus:border-[#8FAF56] focus:ring-2 focus:ring-[#6C4CF5]/10 dark:focus:ring-[#8FAF56]/15 transition-colors disabled:opacity-50"
-              autoComplete="off"
-            />
-
-            {/* Send Button: Solid Purple Action */}
-            <Button
-              type="submit"
-              variant="primary"
-              size="md"
-              disabled={!inputMessage.trim() || isSending || roomStatus !== 'active'}
-              rightIcon={<Send className="h-4 w-4" />}
-              className="shrink-0 rounded-full px-4"
-            >
-              <span className="hidden sm:inline">Send</span>
-            </Button>
-          </form>
-        </div>
-      )}
+              {/* Send Button: Liquid CTA */}
+              <button
+                type="submit"
+                disabled={!inputMessage.trim() || isSending || roomStatus !== 'active'}
+                className="liquid-cta-btn shrink-0 rounded-full h-9 w-9 sm:h-10 sm:w-auto sm:px-4 flex items-center justify-center gap-1.5 text-white font-bold disabled:opacity-40 transition-all active:scale-95 shadow-[0_2px_12px_rgba(141,168,82,0.35)]"
+                title="Send message"
+              >
+                <Send className="h-4 w-4" />
+                <span className="hidden sm:inline text-xs font-bold">Send</span>
+              </button>
+            </form>
+          </div>
+        )}
 
       {/* Close chat-page-container */}
       </div>
@@ -1106,24 +1097,24 @@ export const ChatPage: React.FC = () => {
         description="This will end your current conversation."
         footer={
           <>
-            <Button
-              variant="secondary"
-              size="sm"
+            <button
+              type="button"
               onClick={() => setIsLeaveModalOpen(false)}
+              className="px-4 py-2 rounded-full text-xs font-semibold text-[#9DA89A] hover:text-[#F4F6F1] bg-[#101A12] border border-[rgba(141,168,82,0.2)] hover:bg-[#142314] transition-all"
             >
               Cancel
-            </Button>
-            <Button
-              variant="danger"
-              size="sm"
+            </button>
+            <button
+              type="button"
               onClick={confirmLeave}
+              className="px-4 py-2 rounded-full text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 active:scale-95 transition-all shadow-[0_2px_10px_rgba(225,29,72,0.3)]"
             >
               Leave
-            </Button>
+            </button>
           </>
         }
       >
-        <p className="text-xs text-gray-500 leading-relaxed">
+        <p className="text-xs text-[#9DA89A] leading-relaxed">
           Leaving will end the session for both students. You will return to your student dashboard.
         </p>
       </Modal>

@@ -16,7 +16,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, X, Lightbulb, RefreshCw } from 'lucide-react';
-import { Button, Card, ErrorMessage, Modal } from '../components';
+import { Card, ErrorMessage, Modal } from '../components';
 import { useAuth } from '../context';
 import { matchmakingService } from '../services/matchmakingService';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
@@ -254,40 +254,40 @@ export const MatchingPage: React.FC = () => {
       <div className="w-full max-w-md text-center space-y-8">
         {/* Header Titles */}
         <div className="space-y-2">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-[#F2F5F2] tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#F4F6F1] tracking-tight">
             {hasPendingRequest
               ? statusMessage || 'Waiting for a RITian to respond...'
-              : 'Finding Your Next Conversation...'}
+              : 'Finding a RITian...'}
           </h1>
-          <p className="text-sm text-gray-500 dark:text-[#AEB9AE]">
+          <p className="text-xs sm:text-sm text-[#9DA89A]">
             {hasPendingRequest
               ? 'Request sent to an active online student'
-              : 'Connecting you with a random RITian'}
+              : 'Connecting you with a fellow student from campus'}
           </p>
         </div>
 
-        {/* Circular Animated Indicator with Soft Purple Rings (Zero Neon) */}
-        <div className="relative flex items-center justify-center h-64 w-64 mx-auto my-6">
+        {/* Liquid Concentric Blobs / Soft Pulses */}
+        <div className="relative flex items-center justify-center h-60 w-60 sm:h-64 sm:w-64 mx-auto my-6">
           {/* Outermost subtle pulse ring */}
-          <div className="absolute inset-0 rounded-full bg-[#F5F3FF] dark:bg-[#56733A]/10 animate-ping opacity-30" />
-          {/* Middle soft purple rings / dark muted sage & olive */}
-          <div className="absolute inset-2 rounded-full border-2 border-[#EDE9FE] dark:border-[rgba(120,160,100,0.18)] animate-pulse" />
-          <div className="absolute inset-8 rounded-full bg-[#F5F3FF]/70 dark:bg-[#101A12]/80 border border-[#DDD6FE] dark:border-[rgba(120,160,100,0.22)]" />
-          <div className="absolute inset-16 rounded-full bg-[#EDE9FE]/80 dark:bg-[#0D150F]/90 border border-[#C4B5FD] dark:border-[rgba(140,170,110,0.25)]" />
+          <div className="absolute inset-0 rounded-full bg-[#8DA852]/10 animate-ping opacity-25" />
+          {/* Concentric liquid rings */}
+          <div className="absolute inset-3 rounded-full border border-[rgba(141,168,82,0.2)] animate-pulse" />
+          <div className="absolute inset-8 rounded-full bg-[#0D160E]/70 border border-[rgba(141,168,82,0.25)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]" />
+          <div className="absolute inset-16 rounded-full bg-[#121E12]/80 border border-[rgba(141,168,82,0.35)] shadow-[0_4px_20px_rgba(0,0,0,0.5)]" />
 
           {/* Center Avatar Badge */}
-          <div className="relative z-10 h-16 w-16 rounded-full bg-[#6C4CF5] dark:bg-[#8FAF56] flex items-center justify-center text-white dark:text-[#050806] shadow-md dark:shadow-[0_0_22px_rgba(143,175,86,0.25)]">
-            <User className="h-8 w-8 text-white dark:text-[#050806]" />
+          <div className="relative z-10 h-16 w-16 rounded-full bg-[#1A2E1A] border border-[rgba(141,168,82,0.5)] flex items-center justify-center text-[#A2BD63] shadow-[0_0_28px_rgba(141,168,82,0.35),inset_0_1px_1px_rgba(255,255,255,0.15)]">
+            <User className="h-8 w-8 text-[#A2BD63]" />
           </div>
         </div>
 
         {/* Friendly Message / Icebreaker Card */}
-        <Card className="p-4 bg-white dark:bg-[#0D150F]/90 border-gray-200 dark:border-[rgba(120,160,100,0.16)] shadow-sm text-left max-w-sm mx-auto">
+        <Card className="p-4 text-left max-w-sm mx-auto">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-amber-50 dark:bg-[#101A12] text-amber-500 dark:text-[#A8C96A] shrink-0 border border-transparent dark:border-[rgba(120,160,100,0.18)]">
-              <Lightbulb className="h-5 w-5" />
+            <div className="p-2 rounded-xl bg-[#121E12] text-[#A2BD63] shrink-0 border border-[rgba(141,168,82,0.2)]">
+              <Lightbulb className="h-4 w-4" />
             </div>
-            <p className="text-xs sm:text-sm text-gray-700 dark:text-[#AEB9AE] font-medium">
+            <p className="text-xs sm:text-sm text-[#9DA89A] font-medium leading-relaxed">
               &ldquo;Good conversations start with open minds.&rdquo;
             </p>
           </div>
@@ -304,21 +304,19 @@ export const MatchingPage: React.FC = () => {
 
         {/* Cancel Action */}
         <div className="pt-2">
-          <Button
+          <button
             type="button"
-            variant="secondary"
-            size="md"
             onClick={handleCancel}
             disabled={isLeaving || isMatchingResolved || isForceLeaving}
-            leftIcon={<X className="h-4 w-4" />}
-            className="px-6"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-semibold text-[#9DA89A] hover:text-[#F4F6F1] bg-[#0E170E]/80 border border-[rgba(141,168,82,0.2)] hover:border-[rgba(141,168,82,0.35)] hover:bg-[#132213] active:scale-95 transition-all disabled:opacity-50"
           >
-            {isLeaving ? 'Exiting...' : 'Cancel'}
-          </Button>
+            <X className="h-3.5 w-3.5" />
+            <span>{isLeaving ? 'Exiting...' : 'Cancel Search'}</span>
+          </button>
         </div>
 
         {/* Subtitle / elapsed timer counter */}
-        <p className="text-xs text-gray-400 dark:text-[#758275]">
+        <p className="text-[11px] text-[#6F796D]">
           Searching for {secondsElapsed}s &bull; Safe &amp; Anonymous
         </p>
       </div>
@@ -334,31 +332,27 @@ export const MatchingPage: React.FC = () => {
         title="You have an active conversation"
       >
         <div className="space-y-4">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-[#9DA89A]">
             You're already connected to a chat room that is still active. Would you like to return to
             it, or leave it and find a new match?
           </p>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Button
+          <div className="flex flex-col gap-3 sm:flex-row pt-2">
+            <button
               type="button"
-              variant="primary"
-              size="md"
               onClick={handleResumeExistingRoom}
-              className="flex-1"
+              className="liquid-cta-btn flex-1 py-3 px-4 rounded-full text-sm font-semibold text-white transition-all active:scale-95"
             >
               Resume Conversation
-            </Button>
-            <Button
+            </button>
+            <button
               type="button"
-              variant="secondary"
-              size="md"
               onClick={handleForceLeaveAndRematch}
               disabled={isForceLeaving}
-              leftIcon={<RefreshCw className="h-4 w-4" />}
-              className="flex-1"
+              className="flex-1 inline-flex items-center justify-center gap-2 py-3 px-4 rounded-full text-sm font-semibold text-[#9DA89A] hover:text-[#F4F6F1] bg-[#0E170E] border border-[rgba(141,168,82,0.2)] hover:bg-[#132213] transition-all active:scale-95 disabled:opacity-50"
             >
-              {isForceLeaving ? 'Leaving...' : 'Leave & Find New Match'}
-            </Button>
+              <RefreshCw className="h-4 w-4" />
+              <span>{isForceLeaving ? 'Leaving...' : 'Leave & Rematch'}</span>
+            </button>
           </div>
         </div>
       </Modal>

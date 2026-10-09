@@ -190,7 +190,7 @@ BATCH: 2021-2025`;
   return (
     <div className="space-y-4">
       {/* Viewfinder Container */}
-      <div className="relative w-full aspect-[4/3] sm:aspect-[16/10] bg-slate-900 rounded-2xl overflow-hidden border-2 border-dashed border-brand-500/60 shadow-inner flex items-center justify-center">
+      <div className="relative w-full aspect-[4/3] sm:aspect-[16/10] bg-[#050805] rounded-2xl overflow-hidden border-2 border-dashed border-[#8DA852]/60 shadow-inner flex items-center justify-center">
         {/* Active Video Feed */}
         <video
           ref={videoRef}
@@ -202,12 +202,12 @@ BATCH: 2021-2025`;
         />
 
         {/* Viewfinder ID Card Bounding Frame Overlay */}
-        <div className="absolute inset-4 sm:inset-8 border-2 border-white/80 rounded-xl pointer-events-none shadow-[0_0_0_9999px_rgba(0,0,0,0.45)] flex flex-col justify-between p-3 sm:p-4">
-          <div className="flex justify-between items-center text-[10px] sm:text-xs font-bold text-white/90 uppercase tracking-widest bg-black/40 px-2.5 py-1 rounded-md backdrop-blur-sm self-start">
+        <div className="absolute inset-4 sm:inset-8 border-2 border-white/80 rounded-2xl pointer-events-none shadow-[0_0_0_9999px_rgba(0,0,0,0.55)] flex flex-col justify-between p-3 sm:p-4">
+          <div className="flex justify-between items-center text-[10px] sm:text-xs font-bold text-white/90 uppercase tracking-widest bg-black/60 px-2.5 py-1 rounded-md backdrop-blur-sm self-start">
             Align ID Card Front
           </div>
 
-          <div className="text-center text-[11px] text-white/80 bg-black/50 px-3 py-1.5 rounded-lg backdrop-blur-sm mx-auto">
+          <div className="text-center text-[11px] text-white/90 bg-black/60 px-3 py-1.5 rounded-xl backdrop-blur-sm mx-auto">
             Ensure Student Name &amp; Register Number are clearly visible
           </div>
         </div>
@@ -215,14 +215,14 @@ BATCH: 2021-2025`;
         {/* Camera Loading State */}
         {!cameraActive && !cameraError && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white/80 p-4 text-center">
-            <RefreshCw className="h-7 w-7 animate-spin text-brand-400" />
+            <RefreshCw className="h-7 w-7 animate-spin text-[#8DA852]" />
             <p className="text-xs font-semibold">Starting camera...</p>
           </div>
         )}
 
         {/* Camera Error State */}
         {cameraError && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center bg-slate-900/95 text-white">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center bg-[#050805]/95 text-white">
             <CameraOff className="h-10 w-10 text-rose-400" />
             <p className="text-xs text-rose-200 max-w-xs">{cameraError}</p>
             <Button
@@ -239,15 +239,15 @@ BATCH: 2021-2025`;
       </div>
 
       {localFeedback && (
-        <div className="p-3 rounded-xl bg-brand-50 border border-brand-200 text-brand-800 text-xs flex items-center gap-2 animate-pulse">
-          <RefreshCw className="h-4 w-4 animate-spin text-brand-600 shrink-0" />
+        <div className="p-3 rounded-2xl bg-brand-50/80 dark:bg-[#101D11] border border-brand-200 dark:border-[rgba(140,170,110,0.25)] text-brand-800 dark:text-[#A2BD63] text-xs flex items-center gap-2 animate-pulse">
+          <RefreshCw className="h-4 w-4 animate-spin text-brand-600 dark:text-[#8DA852] shrink-0" />
           <span>{localFeedback}</span>
         </div>
       )}
 
       {/* Zero Persistence Guarantee Banner */}
-      <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200/80 text-[11px] text-emerald-900 flex items-start gap-2">
-        <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+      <div className="p-3.5 rounded-2xl bg-emerald-50/80 dark:bg-[#101D11] border border-emerald-200/80 dark:border-[rgba(140,170,110,0.25)] text-[11px] text-emerald-900 dark:text-[#A2BD63] flex items-start gap-2 shadow-sm">
+        <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-[#8DA852] shrink-0 mt-0.5" />
         <div>
           <span className="font-bold">Zero-Storage Local Processing:</span> Card image is scanned
           entirely inside your browser's memory and is immediately cleared. We never upload or save

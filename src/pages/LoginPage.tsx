@@ -78,12 +78,12 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <Card className="border border-gray-200 bg-white shadow-card rounded-2xl overflow-hidden">
+    <Card className="border border-gray-200/80 dark:border-[rgba(140,170,110,0.22)] bg-white/95 dark:bg-[#091009]/90 backdrop-blur-md shadow-card dark:shadow-liquid-outer rounded-[28px] overflow-hidden">
       <CardHeader className="text-center pb-4 pt-6 px-6 sm:px-8">
-        <CardTitle className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900">
+        <CardTitle className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-[#F4F6F1]">
           Talk to RITians
         </CardTitle>
-        <CardDescription className="text-sm text-gray-500 mt-1.5 font-normal">
+        <CardDescription className="text-sm text-gray-500 dark:text-[#9DA89A] mt-1.5 font-normal">
           Connect anonymously with fellow RITians.
         </CardDescription>
       </CardHeader>
@@ -105,7 +105,7 @@ export const LoginPage: React.FC = () => {
             id="google-signin-btn"
             onClick={handleGoogleSignIn}
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 active:bg-gray-100 text-gray-700 font-medium text-sm sm:text-base shadow-sm hover:shadow transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+            className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-2xl border border-gray-300 dark:border-[rgba(140,170,110,0.28)] bg-white dark:bg-[#0D160E] hover:bg-gray-50 dark:hover:bg-[#122013] active:bg-gray-100 dark:active:bg-[#152616] active:scale-[0.98] text-gray-700 dark:text-[#F4F6F1] font-medium text-sm sm:text-base shadow-sm dark:shadow-liquid-outer hover:shadow transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 dark:focus:ring-[#8DA852] disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer min-h-[48px]"
           >
             {isLoading ? (
               <Spinner size="sm" variant="brand" label="Connecting..." />
@@ -129,19 +129,19 @@ export const LoginPage: React.FC = () => {
                 />
               </svg>
             )}
-            <span className="font-semibold text-gray-800">Continue with Google</span>
+            <span className="font-semibold text-gray-800 dark:text-[#F4F6F1]">Continue with Google</span>
           </button>
         </div>
 
         {/* Informational Subtext */}
-        <p className="text-xs text-gray-500 text-center leading-relaxed max-w-xs mx-auto">
+        <p className="text-xs text-gray-500 dark:text-[#9DA89A] text-center leading-relaxed max-w-xs mx-auto">
           Use your personal Google account. Your college identity is verified separately.
         </p>
 
         {/* Development Mock Test Logins (Local Dev Only - Not present in production) */}
         {import.meta.env.DEV && (
-          <div className="pt-4 border-t border-gray-100 space-y-2">
-            <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block text-center">
+          <div className="pt-4 border-t border-gray-100 dark:border-[rgba(140,170,110,0.16)] space-y-2">
+            <span className="text-[10px] font-semibold text-gray-400 dark:text-[#6F796D] uppercase tracking-wider block text-center">
               Dev Seed Test Accounts (Local Testing Only)
             </span>
             <div className="grid grid-cols-3 gap-1.5">
@@ -151,7 +151,7 @@ export const LoginPage: React.FC = () => {
                 size="sm"
                 onClick={() => handleTestLogin('student.a.ritian.2026@gmail.com')}
                 disabled={isLoading}
-                className="text-[11px] py-1 px-1 text-gray-600 truncate"
+                className="text-[11px] py-1 px-1 text-gray-600 dark:text-[#9DA89A] truncate"
                 title="Login as Student A (Verified CSE)"
               >
                 Student A
@@ -162,7 +162,7 @@ export const LoginPage: React.FC = () => {
                 size="sm"
                 onClick={() => handleTestLogin('student.b.ritian.2026@gmail.com')}
                 disabled={isLoading}
-                className="text-[11px] py-1 px-1 text-gray-600 truncate"
+                className="text-[11px] py-1 px-1 text-gray-600 dark:text-[#9DA89A] truncate"
                 title="Login as Student B (Verified ECE)"
               >
                 Student B
@@ -173,7 +173,7 @@ export const LoginPage: React.FC = () => {
                 size="sm"
                 onClick={() => handleTestLogin('student.c.ritian.2026@gmail.com')}
                 disabled={isLoading}
-                className="text-[11px] py-1 px-1 text-gray-600 truncate"
+                className="text-[11px] py-1 px-1 text-gray-600 dark:text-[#9DA89A] truncate"
                 title="Login as Student C (Verified MECH)"
               >
                 Student C
@@ -183,8 +183,8 @@ export const LoginPage: React.FC = () => {
         )}
       </CardContent>
 
-      <CardFooter className="bg-gray-50/70 border-t border-gray-100 py-3.5 px-6 rounded-b-2xl">
-        <p className="text-[11px] text-gray-400 text-center w-full leading-relaxed">
+      <CardFooter className="bg-gray-50/70 dark:bg-[#070C07]/80 border-t border-gray-100 dark:border-[rgba(140,170,110,0.14)] py-3.5 px-6 rounded-b-[28px]">
+        <p className="text-[11px] text-gray-400 dark:text-[#6F796D] text-center w-full leading-relaxed">
           By continuing, you agree to our Terms and Privacy Policy.
         </p>
       </CardFooter>

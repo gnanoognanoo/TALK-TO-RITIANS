@@ -1356,8 +1356,9 @@ describe('TALK TO RITIANS — Single DEVELOPER Role & Test Account Security Suit
     });
 
     test('8.9 Leave during freeze terminates room immediately with end_reason = "leave" and clears paused state', () => {
-      db.rpcFreezeChatTimer(DEV_USER_ID, testRoomId);
-      const leaveRes = db.rpcEndChatRoom(NORMAL_USER_ID, testRoomId, 'leave');
+      const freezeTime = new Date('2026-10-02T12:02:00.000Z');
+      db.rpcFreezeChatTimer(DEV_USER_ID, testRoomId, freezeTime);
+      const leaveRes = db.rpcEndChatRoom(NORMAL_USER_ID, testRoomId, 'leave', freezeTime);
 
       assert.equal(leaveRes.success, true);
       assert.equal(leaveRes.status, 'ended');
@@ -1370,8 +1371,9 @@ describe('TALK TO RITIANS — Single DEVELOPER Role & Test Account Security Suit
     });
 
     test('8.10 Skip during freeze terminates room immediately with end_reason = "skip" and clears paused state', () => {
-      db.rpcFreezeChatTimer(DEV_USER_ID, testRoomId);
-      const skipRes = db.rpcEndChatRoom(DEV_USER_ID, testRoomId, 'skip');
+      const freezeTime = new Date('2026-10-02T12:02:00.000Z');
+      db.rpcFreezeChatTimer(DEV_USER_ID, testRoomId, freezeTime);
+      const skipRes = db.rpcEndChatRoom(DEV_USER_ID, testRoomId, 'skip', freezeTime);
 
       assert.equal(skipRes.success, true);
       assert.equal(skipRes.status, 'ended');
@@ -1436,8 +1438,9 @@ describe('TALK TO RITIANS — Single DEVELOPER Role & Test Account Security Suit
     });
 
     test('8.14 Double Freeze protection returns TIMER_ALREADY_PAUSED', () => {
-      db.rpcFreezeChatTimer(DEV_USER_ID, testRoomId);
-      const secondFreeze = db.rpcFreezeChatTimer(DEV_USER_ID, testRoomId);
+      const freezeTime = new Date('2026-10-02T12:02:00.000Z');
+      db.rpcFreezeChatTimer(DEV_USER_ID, testRoomId, freezeTime);
+      const secondFreeze = db.rpcFreezeChatTimer(DEV_USER_ID, testRoomId, freezeTime);
       assert.equal(secondFreeze.success, false);
       assert.equal(secondFreeze.error, 'TIMER_ALREADY_PAUSED');
     });

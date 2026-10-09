@@ -63,24 +63,62 @@ body, header, nav, footer, .card-surface, .navbar-container {
 
   /* Design System: Form Input (Clean White in Light, Chemical Green-Black in Dark) */
   .form-input {
-    @apply w-full bg-white text-gray-900 placeholder-gray-400 rounded-xl
+    @apply w-full bg-white text-gray-900 placeholder-gray-400 rounded-2xl
            border border-gray-200 px-4 py-2.5 text-sm transition-all duration-150
            hover:border-gray-300 focus:border-brand-600 focus:ring-4 focus:ring-brand-500/10 focus:outline-none
            disabled:opacity-50 disabled:bg-gray-50 disabled:cursor-not-allowed
-           dark:bg-[#0C120D] dark:text-[#F2F5F2] dark:placeholder-[#758275] dark:border-[rgba(140,170,110,0.18)]
-           dark:focus:border-[#8FAF56] dark:focus:ring-[#8FAF56]/15;
+           dark:bg-[#070D08] dark:text-[#F4F6F1] dark:placeholder-[#6F796D] dark:border-[rgba(141,168,82,0.16)]
+           dark:focus:border-[#8DA852] dark:focus:ring-[#8DA852]/20 shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)];
   }
 
   /* Design System: Card */
   .card-surface {
-    @apply bg-white border border-gray-200/80 rounded-2xl shadow-card
-           dark:bg-[#0D150F]/90 dark:border-[rgba(120,160,100,0.16)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)];
+    @apply bg-white border border-gray-200/80 rounded-[24px] sm:rounded-[28px] shadow-card
+           dark:bg-[#0D160E]/80 dark:backdrop-blur-md dark:border-[rgba(141,168,82,0.14)]
+           dark:shadow-[0_16px_36px_-6px_rgba(0,0,0,0.65),inset_0_1px_0_0_rgba(162,189,99,0.12),inset_0_-1px_0_0_rgba(0,0,0,0.5)];
+  }
+
+  /* Design System: Liquid Surface (Neomorphic + Liquid Glass) */
+  .liquid-surface {
+    @apply bg-white/90 backdrop-blur-md border border-gray-200/80 rounded-[24px] sm:rounded-[28px]
+           shadow-[0_8px_24px_-4px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.9)]
+           dark:bg-[#0D160E]/80 dark:border-[rgba(141,168,82,0.14)]
+           dark:shadow-[0_16px_36px_-6px_rgba(0,0,0,0.65),inset_0_1px_0_0_rgba(162,189,99,0.12),inset_0_-1px_0_0_rgba(0,0,0,0.5)];
+  }
+
+  /* Design System: Liquid Elevated Surface (For hero/persona cards, modals) */
+  .liquid-surface-elevated {
+    @apply bg-white border border-gray-200/90 rounded-[24px] sm:rounded-[28px]
+           shadow-[0_14px_32px_-4px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,1)]
+           dark:bg-[#101A12]/85 dark:backdrop-blur-lg dark:border-[rgba(162,189,99,0.22)]
+           dark:shadow-[0_20px_42px_-8px_rgba(0,0,0,0.7),inset_0_1px_1px_0_rgba(162,189,99,0.22),inset_0_-1px_0_0_rgba(0,0,0,0.6)];
+  }
+
+  /* Design System: Liquid Inset (For inputs, message wells, recess tracks) */
+  .liquid-inset {
+    @apply bg-slate-100/80 border border-slate-200 rounded-2xl
+           shadow-[inset_0_2px_4px_rgba(0,0,0,0.06)]
+           dark:bg-[#070D08]/90 dark:border-[rgba(141,168,82,0.12)]
+           dark:shadow-[inset_0_2px_5px_rgba(0,0,0,0.65),inset_0_0_0_1px_rgba(0,0,0,0.3)];
+  }
+
+  /* Design System: Liquid Primary CTA Button */
+  .liquid-cta-btn {
+    @apply inline-flex items-center justify-center font-bold rounded-2xl transition-all duration-200
+           bg-brand-600 hover:bg-brand-700 text-white
+           shadow-[0_8px_20px_-4px_rgba(108,76,245,0.45)] hover:shadow-[0_12px_28px_-4px_rgba(108,76,245,0.55)]
+           active:scale-[0.98]
+           dark:bg-gradient-to-r dark:from-[#8DA852] dark:to-[#A2BD63] dark:hover:from-[#96B25A] dark:hover:to-[#ACCA6E]
+           dark:text-[#050805] dark:border-t dark:border-white/30
+           dark:shadow-[0_10px_26px_-4px_rgba(141,168,82,0.35),inset_0_1px_1px_rgba(255,255,255,0.35)]
+           dark:hover:shadow-[0_14px_34px_-4px_rgba(141,168,82,0.48),inset_0_1px_1px_rgba(255,255,255,0.45)]
+           disabled:opacity-50 disabled:pointer-events-none;
   }
 
   /* Design System: Navbar */
   .navbar-container {
-    @apply sticky top-0 z-40 w-full border-b border-gray-200/80 bg-white/95 backdrop-blur-sm
-           dark:bg-[#080D09]/95 dark:border-[rgba(130,160,100,0.14)];
+    @apply sticky top-0 z-40 w-full border-b border-gray-200/80 bg-white/95 backdrop-blur-md
+           dark:bg-[#080D09]/90 dark:backdrop-blur-md dark:border-[rgba(141,168,82,0.12)];
   }
 
   /* Design System: Badge */
@@ -91,8 +129,17 @@ body, header, nav, footer, .card-surface, .navbar-container {
   /* Design System: Avatar Container */
   .avatar-ring {
     @apply relative inline-flex items-center justify-center rounded-2xl bg-brand-50
-           border border-brand-200 text-brand-700 font-semibold overflow-hidden select-none;
+           border border-brand-200 text-brand-700 font-semibold overflow-hidden select-none
+           dark:bg-[#101A12] dark:border-[rgba(141,168,82,0.2)] dark:text-[#A2BD63];
   }
+}
+
+/* Safe area padding utilities for mobile edge-to-edge screens */
+.pb-safe {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+}
+.pt-safe {
+  padding-top: max(0.5rem, env(safe-area-inset-top, 0px));
 }
 
 /* =========================================================================

@@ -22,15 +22,15 @@ export const ErrorMessage: React.FC<ErrorMessageProps> = ({
     <div
       role="alert"
       className={`
-        p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800
+        p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-800 dark:text-rose-200
         flex items-start gap-3 text-sm shadow-sm ${className}
       `.trim()}
     >
       <AlertCircle className="h-5 w-5 text-rose-500 shrink-0 mt-0.5" aria-hidden="true" />
 
       <div className="flex-1 min-w-0">
-        {title && <h4 className="font-semibold text-rose-900 text-sm">{title}</h4>}
-        <p className={`text-xs text-rose-700 leading-relaxed ${title ? 'mt-1' : ''}`}>
+        {title && <h4 className="font-semibold text-rose-900 dark:text-rose-100 text-sm">{title}</h4>}
+        <p className={`text-xs text-rose-700 dark:text-rose-300 leading-relaxed ${title ? 'mt-1' : ''}`}>
           {message}
         </p>
 
@@ -38,7 +38,7 @@ export const ErrorMessage: React.FC<ErrorMessageProps> = ({
           <button
             type="button"
             onClick={onRetry}
-            className="mt-2.5 inline-flex items-center text-xs font-semibold text-rose-700 hover:text-rose-900 underline underline-offset-4 decoration-rose-300 hover:decoration-rose-700 transition-colors"
+            className="mt-2.5 inline-flex items-center text-xs font-semibold text-rose-700 dark:text-rose-300 hover:text-rose-900 dark:hover:text-rose-100 underline underline-offset-4 decoration-rose-300 hover:decoration-rose-700 transition-colors"
           >
             {retryText} &rarr;
           </button>
@@ -50,7 +50,7 @@ export const ErrorMessage: React.FC<ErrorMessageProps> = ({
           type="button"
           onClick={onDismiss}
           aria-label="Dismiss error"
-          className="text-rose-400 hover:text-rose-600 p-1 rounded-md hover:bg-rose-100 transition-colors"
+          className="text-rose-400 hover:text-rose-600 dark:hover:text-rose-200 p-1 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors"
         >
           <X className="h-4 w-4" />
         </button>

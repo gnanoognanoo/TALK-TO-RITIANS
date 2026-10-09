@@ -2,11 +2,11 @@
  * ============================================================================
  * TALK TO RITIANS - Central Home Screen (Primary App Screen)
  * ============================================================================
- * Central hub for authenticated students:
- * 1. Current anonymous persona display (avatar + username)
- * 2. Verification status (Verified Badge vs subtle Verification Pending banner)
- * 3. Primary "Start Chat" CTA entering random 1-on-1 7-minute matchmaking
- * 4. Settings management link
+ * Simplified, mobile-first chat-launch interface:
+ * 1. Compact status pill (Developer Mode / Verification Status)
+ * 2. Greeting & Persona Card (Avatar + Anonymous Handle + Verified RITian / Developer Persona)
+ * 3. Primary Hero Action: [ 💬 Start Anonymous Chat → ]
+ * 4. Minimal secondary action for Settings
  */
 
 import React from 'react';
@@ -14,12 +14,13 @@ import { useNavigate, Link } from 'react-router-dom';
 import {
   ArrowRight,
   Sparkles,
-  ShieldCheck,
   CheckCircle2,
   AlertCircle,
   Settings,
+  MessageSquare,
+  Shield,
 } from 'lucide-react';
-import { Button, Card, Avatar } from '../components';
+import { Card, Avatar } from '../components';
 import { useAuth } from '../context';
 import { getEffectivePersona } from '../utils/persona';
 
@@ -32,176 +33,140 @@ export const HomePage: React.FC = () => {
   const displayUsername = effectivePersona.displayUsername;
   const initials = effectivePersona.initials;
 
+  const personaLabel = isStaff
+    ? 'Developer Persona'
+    : isVerified
+    ? 'Verified RITian'
+    : 'Unverified persona';
+
   return (
-    <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-10 space-y-6 animate-in fade-in">
+    <div className="max-w-xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-10 space-y-5 animate-in fade-in">
       {/* =========================================================================
-          VERIFICATION STATUS NOTICE (Subtle, Non-blocking)
+          STATUS PILL (Developer Mode or Verification State)
           ========================================================================= */}
       {isStaff ? (
-        <div className="px-4 py-2.5 rounded-xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 flex items-center justify-between transition-colors">
-          <div className="flex items-center gap-2 text-xs font-medium text-amber-800 dark:text-amber-300">
-            <Sparkles className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
-            <span>
-              <strong className="font-bold uppercase tracking-wider">{staffRole || 'Developer'} Mode</strong> &bull; Custom persona active &bull; College ID verification bypassed
-            </span>
-          </div>
+        <div className="flex justify-center">
           <Link
             to="/developer"
-            className="text-xs font-semibold text-amber-700 dark:text-amber-400 hover:underline inline-flex items-center gap-1"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-950/40 border border-amber-500/40 text-amber-300 text-xs font-semibold shadow-[0_2px_10px_rgba(227,163,41,0.15)] hover:bg-amber-950/60 active:scale-95 transition-all"
           >
-            <span>Developer Console</span>
-            <ArrowRight className="h-3 w-3" />
+            <Sparkles className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+            <span>⚡ {staffRole || 'Developer'} Mode</span>
+            <span className="text-amber-400/60">•</span>
+            <span className="text-[11px] text-amber-200/90 underline font-normal">Console</span>
+            <ArrowRight className="h-3 w-3 text-amber-400" />
           </Link>
         </div>
       ) : !isVerified ? (
-        <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/80 dark:bg-amber-950/25 border border-amber-200 dark:border-amber-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors">
-          <div className="flex items-start gap-3">
-            <div className="h-9 w-9 rounded-xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
-              <AlertCircle className="h-5 w-5" />
-            </div>
-            <div className="space-y-0.5">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-xs uppercase tracking-wider text-amber-800 dark:text-amber-300">
-                  Verification Pending
-                </span>
-              </div>
-              <p className="text-xs text-amber-900/80 dark:text-amber-200 leading-relaxed max-w-xl">
-                Link your RIT ID to get verified and unlock custom avatar and anonymous username customization. You can still chat right now!
-              </p>
+        <div className="p-3.5 sm:p-4 rounded-2xl bg-amber-950/25 border border-amber-500/30 flex items-center justify-between gap-3 text-left">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <AlertCircle className="h-4 w-4 text-amber-400 shrink-0" />
+            <div className="min-w-0">
+              <span className="text-xs font-bold text-amber-300 block truncate">Verification Pending</span>
+              <span className="text-[11px] text-[#9DA89A] block truncate">Link your physical RIT ID to customize</span>
             </div>
           </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('/verify')}
-              rightIcon={<ArrowRight className="h-3.5 w-3.5" />}
-              className="border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 hover:bg-amber-100/60 dark:hover:bg-amber-900/40 text-xs font-semibold"
-            >
-              Verify RIT ID
-            </Button>
-          </div>
+          <button
+            type="button"
+            onClick={() => navigate('/verify')}
+            className="shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-500/20 border border-amber-500/40 text-amber-300 hover:bg-amber-500/30 active:scale-95 transition-all"
+          >
+            Verify ID
+          </button>
         </div>
       ) : (
-        <div className="px-4 py-2.5 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/25 border border-emerald-200 dark:border-emerald-900/40 flex items-center justify-between transition-colors">
-          <div className="flex items-center gap-2 text-xs font-medium text-emerald-800 dark:text-emerald-300">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-            <span>
-              <strong className="font-semibold">✓ RIT Student Verified</strong> &bull; Anonymous persona active
-            </span>
+        <div className="flex justify-center">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#101A12]/80 border border-[rgba(141,168,82,0.22)] text-[#A2BD63] text-xs font-medium shadow-sm">
+            <CheckCircle2 className="h-3.5 w-3.5 text-[#8DA852] shrink-0" />
+            <span>Verified RIT Student &bull; Cryptographically Isolated</span>
           </div>
-          <Link
-            to="/settings"
-            className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-1"
-          >
-            <span>Settings</span>
-            <ArrowRight className="h-3 w-3" />
-          </Link>
         </div>
       )}
 
       {/* =========================================================================
-          MAIN HERO CARD: Start Chat CTA & Anonymous Identity Status
+          GREETING & PERSONA CARD (Who am I?)
           ========================================================================= */}
-      <Card className="p-6 sm:p-10 bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 shadow-card">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
-          <div className="md:col-span-8 space-y-5">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-50 dark:bg-brand-950/40 text-brand-700 dark:text-brand-300 text-xs font-semibold border border-brand-100 dark:border-brand-900/40">
-              <Sparkles className="h-3.5 w-3.5 text-brand-600 dark:text-brand-400" />
-              <span>RIT Anonymous Network</span>
-            </div>
+      <Card className="p-6 sm:p-7 space-y-6 text-center">
+        {/* Welcome Text */}
+        <div className="space-y-1">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#F4F6F1] tracking-tight">
+            Welcome, {displayUsername} 👋
+          </h1>
+          <p className="text-xs sm:text-sm text-[#9DA89A] max-w-sm mx-auto">
+            Ready for a 7-minute anonymous conversation with a fellow RITian?
+          </p>
+        </div>
 
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight leading-tight">
-              Welcome, {displayUsername} 👋
-            </h1>
+        {/* Compact Liquid Persona Card */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-[#091009]/70 border border-[rgba(141,168,82,0.18)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.06),0_4px_16px_rgba(0,0,0,0.3)] flex flex-col items-center gap-3">
+          <Avatar
+            size="xl"
+            avatarConfig={effectivePersona.avatarConfig}
+            initials={initials}
+            presence="online"
+            shape="circle"
+          />
 
-            <p className="text-base text-gray-600 dark:text-slate-300 font-normal leading-relaxed max-w-xl">
-              Ready to meet a new RITian? Connect 1-on-1 with a fellow student from campus for a 7-minute anonymous conversation.
-            </p>
-
-            <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              <Button
-                variant="primary"
-                size="lg"
-                onClick={() => navigate('/matching')}
-                rightIcon={<ArrowRight className="h-5 w-5" />}
-                className="font-bold px-8 py-3.5 shadow-md text-base"
-              >
-                Start Chat
-              </Button>
-
-              <Link to="/settings" className="sm:inline-block">
-                <Button variant="secondary" size="lg" className="w-full sm:w-auto font-medium" leftIcon={<Settings className="h-4 w-4" />}>
-                  Settings
-                </Button>
-              </Link>
+          <div className="space-y-0.5">
+            <h2 className="font-bold text-base text-[#F4F6F1] tracking-tight">
+              {displayUsername}
+            </h2>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#121E12] border border-[rgba(141,168,82,0.2)] text-[11px] font-medium text-[#A2BD63]">
+              <Shield className="h-3 w-3 text-[#8DA852]" />
+              <span>{personaLabel}</span>
             </div>
           </div>
 
-          {/* Right Column: Persona Snapshot */}
-          <div className="md:col-span-4 flex flex-col items-center justify-center p-6 rounded-2xl bg-gray-50/80 dark:bg-slate-800/60 border border-gray-200/80 dark:border-slate-700 text-center space-y-3">
-            <Avatar
-              size="xl"
-              avatarConfig={effectivePersona.avatarConfig}
-              initials={initials}
-              presence="online"
-              shape="circle"
-            />
-            <div className="space-y-0.5">
-              <h4 className="font-bold text-sm text-gray-900 dark:text-white">
-                {displayUsername}
-              </h4>
-              <p className="text-[11px] text-gray-500 dark:text-slate-400">
-                {isVerified ? '✓ Verified Student' : 'Default Anonymous Persona'}
-              </p>
-            </div>
+          <Link
+            to="/settings"
+            className="text-xs text-[#8DA852] hover:text-[#A2BD63] hover:underline font-semibold inline-flex items-center gap-1 pt-0.5"
+          >
+            <span>{isVerified ? 'Customize Persona' : isStaff ? 'Developer Settings' : 'Verify to Unlock Persona'}</span>
+            <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
 
+        {/* =========================================================================
+            PRIMARY ACTION: START CHAT
+            ========================================================================= */}
+        <div className="pt-1 space-y-3">
+          <button
+            type="button"
+            onClick={() => navigate('/matching')}
+            className="liquid-cta-btn w-full flex items-center justify-center gap-3 py-4 px-6 rounded-full text-base sm:text-lg font-bold text-white shadow-[0_4px_24px_rgba(141,168,82,0.4)] transition-all active:scale-[0.98]"
+          >
+            <MessageSquare className="h-5 w-5 shrink-0" />
+            <span>Start Anonymous Chat</span>
+            <ArrowRight className="h-5 w-5 shrink-0" />
+          </button>
+
+          {/* Quick secondary action */}
+          <div className="flex items-center justify-center gap-4 text-xs text-[#9DA89A]">
             <Link
               to="/settings"
-              className="text-xs font-semibold text-brand-600 dark:text-brand-400 hover:underline pt-1 inline-flex items-center gap-1"
+              className="inline-flex items-center gap-1.5 hover:text-[#F4F6F1] transition-colors py-1 px-3 rounded-full hover:bg-[#121E12]"
             >
-              <span>{isVerified ? 'Customize Persona' : 'Verify to Unlock'}</span>
-              <ArrowRight className="h-3 w-3" />
+              <Settings className="h-3.5 w-3.5" />
+              <span>Settings &amp; Preferences</span>
             </Link>
           </div>
         </div>
       </Card>
 
       {/* =========================================================================
-          CAMPUS FEATURE CARD
+          CAMPUS ATMOSPHERE NOTE (Subtle, Minimal)
           ========================================================================= */}
-      <Card className="overflow-hidden bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 shadow-card">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-0 items-center">
-          <div className="p-6 sm:p-8 md:col-span-7 space-y-3">
-            <div className="flex items-center gap-2 text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">
-              <ShieldCheck className="h-4 w-4 text-emerald-500" />
-              <span>Campus Community</span>
-            </div>
-            <blockquote className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white leading-snug">
-              &ldquo;Different departments. Same campus. Infinite conversations.&rdquo;
-            </blockquote>
-            <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-400 leading-relaxed">
-              Every conversation runs with a server-authoritative 7-minute timer. Personal identity and contact details are permanently sealed.
-            </p>
-            <div className="pt-2 flex items-center gap-4 text-xs font-medium text-gray-500 dark:text-slate-400">
-              <Link to="/settings" className="text-brand-600 dark:text-brand-400 hover:underline font-semibold">
-                Manage Profile &amp; Settings &rarr;
-              </Link>
-            </div>
-          </div>
-
-          <div className="md:col-span-5 h-52 sm:h-60 md:h-full min-h-[200px] relative overflow-hidden bg-black">
-            <img
-              src="/heisenberg.jpg"
-              alt="Heisenberg"
-              className="w-full h-full object-cover object-[center_42%]"
-            />
-          </div>
-        </div>
-      </Card>
+      <div className="p-4 rounded-2xl bg-[#091009]/50 border border-[rgba(141,168,82,0.12)] text-center text-xs text-[#9DA89A] space-y-1">
+        <p className="font-medium text-[#F4F6F1]">
+          &ldquo;Different departments. Same campus. Infinite conversations.&rdquo;
+        </p>
+        <p className="text-[11px] text-[#6F796D]">
+          7-minute server-authoritative timer &bull; Cryptographic identity isolation
+        </p>
+      </div>
     </div>
   );
 };
 
 export default HomePage;
+

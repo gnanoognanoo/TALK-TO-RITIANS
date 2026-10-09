@@ -31,13 +31,11 @@ import {
   Upload,
 } from 'lucide-react';
 import {
-  Button,
   Card,
   CardHeader,
   CardTitle,
   CardDescription,
   CardContent,
-  Badge,
   Avatar,
   Modal,
   ErrorMessage,
@@ -253,257 +251,225 @@ export const SettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-10 space-y-8 animate-in fade-in">
+    <div className="max-w-2xl mx-auto w-full px-3.5 sm:px-6 py-6 sm:py-10 space-y-6 animate-in fade-in pb-16">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-gray-200 dark:border-slate-800">
+      <div className="flex items-center justify-between pb-3 border-b border-[rgba(141,168,82,0.15)]">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#F4F6F1] tracking-tight">
             Settings
           </h1>
-          <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-400 mt-1">
-            Manage your anonymous persona, college verification, and app preferences.
+          <p className="text-xs text-[#9DA89A] mt-0.5">
+            Anonymous persona, campus verification &amp; preferences
           </p>
         </div>
-        <Link to="/home">
-          <Button variant="secondary" size="sm">
-            &larr; Back to Home
-          </Button>
+        <Link
+          to="/home"
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold text-[#9DA89A] hover:text-[#F4F6F1] bg-[#101A12] border border-[rgba(141,168,82,0.2)] hover:bg-[#142314] active:scale-95 transition-all"
+        >
+          <span>← Home</span>
         </Link>
       </div>
 
-      {/* Privileged Staff Access Card (Visible to DEVELOPER only) */}
+      {/* =========================================================================
+          DEVELOPER SECTION (Authorized Staff Only)
+          ========================================================================= */}
       {isStaff && (
-        <Card className="border-amber-300 dark:border-amber-800 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20 shadow-md">
-          <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1">
+        <Card className="border-amber-500/40 bg-[#14120A] shadow-[0_4px_20px_rgba(227,163,41,0.12)]">
+          <CardHeader>
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Terminal className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                <h3 className="text-base font-bold text-gray-900 dark:text-white">
-                  Developer Console
-                </h3>
-                <Badge variant="warning" size="sm">
-                  {staffRole?.toUpperCase() || 'DEVELOPER'}
-                </Badge>
+                <Terminal className="h-5 w-5 text-amber-400" />
+                <CardTitle className="text-base sm:text-lg text-[#F4F6F1]">
+                  Developer Controls
+                </CardTitle>
               </div>
-              <p className="text-xs text-gray-600 dark:text-slate-300">
-                Access realtime campus overview, online users, active rooms, and audited moderation transcripts.
-              </p>
+              <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[11px] font-bold uppercase tracking-wider">
+                {staffRole?.toUpperCase() || 'DEVELOPER'}
+              </span>
             </div>
-            <Link to="/developer">
-              <Button variant="primary" size="sm" className="shrink-0 bg-amber-600 hover:bg-amber-700 text-white font-semibold">
-                Open Console &rarr;
-              </Button>
-            </Link>
-          </div>
+            <CardDescription className="text-xs text-[#9DA89A]">
+              Platform administration, realtime analytics &amp; custom staff persona.
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="space-y-4 pt-1">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-amber-950/20 border border-amber-500/30">
+              <div className="text-xs text-[#9DA89A]">
+                <strong className="text-amber-300 block mb-0.5">Developer Console</strong>
+                <span>Realtime campus metrics, active rooms, online users &amp; audit log.</span>
+              </div>
+              <Link to="/developer" className="shrink-0">
+                <button
+                  type="button"
+                  className="w-full sm:w-auto px-4 py-2 rounded-full text-xs font-bold bg-amber-500 hover:bg-amber-400 text-black active:scale-95 transition-all shadow-[0_2px_12px_rgba(227,163,41,0.3)]"
+                >
+                  Open Console →
+                </button>
+              </Link>
+            </div>
+
+            {/* Developer Persona Customization */}
+            <div className="space-y-3 pt-1">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="dev-username-input" className="text-xs font-semibold text-[#9DA89A] uppercase tracking-wider block">
+                    Custom Anonymous Handle
+                  </label>
+                  <span className="text-[11px] font-mono text-[#6F796D]">
+                    {devUsername.length}/20 chars
+                  </span>
+                </div>
+                <input
+                  id="dev-username-input"
+                  type="text"
+                  value={devUsername}
+                  onChange={(e) => setDevUsername(e.target.value)}
+                  maxLength={20}
+                  placeholder="e.g. Heisenberg"
+                  className="liquid-inset w-full px-3.5 py-2 text-sm rounded-xl border border-[rgba(141,168,82,0.2)] bg-[#060A06] text-[#F4F6F1] focus:outline-none focus:border-amber-400 font-medium"
+                />
+              </div>
+
+              {/* Gallery Avatar Upload */}
+              <div className="p-3.5 rounded-2xl bg-[#091009]/80 border border-[rgba(141,168,82,0.18)] flex flex-col sm:flex-row sm:items-center gap-4">
+                <Avatar
+                  size="lg"
+                  src={devAvatarUrl || undefined}
+                  avatarConfig={!devAvatarUrl ? effectivePersona.avatarConfig : undefined}
+                  initials={devUsername.slice(0, 2).toUpperCase()}
+                  shape="circle"
+                />
+                <div className="space-y-1.5 flex-1">
+                  <span className="text-xs font-bold text-[#F4F6F1] block">
+                    Gallery Avatar Upload
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#121E12] border border-[rgba(141,168,82,0.25)] text-xs font-semibold text-[#A2BD63] hover:bg-[#182B18] cursor-pointer transition-all active:scale-95">
+                      <Upload className="h-3.5 w-3.5" />
+                      <span>{isUploadingDevAvatar ? 'Uploading...' : 'Upload Image'}</span>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={handleUploadDevAvatar}
+                        disabled={isUploadingDevAvatar}
+                        className="hidden"
+                      />
+                    </label>
+                    {devAvatarUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setDevAvatarUrl(null)}
+                        className="text-xs text-rose-400 hover:underline"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Feedback */}
+              {devPersonaError && (
+                <p className="text-xs text-rose-400 font-medium">{devPersonaError}</p>
+              )}
+              {devPersonaSuccess && (
+                <p className="text-xs text-[#A2BD63] font-semibold">✓ {devPersonaSuccess}</p>
+              )}
+
+              <button
+                type="button"
+                disabled={isSavingDevPersona}
+                onClick={handleSaveDevPersona}
+                className="liquid-cta-btn px-5 py-2.5 rounded-full text-xs font-bold text-white shadow-sm active:scale-95 transition-all"
+              >
+                {isSavingDevPersona ? 'Saving...' : 'Save Developer Persona'}
+              </button>
+            </div>
+          </CardContent>
         </Card>
       )}
 
       {/* =========================================================================
-          SECTION A: PROFILE CUSTOMIZATION
+          SECTION 1: PERSONA
           ========================================================================= */}
-      <Card className="border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-card">
+      <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-brand-600 dark:text-brand-400" />
-              <CardTitle className="text-lg sm:text-xl text-gray-900 dark:text-white">
-                Profile Customization
+              <Sparkles className="h-5 w-5 text-[#8DA852]" />
+              <CardTitle className="text-base sm:text-lg text-[#F4F6F1]">
+                Persona
               </CardTitle>
             </div>
             {isStaff ? (
-              <Badge variant="warning" size="sm" withDot>
-                Staff Persona Unlocked
-              </Badge>
+              <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[11px] font-semibold">
+                Staff Persona
+              </span>
             ) : isVerified ? (
-              <Badge variant="success" size="sm" withDot>
-                Unlocked
-              </Badge>
+              <span className="px-2.5 py-0.5 rounded-full bg-[#121E12] border border-[rgba(141,168,82,0.3)] text-[#A2BD63] text-[11px] font-semibold">
+                ✓ Unlocked
+              </span>
             ) : (
-              <Badge variant="warning" size="sm">
+              <span className="px-2.5 py-0.5 rounded-full bg-[#14120A] border border-amber-500/30 text-amber-300 text-[11px] font-semibold">
                 Locked
-              </Badge>
+              </span>
             )}
           </div>
-          <CardDescription className="text-xs sm:text-sm text-gray-500 dark:text-slate-400">
-            {isStaff
-              ? 'Developer persona mode: custom typed handle and gallery avatar image.'
-              : isVerified
-              ? 'Customize your anonymous public handle and modular vector avatar.'
-              : 'Verify your RIT ID to unlock anonymous alias and avatar customization.'}
+          <CardDescription className="text-xs text-[#9DA89A]">
+            {isVerified
+              ? 'Customize your anonymous identity and avatar for 7-minute chats.'
+              : 'Link your physical RIT ID to unlock anonymous handle & avatar customization.'}
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-6">
-          {isStaff ? (
-            /* DEVELOPER PERSONA CUSTOMIZATION (Custom Typed Username + Gallery Avatar) */
-            <div className="space-y-6">
-              <div className="p-4 rounded-xl bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/40 flex items-start gap-3">
-                <Terminal className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                <div className="space-y-1">
-                  <h4 className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider">
-                    Developer Persona Mode
-                  </h4>
-                  <p className="text-xs text-gray-600 dark:text-slate-300 leading-relaxed">
-                    Physical RIT ID verification is bypassed for platform staff without faking student records. You can manually enter any custom username and upload an avatar image from your gallery.
-                  </p>
-                </div>
+        <CardContent className="space-y-5 pt-1">
+          {!isVerified && !isStaff ? (
+            /* Locked State */
+            <div className="p-5 rounded-2xl bg-[#091009]/80 border border-[rgba(141,168,82,0.18)] text-center space-y-3">
+              <div className="h-10 w-10 rounded-full bg-[#121E12] text-[#8DA852] flex items-center justify-center mx-auto border border-[rgba(141,168,82,0.2)]">
+                <Lock className="h-5 w-5" />
               </div>
-
-              {/* Developer Username Input */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label htmlFor="dev-username-input" className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider block">
-                    Custom Anonymous Username
-                  </label>
-                  <span className="text-[11px] font-mono text-gray-400">
-                    {devUsername.length}/20 chars
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <input
-                    id="dev-username-input"
-                    type="text"
-                    value={devUsername}
-                    onChange={(e) => setDevUsername(e.target.value)}
-                    maxLength={20}
-                    placeholder="e.g. Heisenberg"
-                    className="flex-1 px-3.5 py-2 text-sm rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium"
-                  />
-                </div>
-                <p className="text-[11px] text-gray-500 dark:text-slate-400">
-                  Must be 3–20 characters. Trimmed automatically. HTML and control characters are rejected.
-                </p>
-              </div>
-
-              {/* Gallery Avatar Upload */}
-              <div className="space-y-3 pt-2">
-                <span className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider block">
-                  Gallery Avatar
-                </span>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-xl bg-gray-50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700">
-                  <Avatar
-                    size="xl"
-                    src={devAvatarUrl || undefined}
-                    avatarConfig={!devAvatarUrl ? effectivePersona.avatarConfig : undefined}
-                    initials={devUsername.slice(0, 2).toUpperCase()}
-                    shape="circle"
-                  />
-                  <div className="space-y-2 flex-1">
-                    <h4 className="text-sm font-bold text-gray-900 dark:text-white">
-                      Device Gallery Upload
-                    </h4>
-                    <p className="text-xs text-gray-500 dark:text-slate-400">
-                      Upload any JPEG, PNG, or WebP image. Automatically cropped to square and optimized to 512x512 WebP with metadata stripped. Max 5 MB.
-                    </p>
-                    <div className="flex items-center gap-3">
-                      <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 text-xs font-semibold text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer transition-colors shadow-sm">
-                        <Upload className="h-3.5 w-3.5" />
-                        <span>{isUploadingDevAvatar ? 'Processing...' : 'Upload from Gallery'}</span>
-                        <input
-                          type="file"
-                          accept="image/jpeg,image/png,image/webp"
-                          onChange={handleUploadDevAvatar}
-                          disabled={isUploadingDevAvatar}
-                          className="hidden"
-                        />
-                      </label>
-                      {devAvatarUrl && (
-                        <button
-                          type="button"
-                          onClick={() => setDevAvatarUrl(null)}
-                          className="text-xs text-rose-600 dark:text-rose-400 hover:underline"
-                        >
-                          Remove image
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Feedback messages */}
-              {devPersonaError && (
-                <p className="text-xs text-rose-600 dark:text-rose-400 font-medium">
-                  {devPersonaError}
-                </p>
-              )}
-              {devPersonaSuccess && (
-                <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
-                  ✓ {devPersonaSuccess}
-                </p>
-              )}
-
-              {/* Save Persona Button */}
-              <div className="pt-2">
-                <Button
-                  type="button"
-                  variant="primary"
-                  size="sm"
-                  isLoading={isSavingDevPersona}
-                  loadingText="Saving Persona..."
-                  onClick={handleSaveDevPersona}
-                  className="font-semibold"
-                >
-                  Save Developer Persona
-                </Button>
-              </div>
-            </div>
-          ) : !isVerified ? (
-            /* UNVERIFIED LOCKED STATE */
-            <div className="p-6 rounded-xl bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/40 text-center space-y-4">
-              <div className="h-12 w-12 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto">
-                <Lock className="h-6 w-6" />
-              </div>
-              <div className="max-w-md mx-auto space-y-1">
-                <h4 className="text-sm font-bold text-gray-900 dark:text-white">
-                  Verify your RIT ID to unlock profile customization
+              <div className="space-y-1">
+                <h4 className="text-sm font-bold text-[#F4F6F1]">
+                  Profile Customization Locked
                 </h4>
-                <p className="text-xs text-gray-600 dark:text-slate-300 leading-relaxed">
-                  Unverified students chat with a safe anonymous persona (
-                  <span className="font-mono font-semibold">{displayUsername}</span>). Link your
-                  physical college ID card to choose a custom anonymous alias, design your avatar, and set your private gender.
+                <p className="text-xs text-[#9DA89A] max-w-sm mx-auto leading-relaxed">
+                  You are currently chatting as <span className="font-mono text-[#A2BD63]">{displayUsername}</span>. Scan your physical RIT student ID to unlock custom alias rerolling and modular avatars.
                 </p>
               </div>
-              <div className="pt-1">
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => navigate('/verify')}
-                  rightIcon={<ArrowRight className="h-4 w-4" />}
-                >
-                  Verify RIT ID Now
-                </Button>
-              </div>
+              <button
+                type="button"
+                onClick={() => navigate('/verify')}
+                className="liquid-cta-btn inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold text-white shadow-sm active:scale-95 transition-all"
+              >
+                <span>Verify RIT ID Now</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </button>
             </div>
           ) : (
-            /* VERIFIED UNLOCKED STATE */
-            <div className="space-y-6 divide-y divide-gray-100 dark:divide-slate-800">
-              {/* Anonymous Username (Change 4: Curated short random alias only, no free-text input) */}
-              <div className="pt-2 space-y-3">
+            /* Verified Persona Controls */
+            <div className="space-y-5">
+              {/* Alias Reroll UI */}
+              <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <span className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider block">
-                      Anonymous Username
-                    </span>
-                    <p className="text-[11px] text-gray-500 dark:text-slate-400">
-                      Short random alias for 7-minute chats. Your real identity is never exposed.
-                    </p>
-                  </div>
+                  <span className="text-xs font-semibold text-[#9DA89A] uppercase tracking-wider block">
+                    Anonymous Handle
+                  </span>
                   {aliasSuccessMessage && (
-                    <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                    <span className="text-xs font-semibold text-[#A2BD63]">
                       ✓ {aliasSuccessMessage}
                     </span>
                   )}
                 </div>
 
-                <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="p-4 rounded-2xl bg-[#091009]/90 border border-[rgba(141,168,82,0.2)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)]">
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-brand-50 dark:bg-brand-950/50 border border-brand-200 dark:border-brand-800 flex items-center justify-center text-brand-600 dark:text-brand-400 font-bold text-sm">
+                    <div className="h-10 w-10 rounded-xl bg-[#121E12] border border-[rgba(141,168,82,0.25)] flex items-center justify-center text-[#A2BD63] font-bold text-sm shrink-0">
                       {aliasCandidate.slice(0, 2).toUpperCase()}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span id="alias-candidate-display" className="text-xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+                        <span id="alias-candidate-display" className="text-lg sm:text-xl font-extrabold text-[#F4F6F1] tracking-tight">
                           {aliasCandidate}
                         </span>
                         <button
@@ -511,149 +477,114 @@ export const SettingsPage: React.FC = () => {
                           id="alias-refresh-button"
                           onClick={handleRefreshAlias}
                           title="Generate another alias"
-                          className="p-1.5 rounded-lg text-gray-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                          className="p-1.5 rounded-full text-[#9DA89A] hover:text-[#F4F6F1] hover:bg-[#121E12] active:scale-95 transition-all"
                         >
                           <RefreshCw className="h-4 w-4" />
                         </button>
                       </div>
-                      <span className="text-[11px] text-gray-500 dark:text-slate-400">
-                        {aliasCandidate === displayUsername ? 'Currently active in chats' : 'Candidate preview — click Use to save'}
+                      <span className="text-[11px] text-[#6F796D]">
+                        {aliasCandidate === displayUsername ? 'Active handle' : 'Candidate preview — tap Use to apply'}
                       </span>
                     </div>
                   </div>
 
-                  <Button
+                  <button
                     type="button"
                     id="alias-save-button"
-                    variant="primary"
-                    size="sm"
                     disabled={isSavingAlias || aliasCandidate === displayUsername}
-                    isLoading={isSavingAlias}
-                    loadingText="Saving..."
                     onClick={handleSaveAlias}
-                    className="shrink-0 font-semibold"
+                    className="liquid-cta-btn px-4 py-2 rounded-full text-xs font-bold text-white disabled:opacity-40 active:scale-95 transition-all shadow-sm shrink-0"
                   >
                     {aliasCandidate === displayUsername ? 'Active' : `Use ${aliasCandidate}`}
-                  </Button>
+                  </button>
                 </div>
                 {aliasError && (
-                  <p className="text-xs text-red-600 dark:text-red-400">{aliasError}</p>
+                  <p className="text-xs text-rose-400">{aliasError}</p>
                 )}
               </div>
 
-              {/* Avatar Customization */}
-              <div className="pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
+              {/* Avatar Selection */}
+              <div className="p-3.5 rounded-2xl bg-[#091009]/70 border border-[rgba(141,168,82,0.18)] flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
                   <Avatar
                     size="lg"
                     avatarConfig={effectivePersona.avatarConfig}
                     initials={effectivePersona.initials}
                     shape="circle"
                   />
-                  <div className="space-y-1">
-                    <span className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">
-                      Vector Avatar
-                    </span>
-                    <h4 className="text-sm font-bold text-gray-900 dark:text-white">
-                      Modular Persona Artwork
-                    </h4>
-                    <p className="text-[11px] text-gray-500 dark:text-slate-400">
-                      Displayed to other students during 7-minute chats.
-                    </p>
+                  <div>
+                    <span className="text-xs font-bold text-[#F4F6F1] block">Modular Avatar</span>
+                    <span className="text-[11px] text-[#9DA89A]">Face, hairstyles, expressions &amp; clothing</span>
                   </div>
                 </div>
-                <Button
-                  variant="secondary"
-                  size="sm"
+                <button
+                  type="button"
                   onClick={() => navigate('/avatar')}
-                  leftIcon={<Edit2 className="h-3.5 w-3.5" />}
+                  className="px-3.5 py-2 rounded-full text-xs font-semibold text-[#A2BD63] bg-[#121E12] border border-[rgba(141,168,82,0.25)] hover:bg-[#182B18] active:scale-95 transition-all shrink-0 inline-flex items-center gap-1.5"
                 >
-                  Customize Avatar
-                </Button>
+                  <Edit2 className="h-3.5 w-3.5" />
+                  <span>Customize</span>
+                </button>
               </div>
 
               {/* Private Gender Selection & Freeze */}
-              <div className="pt-4 space-y-3">
+              <div className="space-y-2 pt-1">
                 <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <span className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">
-                      Private Gender
-                    </span>
-                    <p className="text-[11px] text-gray-500 dark:text-slate-400">
-                      Never shown to strangers. Manually chosen once and permanently frozen.
-                    </p>
-                  </div>
+                  <span className="text-xs font-semibold text-[#9DA89A] uppercase tracking-wider block">
+                    Private Gender
+                  </span>
                   {genderSuccessMessage && (
-                    <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                    <span className="text-xs font-semibold text-[#A2BD63]">
                       ✓ {genderSuccessMessage}
                     </span>
                   )}
                 </div>
 
                 {isGenderLocked ? (
-                  <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700 flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-xs">
-                      <span className="text-gray-500 dark:text-slate-400">Gender:</span>
-                      <span className="font-bold text-gray-900 dark:text-white">
-                        {profile?.gender || selectedGender}
-                      </span>
-                    </div>
-                    <Badge variant="success" size="sm" withDot>
-                      Confirmed &amp; Locked
-                    </Badge>
+                  <div className="p-3 rounded-xl bg-[#091009]/80 border border-[rgba(141,168,82,0.18)] flex items-center justify-between text-xs">
+                    <span className="text-[#9DA89A]">
+                      Gender: <strong className="text-[#F4F6F1] ml-1">{profile?.gender || selectedGender}</strong>
+                    </span>
+                    <span className="text-[11px] font-semibold text-[#A2BD63] px-2 py-0.5 rounded-full bg-[#121E12]">
+                      ✓ Locked
+                    </span>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {GENDER_OPTIONS.map((gOption) => (
                       <button
                         key={gOption}
                         type="button"
                         onClick={() => setGenderToConfirm(gOption)}
-                        className="p-2.5 rounded-xl border border-gray-200 dark:border-[rgba(120,160,100,0.18)] bg-white dark:bg-[#0D150F] text-xs font-semibold hover:border-brand-500 hover:bg-gray-50 transition-all text-gray-700 dark:text-slate-200"
+                        className="py-2 px-3 rounded-xl border border-[rgba(141,168,82,0.2)] bg-[#091009] text-xs font-medium text-[#F4F6F1] hover:border-[#8DA852] hover:bg-[#121E12] active:scale-95 transition-all"
                       >
                         {gOption}
                       </button>
                     ))}
                   </div>
                 )}
-                {genderError && (
-                  <p className="text-xs text-rose-600 dark:text-rose-400">{genderError}</p>
-                )}
+                {genderError && <p className="text-xs text-rose-400">{genderError}</p>}
               </div>
 
-              {/* Verified Student Information (Permanently Immutable) */}
-              <div className="pt-4 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">
-                    Verified Student Information
-                  </span>
-                  <Badge variant="success" size="sm" withDot>
-                    Verified &bull; Immutable
-                  </Badge>
-                </div>
-                <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700/80 space-y-2 text-xs">
-                  <div className="flex items-center justify-between py-1 border-b border-gray-200/60 dark:border-slate-700/60">
-                    <span className="text-gray-500 dark:text-slate-400">Name</span>
-                    <span className="font-bold text-gray-900 dark:text-white">
-                      {profile?.name || profile?.full_name || 'Verified Student'}
-                    </span>
+              {/* Verified Student Credentials (Immutable) */}
+              <div className="space-y-1.5 pt-1">
+                <span className="text-xs font-semibold text-[#9DA89A] uppercase tracking-wider block">
+                  Student Verification Details
+                </span>
+                <div className="p-3.5 rounded-xl bg-[#091009]/80 border border-[rgba(141,168,82,0.15)] text-xs space-y-1.5">
+                  <div className="flex justify-between py-0.5 border-b border-[rgba(141,168,82,0.1)]">
+                    <span className="text-[#9DA89A]">Name</span>
+                    <span className="font-bold text-[#F4F6F1]">{profile?.name || profile?.full_name || 'Verified Student'}</span>
                   </div>
-                  <div className="flex items-center justify-between py-1 border-b border-gray-200/60 dark:border-slate-700/60">
-                    <span className="text-gray-500 dark:text-slate-400">Department</span>
-                    <span className="font-semibold text-brand-600 dark:text-brand-400">
-                      {profile?.department || 'RIT'}
-                    </span>
+                  <div className="flex justify-between py-0.5 border-b border-[rgba(141,168,82,0.1)]">
+                    <span className="text-[#9DA89A]">Department</span>
+                    <span className="font-semibold text-[#A2BD63]">{profile?.department || 'RIT'}</span>
                   </div>
-                  <div className="flex items-center justify-between py-1">
-                    <span className="text-gray-500 dark:text-slate-400">Batch</span>
-                    <span className="font-mono font-semibold text-gray-800 dark:text-slate-200">
-                      {profile?.batch || '—'}
-                    </span>
+                  <div className="flex justify-between py-0.5">
+                    <span className="text-[#9DA89A]">Batch</span>
+                    <span className="font-mono text-[#F4F6F1]">{profile?.batch || '—'}</span>
                   </div>
                 </div>
-                <p className="text-[11px] text-gray-400 dark:text-slate-500">
-                  Institutional credentials from your verified ID. Permanently immutable and never editable.
-                </p>
               </div>
             </div>
           )}
@@ -661,168 +592,132 @@ export const SettingsPage: React.FC = () => {
       </Card>
 
       {/* =========================================================================
-          SECTION B: COLLEGE VERIFICATION
+          SECTION 2: VERIFICATION
           ========================================================================= */}
-      <Card className="border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-card">
+      <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-              <CardTitle className="text-lg sm:text-xl text-gray-900 dark:text-white">
-                College Verification
+              <ShieldCheck className="h-5 w-5 text-[#8DA852]" />
+              <CardTitle className="text-base sm:text-lg text-[#F4F6F1]">
+                Verification
               </CardTitle>
             </div>
             {isVerified ? (
-              <Badge variant="success" size="sm" withDot>
-                Verified
-              </Badge>
+              <span className="px-2.5 py-0.5 rounded-full bg-[#121E12] text-[#A2BD63] text-[11px] font-semibold">
+                ✓ Verified
+              </span>
             ) : (
-              <Badge variant="neutral" size="sm">
-                Not Verified
-              </Badge>
+              <span className="px-2.5 py-0.5 rounded-full bg-[#14120A] text-amber-300 text-[11px] font-semibold">
+                Unverified
+              </span>
             )}
           </div>
-          <CardDescription className="text-xs sm:text-sm text-gray-500 dark:text-slate-400">
+          <CardDescription className="text-xs text-[#9DA89A]">
             {isVerified
-              ? 'Your RIT identity is verified and locked to your account.'
-              : 'Scan your physical RIT student ID to verify your identity.'}
+              ? 'Your RIT identity is cryptographically linked.'
+              : 'Scan your physical RIT student ID to link your campus status.'}
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-1">
           {!isVerified ? (
-            /* UNVERIFIED STATE */
-            <div className="p-4 sm:p-5 rounded-xl bg-gray-50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700 space-y-4">
+            <div className="p-4 rounded-2xl bg-[#091009]/80 border border-[rgba(141,168,82,0.18)] space-y-3">
               <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400">
-                    Status:
-                  </h4>
-                  <Badge variant="neutral" size="sm">
-                    Not Verified
-                  </Badge>
-                </div>
-                <h3 className="text-sm font-bold text-gray-900 dark:text-white pt-1">
+                <span className="text-xs font-bold text-[#F4F6F1] block">
                   Verify your RIT identity
-                </h3>
-                <p className="text-xs text-gray-500 dark:text-slate-400">
-                  Verification unlocks your anonymous profile customization. You can still chat without verification.
+                </span>
+                <p className="text-xs text-[#9DA89A] leading-relaxed">
+                  Scan the QR code on your card to link your student status and unlock your custom persona.
                 </p>
               </div>
-
-              <div className="pt-1">
-                <Button
-                  type="button"
-                  variant="primary"
-                  size="sm"
-                  onClick={() => navigate('/verify')}
-                  leftIcon={<CreditCard className="h-4 w-4" />}
-                  rightIcon={<ArrowRight className="h-4 w-4" />}
-                  className="w-full sm:w-auto"
-                >
-                  Scan Physical RIT ID
-                </Button>
-              </div>
+              <button
+                type="button"
+                onClick={() => navigate('/verify')}
+                className="liquid-cta-btn inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold text-white shadow-sm active:scale-95 transition-all"
+              >
+                <CreditCard className="h-3.5 w-3.5" />
+                <span>Scan Physical RIT ID</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </button>
             </div>
           ) : (
-            /* VERIFIED STATE */
-            <div className="space-y-4">
-              <div className="p-4 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                    <CheckCircle2 className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white">
-                      ✓ Verified
-                    </h4>
-                    <p className="text-xs text-gray-600 dark:text-slate-300">
-                      Method:{' '}
-                      <span className="font-semibold text-emerald-700 dark:text-emerald-400">
-                        Physical RIT ID
-                      </span>
-                      {profile?.department && ` • ${profile.department}`}
-                      {profile?.batch && ` • Batch: ${profile.batch}`}
-                    </p>
-                  </div>
+            <div className="p-4 rounded-2xl bg-[#091009]/80 border border-[rgba(141,168,82,0.18)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-full bg-[#121E12] text-[#8DA852] flex items-center justify-center shrink-0 border border-[rgba(141,168,82,0.25)]">
+                  <CheckCircle2 className="h-5 w-5" />
                 </div>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowUnlinkModal(true)}
-                  leftIcon={<Unlink className="h-3.5 w-3.5 text-rose-500" />}
-                  className="hover:border-rose-300 hover:text-rose-600 text-xs shrink-0"
-                >
-                  Unlink Verification
-                </Button>
+                <div className="text-xs">
+                  <span className="font-bold text-[#F4F6F1] block">Physical RIT ID Verified</span>
+                  <span className="text-[#9DA89A]">{profile?.department ? `${profile.department} • Batch ${profile.batch || ''}` : 'Active enrollment linked'}</span>
+                </div>
               </div>
-              <p className="text-[11px] text-gray-400 dark:text-slate-500">
-                Your college identity fingerprint ensures 1-to-1 uniqueness across accounts.
-              </p>
+              <button
+                type="button"
+                onClick={() => setShowUnlinkModal(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-rose-300 hover:text-rose-200 bg-rose-950/20 border border-rose-500/30 hover:bg-rose-950/40 active:scale-95 transition-all shrink-0"
+              >
+                <Unlink className="h-3.5 w-3.5" />
+                <span>Unlink ID</span>
+              </button>
             </div>
           )}
         </CardContent>
       </Card>
 
       {/* =========================================================================
-          SECTION C: APPEARANCE
+          SECTION 3: APPEARANCE
           ========================================================================= */}
-      <Card className="border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-card">
+      <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
             {theme === 'dark' ? (
-              <Moon className="h-5 w-5 text-indigo-400 dark:text-[#A8C96A]" />
+              <Moon className="h-5 w-5 text-[#A2BD63]" />
             ) : (
-              <Sun className="h-5 w-5 text-amber-500" />
+              <Sun className="h-5 w-5 text-amber-400" />
             )}
-            <CardTitle className="text-lg sm:text-xl text-gray-900 dark:text-white">
+            <CardTitle className="text-base sm:text-lg text-[#F4F6F1]">
               Appearance
             </CardTitle>
           </div>
-          <CardDescription className="text-xs sm:text-sm text-gray-500 dark:text-slate-400">
-            Choose your preferred theme style for the interface.
+          <CardDescription className="text-xs text-[#9DA89A]">
+            Select your visual aesthetic. Dark mode is optimized with Heisenberg chemistry depth.
           </CardDescription>
         </CardHeader>
 
-        <CardContent>
-          <div className="grid grid-cols-2 gap-4 max-w-md">
-            {/* Light Mode Option */}
+        <CardContent className="pt-1">
+          <div className="grid grid-cols-2 gap-3 max-w-sm">
+            {/* Light Mode */}
             <button
               type="button"
               onClick={() => setTheme('light')}
-              className={`p-4 rounded-xl border text-left transition-all flex items-center gap-3 ${
+              className={`p-3.5 rounded-2xl border text-left flex items-center gap-2.5 transition-all active:scale-95 ${
                 theme === 'light'
-                  ? 'border-brand-600 bg-brand-50/70 text-brand-900 shadow-sm ring-2 ring-brand-500/20'
-                  : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:border-gray-300'
+                  ? 'border-[#8DA852] bg-[#121E12] shadow-sm'
+                  : 'border-[rgba(141,168,82,0.18)] bg-[#091009] hover:border-[rgba(141,168,82,0.3)]'
               }`}
             >
-              <div className="h-8 w-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
-                <Sun className="h-4 w-4" />
-              </div>
+              <Sun className="h-4 w-4 text-amber-400 shrink-0" />
               <div>
-                <span className="text-xs font-bold block">Light</span>
-                <span className="text-[11px] text-gray-500 dark:text-slate-400">Crisp & Clean</span>
+                <span className="text-xs font-bold text-[#F4F6F1] block">Light</span>
+                <span className="text-[10px] text-[#9DA89A]">Clean</span>
               </div>
             </button>
 
-            {/* Dark Mode Option */}
+            {/* Dark Mode */}
             <button
               type="button"
               onClick={() => setTheme('dark')}
-              className={`p-4 rounded-xl border text-left transition-all flex items-center gap-3 ${
+              className={`p-3.5 rounded-2xl border text-left flex items-center gap-2.5 transition-all active:scale-95 ${
                 theme === 'dark'
-                  ? 'border-brand-500 dark:border-[#8FAF56] bg-brand-950/40 dark:bg-[#101A12] text-white shadow-sm ring-2 ring-brand-500/30 dark:ring-[#8FAF56]/30'
-                  : 'border-gray-200 dark:border-[rgba(120,160,100,0.18)] bg-white dark:bg-[#0D150F] text-gray-700 dark:text-[#AEB9AE] hover:border-gray-300'
+                  ? 'border-[#8DA852] bg-[#121E12] shadow-[0_0_12px_rgba(141,168,82,0.2)]'
+                  : 'border-[rgba(141,168,82,0.18)] bg-[#091009] hover:border-[rgba(141,168,82,0.3)]'
               }`}
             >
-              <div className="h-8 w-8 rounded-lg bg-indigo-950 dark:bg-[#101A12] text-indigo-400 dark:text-[#A8C96A] border border-transparent dark:border-[rgba(140,170,110,0.2)] flex items-center justify-center shrink-0">
-                <Moon className="h-4 w-4" />
-              </div>
+              <Moon className="h-4 w-4 text-[#A2BD63] shrink-0" />
               <div>
-                <span className="text-xs font-bold block text-gray-900 dark:text-[#F2F5F2]">Dark</span>
-                <span className="text-[11px] text-gray-500 dark:text-[#AEB9AE]">Deep & Atmospheric</span>
+                <span className="text-xs font-bold text-[#F4F6F1] block">Dark</span>
+                <span className="text-[10px] text-[#9DA89A]">Chemical</span>
               </div>
             </button>
           </div>
@@ -830,87 +725,84 @@ export const SettingsPage: React.FC = () => {
       </Card>
 
       {/* =========================================================================
-          SECTION D: CHAT PREFERENCES (Random Chat Requests Toggle)
+          SECTION 4: CHAT PREFERENCES
           ========================================================================= */}
-      <Card className="border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-card">
+      <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5 text-brand-600 dark:text-brand-400" />
-            <CardTitle className="text-lg sm:text-xl text-gray-900 dark:text-white">
+            <MessageSquare className="h-5 w-5 text-[#8DA852]" />
+            <CardTitle className="text-base sm:text-lg text-[#F4F6F1]">
               Chat Preferences
             </CardTitle>
           </div>
-          <CardDescription className="text-xs sm:text-sm text-gray-500 dark:text-slate-400">
-            Control incoming random chat requests from fellow online students.
+          <CardDescription className="text-xs text-[#9DA89A]">
+            Control incoming random chat requests while idle online.
           </CardDescription>
         </CardHeader>
 
-        <CardContent>
-          <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <h4 className="text-sm font-bold text-gray-900 dark:text-white">
-                Receive random chat requests
-              </h4>
-              <p className="text-xs text-gray-500 dark:text-slate-400 max-w-md leading-relaxed">
-                Allow other online RITians to invite you to a 7-minute chat even when you are not actively searching.
+        <CardContent className="pt-1">
+          <div className="p-3.5 rounded-2xl bg-[#091009]/80 border border-[rgba(141,168,82,0.18)] flex items-center justify-between gap-3">
+            <div className="space-y-0.5">
+              <span className="text-xs font-bold text-[#F4F6F1] block">
+                Random Chat Requests
+              </span>
+              <p className="text-[11px] text-[#9DA89A]">
+                Allow online students to invite you to chats while idle
               </p>
             </div>
-
-            <Button
+            <button
               type="button"
-              variant={chatRequestsEnabled ? 'primary' : 'secondary'}
-              size="sm"
               onClick={handleToggleChatRequests}
-              className="shrink-0 font-semibold"
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95 ${
+                chatRequestsEnabled
+                  ? 'bg-[#182B18] border border-[#8DA852] text-[#A2BD63]'
+                  : 'bg-[#101A12] border border-[rgba(141,168,82,0.2)] text-[#6F796D]'
+              }`}
             >
-              {chatRequestsEnabled ? 'Enabled (ON)' : 'Disabled (OFF)'}
-            </Button>
+              {chatRequestsEnabled ? 'ON' : 'OFF'}
+            </button>
           </div>
         </CardContent>
       </Card>
 
       {/* =========================================================================
-          SECTION E: ACCOUNT / LOGOUT
+          SECTION 5: ACCOUNT & LOGOUT
           ========================================================================= */}
-      <Card className="border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-card">
+      <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <User className="h-5 w-5 text-gray-500 dark:text-slate-400" />
-            <CardTitle className="text-lg sm:text-xl text-gray-900 dark:text-white">
+            <User className="h-5 w-5 text-[#8DA852]" />
+            <CardTitle className="text-base sm:text-lg text-[#F4F6F1]">
               Account
             </CardTitle>
           </div>
-          <CardDescription className="text-xs sm:text-sm text-gray-500 dark:text-slate-400">
-            Manage your authenticated session and sign out.
+          <CardDescription className="text-xs text-[#9DA89A]">
+            Signed-in email identity &amp; session termination.
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-4">
-          <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <span className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider block">
-                Session Identity
-              </span>
-              <span className="text-xs sm:text-sm font-semibold text-gray-800 dark:text-slate-200">
+        <CardContent className="pt-1">
+          <div className="p-3.5 rounded-2xl bg-[#091009]/80 border border-[rgba(141,168,82,0.18)] flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <span className="text-[11px] text-[#6F796D] uppercase font-semibold block">Signed In As</span>
+              <span className="text-xs font-semibold text-[#F4F6F1] truncate block">
                 {user?.email || `User: ${user?.id.slice(0, 8)}...`}
               </span>
             </div>
-
-            <Button
+            <button
               type="button"
-              variant="danger"
-              size="sm"
               onClick={handleLogout}
-              leftIcon={<LogOut className="h-4 w-4" />}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold text-rose-300 hover:text-rose-200 bg-rose-950/20 border border-rose-500/30 hover:bg-rose-950/40 active:scale-95 transition-all shrink-0"
             >
-              Logout
-            </Button>
+              <LogOut className="h-3.5 w-3.5" />
+              <span>Logout</span>
+            </button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Subtle Anonymous Creator Signature */}
-      <div className="pt-3 pb-8 flex flex-col items-center justify-center text-center gap-1.5">
+      {/* Heisenberg Creator Signature */}
+      <div className="pt-4 flex flex-col items-center justify-center text-center">
         <HeisenbergSignature variant="badge" />
       </div>
 
@@ -921,10 +813,10 @@ export const SettingsPage: React.FC = () => {
         title="Unlink College Identity"
       >
         <div className="space-y-4">
-          <div className="flex items-start gap-3 p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 text-amber-800 dark:text-amber-300 text-xs leading-relaxed">
-            <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-amber-950/30 border border-amber-500/30 text-amber-200 text-xs leading-relaxed">
+            <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
             <div>
-              <p className="font-semibold mb-1">Are you sure you want to unlink your ID?</p>
+              <p className="font-semibold mb-1 text-white">Are you sure you want to unlink your ID?</p>
               <p>
                 You can still chat anonymously using the safe fallback persona (Unknown User).
                 Custom username and avatar customization will be locked until you link your ID again.
@@ -941,30 +833,27 @@ export const SettingsPage: React.FC = () => {
           )}
 
           <div className="flex gap-3 justify-end pt-2">
-            <Button
+            <button
               type="button"
-              variant="secondary"
-              size="sm"
               disabled={isUnlinking}
               onClick={() => setShowUnlinkModal(false)}
+              className="px-4 py-2 rounded-full text-xs font-semibold text-[#9DA89A] hover:text-[#F4F6F1] bg-[#101A12] border border-[rgba(141,168,82,0.2)] hover:bg-[#142314] transition-all"
             >
               Cancel
-            </Button>
-            <Button
+            </button>
+            <button
               type="button"
-              variant="danger"
-              size="sm"
-              isLoading={isUnlinking}
-              loadingText="Unlinking..."
+              disabled={isUnlinking}
               onClick={handleUnlink}
+              className="px-4 py-2 rounded-full text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 active:scale-95 transition-all"
             >
-              Confirm Unlink
-            </Button>
+              {isUnlinking ? 'Unlinking...' : 'Confirm Unlink'}
+            </button>
           </div>
         </div>
       </Modal>
 
-      {/* Confirm Your Gender Modal (Choose Once & Freeze) */}
+      {/* Confirm Your Gender Modal */}
       <Modal
         isOpen={Boolean(genderToConfirm)}
         onClose={() => setGenderToConfirm(null)}
@@ -972,14 +861,14 @@ export const SettingsPage: React.FC = () => {
         maxWidth="sm"
       >
         <div className="space-y-4">
-          <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700 space-y-1">
-            <span className="text-xs text-gray-500 dark:text-slate-400 block">Selected:</span>
-            <span className="text-base font-bold text-gray-900 dark:text-white block">
+          <div className="p-3.5 rounded-2xl bg-[#091009] border border-[rgba(141,168,82,0.2)] space-y-1">
+            <span className="text-xs text-[#9DA89A] block">Selected:</span>
+            <span className="text-base font-bold text-[#F4F6F1] block">
               {genderToConfirm}
             </span>
           </div>
 
-          <p className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed">
+          <p className="text-xs text-[#9DA89A] leading-relaxed">
             You won't be able to change this after confirming.
           </p>
 
@@ -992,25 +881,22 @@ export const SettingsPage: React.FC = () => {
           )}
 
           <div className="flex gap-3 justify-end pt-2">
-            <Button
+            <button
               type="button"
-              variant="secondary"
-              size="sm"
               disabled={isSavingGender}
               onClick={() => setGenderToConfirm(null)}
+              className="px-4 py-2 rounded-full text-xs font-semibold text-[#9DA89A] hover:text-[#F4F6F1] bg-[#101A12] border border-[rgba(141,168,82,0.2)] hover:bg-[#142314] transition-all"
             >
               Back
-            </Button>
-            <Button
+            </button>
+            <button
               type="button"
-              variant="primary"
-              size="sm"
-              isLoading={isSavingGender}
-              loadingText="Confirming..."
+              disabled={isSavingGender}
               onClick={handleConfirmGender}
+              className="liquid-cta-btn px-4 py-2 rounded-full text-xs font-bold text-white active:scale-95 transition-all"
             >
-              Confirm
-            </Button>
+              {isSavingGender ? 'Confirming...' : 'Confirm'}
+            </button>
           </div>
         </div>
       </Modal>

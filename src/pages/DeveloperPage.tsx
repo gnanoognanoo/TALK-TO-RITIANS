@@ -425,34 +425,34 @@ export const DeveloperPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Console Tab Navigation */}
-      <div className="flex items-center gap-1.5 border-b border-gray-200 dark:border-slate-800 pb-px overflow-x-auto">
+      {/* Console Tab Navigation (Mobile Horizontally Scrollable Pill Tabs) */}
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
         <button
           type="button"
           onClick={() => setTab('overview')}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-all whitespace-nowrap ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all active:scale-95 ${
             activeTab === 'overview'
-              ? 'border-brand-600 dark:border-brand-400 text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-950/20 rounded-t-lg'
-              : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white'
+              ? 'bg-[#182B18] text-[#A2BD63] border border-[#8DA852]/50 shadow-[0_2px_8px_rgba(141,168,82,0.2)]'
+              : 'bg-[#091009] text-[#9DA89A] hover:text-[#F4F6F1] border border-[rgba(141,168,82,0.15)] hover:bg-[#101A12]'
           }`}
         >
-          <Activity className="h-4 w-4" />
+          <Activity className="h-3.5 w-3.5" />
           <span>Overview</span>
         </button>
 
         <button
           type="button"
           onClick={() => setTab('users')}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-all whitespace-nowrap ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all active:scale-95 ${
             activeTab === 'users'
-              ? 'border-brand-600 dark:border-brand-400 text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-950/20 rounded-t-lg'
-              : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white'
+              ? 'bg-[#182B18] text-[#A2BD63] border border-[#8DA852]/50 shadow-[0_2px_8px_rgba(141,168,82,0.2)]'
+              : 'bg-[#091009] text-[#9DA89A] hover:text-[#F4F6F1] border border-[rgba(141,168,82,0.15)] hover:bg-[#101A12]'
           }`}
         >
-          <Users className="h-4 w-4" />
+          <Users className="h-3.5 w-3.5" />
           <span>Online Users</span>
           {stats?.online_users !== undefined && (
-            <span className="ml-1 px-1.5 py-0.5 text-[10px] rounded-full bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-slate-300">
+            <span className="ml-0.5 px-1.5 py-0.2 rounded-full bg-[#121E12] text-[10px] text-[#A2BD63]">
               {stats.online_users}
             </span>
           )}
@@ -461,16 +461,16 @@ export const DeveloperPage: React.FC = () => {
         <button
           type="button"
           onClick={() => setTab('rooms')}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-all whitespace-nowrap ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all active:scale-95 ${
             activeTab === 'rooms'
-              ? 'border-brand-600 dark:border-brand-400 text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-950/20 rounded-t-lg'
-              : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white'
+              ? 'bg-[#182B18] text-[#A2BD63] border border-[#8DA852]/50 shadow-[0_2px_8px_rgba(141,168,82,0.2)]'
+              : 'bg-[#091009] text-[#9DA89A] hover:text-[#F4F6F1] border border-[rgba(141,168,82,0.15)] hover:bg-[#101A12]'
           }`}
         >
-          <MessageSquare className="h-4 w-4" />
+          <MessageSquare className="h-3.5 w-3.5" />
           <span>Active Rooms</span>
           {stats?.active_rooms !== undefined && (
-            <span className="ml-1 px-1.5 py-0.5 text-[10px] rounded-full bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-slate-300">
+            <span className="ml-0.5 px-1.5 py-0.2 rounded-full bg-[#121E12] text-[10px] text-[#A2BD63]">
               {stats.active_rooms}
             </span>
           )}
@@ -479,13 +479,13 @@ export const DeveloperPage: React.FC = () => {
         <button
           type="button"
           onClick={() => setTab('audit')}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-all whitespace-nowrap ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all active:scale-95 ${
             activeTab === 'audit'
-              ? 'border-brand-600 dark:border-brand-400 text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-950/20 rounded-t-lg'
-              : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white'
+              ? 'bg-[#182B18] text-[#A2BD63] border border-[#8DA852]/50 shadow-[0_2px_8px_rgba(141,168,82,0.2)]'
+              : 'bg-[#091009] text-[#9DA89A] hover:text-[#F4F6F1] border border-[rgba(141,168,82,0.15)] hover:bg-[#101A12]'
           }`}
         >
-          <FileText className="h-4 w-4" />
+          <FileText className="h-3.5 w-3.5" />
           <span>Audit Log</span>
         </button>
       </div>
@@ -495,148 +495,148 @@ export const DeveloperPage: React.FC = () => {
           ===================================================================== */}
       {activeTab === 'overview' && (
         <div className="space-y-6">
-          {/* Summary Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-4">
+          {/* Summary Cards: 2-column mobile grid, 5-column desktop grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
             {/* 1. Online Users */}
-            <Card className="p-4 sm:p-5 border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
-              <div className="flex items-center justify-between text-gray-500 dark:text-slate-400">
-                <span className="text-xs font-semibold uppercase tracking-wider">Online Users</span>
-                <Users className="h-4 w-4 text-emerald-500" />
+            <Card className="p-4 sm:p-5">
+              <div className="flex items-center justify-between text-[#9DA89A]">
+                <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider">Online Users</span>
+                <Users className="h-4 w-4 text-[#8DA852]" />
               </div>
-              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white">
+              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#F4F6F1]">
                 {statsLoading ? '...' : stats?.online_users ?? 0}
               </div>
-              <div className="mt-1 flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <div className="mt-1 flex items-center gap-1.5 text-[11px] text-[#A2BD63] font-medium">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#8DA852] animate-pulse" />
                 Active heartbeats
               </div>
             </Card>
 
             {/* 2. Currently Chatting */}
-            <Card className="p-4 sm:p-5 border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
-              <div className="flex items-center justify-between text-gray-500 dark:text-slate-400">
-                <span className="text-xs font-semibold uppercase tracking-wider">In Chat</span>
-                <MessageSquare className="h-4 w-4 text-brand-500" />
+            <Card className="p-4 sm:p-5">
+              <div className="flex items-center justify-between text-[#9DA89A]">
+                <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider">In Chat</span>
+                <MessageSquare className="h-4 w-4 text-[#8DA852]" />
               </div>
-              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white">
+              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#F4F6F1]">
                 {statsLoading ? '...' : stats?.users_chatting ?? 0}
               </div>
-              <div className="mt-1 text-[11px] text-gray-500 dark:text-slate-400">
+              <div className="mt-1 text-[11px] text-[#6F796D]">
                 In 7-minute rooms
               </div>
             </Card>
 
             {/* 3. Users Idle */}
-            <Card className="p-4 sm:p-5 border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
-              <div className="flex items-center justify-between text-gray-500 dark:text-slate-400">
-                <span className="text-xs font-semibold uppercase tracking-wider">Users Idle</span>
-                <Clock className="h-4 w-4 text-amber-500" />
+            <Card className="p-4 sm:p-5">
+              <div className="flex items-center justify-between text-[#9DA89A]">
+                <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider">Users Idle</span>
+                <Clock className="h-4 w-4 text-amber-400" />
               </div>
-              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white">
+              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#F4F6F1]">
                 {statsLoading ? '...' : stats?.users_idle ?? 0}
               </div>
-              <div className="mt-1 text-[11px] text-gray-500 dark:text-slate-400">
+              <div className="mt-1 text-[11px] text-[#6F796D]">
                 Available on campus
               </div>
             </Card>
 
             {/* 4. Active Rooms */}
-            <Card className="p-4 sm:p-5 border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
-              <div className="flex items-center justify-between text-gray-500 dark:text-slate-400">
-                <span className="text-xs font-semibold uppercase tracking-wider">Active Rooms</span>
-                <Radio className="h-4 w-4 text-indigo-500" />
+            <Card className="p-4 sm:p-5">
+              <div className="flex items-center justify-between text-[#9DA89A]">
+                <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider">Active Rooms</span>
+                <Radio className="h-4 w-4 text-[#A2BD63]" />
               </div>
-              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white">
+              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#F4F6F1]">
                 {statsLoading ? '...' : stats?.active_rooms ?? 0}
               </div>
-              <div className="mt-1 text-[11px] text-gray-500 dark:text-slate-400">
+              <div className="mt-1 text-[11px] text-[#6F796D]">
                 Realtime sessions
               </div>
             </Card>
 
             {/* 5. Pending Chat Requests */}
-            <Card className="p-4 sm:p-5 border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm col-span-2 lg:col-span-1">
-              <div className="flex items-center justify-between text-gray-500 dark:text-slate-400">
-                <span className="text-xs font-semibold uppercase tracking-wider">Pending Requests</span>
-                <Send className="h-4 w-4 text-cyan-500" />
+            <Card className="p-4 sm:p-5 col-span-2 lg:col-span-1">
+              <div className="flex items-center justify-between text-[#9DA89A]">
+                <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider">Pending Requests</span>
+                <Send className="h-4 w-4 text-amber-400" />
               </div>
-              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white">
+              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#F4F6F1]">
                 {statsLoading ? '...' : stats?.pending_requests ?? 0}
               </div>
-              <div className="mt-1 text-[11px] text-gray-500 dark:text-slate-400">
-                Awaiting student response
+              <div className="mt-1 text-[11px] text-[#6F796D]">
+                Awaiting response
               </div>
             </Card>
           </div>
 
           {/* Quick Actions & Security Governance Panel */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card className="border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-card">
+            <Card>
               <CardHeader>
-                <CardTitle className="text-base text-gray-900 dark:text-white flex items-center gap-2">
-                  <Shield className="h-4 w-4 text-brand-500" />
+                <CardTitle className="text-sm sm:text-base text-[#F4F6F1] flex items-center gap-2">
+                  <Shield className="h-4 w-4 text-[#8DA852]" />
                   Staff Security Invariants
                 </CardTitle>
-                <CardDescription className="text-xs text-gray-500 dark:text-slate-400">
+                <CardDescription className="text-xs text-[#9DA89A]">
                   Strict privacy boundaries enforced by PostgreSQL engine rules.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3 text-xs text-gray-600 dark:text-slate-300">
+              <CardContent className="space-y-3 text-xs text-[#9DA89A]">
                 <div className="flex items-start gap-2.5">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <CheckCircle2 className="h-4 w-4 text-[#8DA852] shrink-0 mt-0.5" />
                   <div>
-                    <strong className="text-gray-900 dark:text-white">Zero Raw Register Numbers:</strong> Raw student IDs are never stored in the database. Identity verification references use one-way salted hashes and masked suffix fingerprints.
+                    <strong className="text-[#F4F6F1]">Zero Raw Register Numbers:</strong> Raw student IDs are never stored in the database. Identity verification references use one-way salted hashes and masked fingerprints.
                   </div>
                 </div>
                 <div className="flex items-start gap-2.5">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <CheckCircle2 className="h-4 w-4 text-[#8DA852] shrink-0 mt-0.5" />
                   <div>
-                    <strong className="text-gray-900 dark:text-white">Audited Profile Access:</strong> Inspecting any private student profile requires a mandatory reason and is immutably logged to <code className="bg-gray-100 dark:bg-slate-800 px-1 py-0.5 rounded text-[11px]">admin_audit_log</code>.
+                    <strong className="text-[#F4F6F1]">Audited Profile Access:</strong> Inspecting any private student profile requires a mandatory reason and is immutably logged to <code className="bg-[#121E12] px-1 py-0.5 rounded text-[11px] text-[#A2BD63]">admin_audit_log</code>.
                   </div>
                 </div>
                 <div className="flex items-start gap-2.5">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <CheckCircle2 className="h-4 w-4 text-[#8DA852] shrink-0 mt-0.5" />
                   <div>
-                    <strong className="text-gray-900 dark:text-white">Zero Secret Observer Presence:</strong> Staff moderation does not invisibly join chat rooms as a third participant, preserving standard 2-person participant caps and 7-minute timers.
+                    <strong className="text-[#F4F6F1]">Zero Secret Observer Presence:</strong> Staff moderation does not invisibly join chat rooms as a third participant, preserving standard 2-person participant caps.
                   </div>
                 </div>
                 <div className="flex items-start gap-2.5">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <CheckCircle2 className="h-4 w-4 text-[#8DA852] shrink-0 mt-0.5" />
                   <div>
-                    <strong className="text-gray-900 dark:text-white">Forced Test Isolation:</strong> Forced test sessions are strictly prohibited against normal students and succeed exclusively when both participants are staff/test accounts.
+                    <strong className="text-[#F4F6F1]">Forced Test Isolation:</strong> Forced test sessions succeed exclusively when both participants are staff/test accounts.
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-card">
+            <Card>
               <CardHeader>
-                <CardTitle className="text-base text-gray-900 dark:text-white flex items-center gap-2">
-                  <Activity className="h-4 w-4 text-amber-500" />
+                <CardTitle className="text-sm sm:text-base text-[#F4F6F1] flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-amber-400" />
                   Platform Staff Session
                 </CardTitle>
-                <CardDescription className="text-xs text-gray-500 dark:text-slate-400">
+                <CardDescription className="text-xs text-[#9DA89A]">
                   Current authenticated operator privileges.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3 text-xs">
-                <div className="flex justify-between py-1.5 border-b border-gray-100 dark:border-slate-800">
-                  <span className="text-gray-500 dark:text-slate-400">Staff Role</span>
+                <div className="flex justify-between py-1.5 border-b border-[rgba(141,168,82,0.1)]">
+                  <span className="text-[#9DA89A]">Staff Role</span>
                   <Badge variant="warning" size="sm">{staffRole?.toUpperCase() || 'DEVELOPER'}</Badge>
                 </div>
-                <div className="flex justify-between py-1.5 border-b border-gray-100 dark:border-slate-800">
-                  <span className="text-gray-500 dark:text-slate-400">Operator User ID</span>
-                  <span className="font-mono text-gray-900 dark:text-white text-[11px]">
+                <div className="flex justify-between py-1.5 border-b border-[rgba(141,168,82,0.1)]">
+                  <span className="text-[#9DA89A]">Operator User ID</span>
+                  <span className="font-mono text-[#F4F6F1] text-[11px]">
                     {user?.id.slice(0, 16)}...
                   </span>
                 </div>
-                <div className="flex justify-between py-1.5 border-b border-gray-100 dark:border-slate-800">
-                  <span className="text-gray-500 dark:text-slate-400">Operator Email</span>
-                  <span className="text-gray-900 dark:text-white font-medium">{user?.email || 'Authenticated'}</span>
+                <div className="flex justify-between py-1.5 border-b border-[rgba(141,168,82,0.1)]">
+                  <span className="text-[#9DA89A]">Operator Email</span>
+                  <span className="text-[#F4F6F1] font-medium">{user?.email || 'Authenticated'}</span>
                 </div>
                 <div className="flex justify-between py-1.5">
-                  <span className="text-gray-500 dark:text-slate-400">Database Engine</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Supabase PostgreSQL 15 (ap-south-1)</span>
+                  <span className="text-[#9DA89A]">Database Engine</span>
+                  <span className="text-[#A2BD63] font-semibold">Supabase PostgreSQL 15</span>
                 </div>
               </CardContent>
             </Card>
@@ -652,22 +652,22 @@ export const DeveloperPage: React.FC = () => {
           {/* Controls: Search and State filter */}
           <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
             <div className="relative flex-1 max-w-md">
-              <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#6F796D]" />
               <input
                 type="text"
-                placeholder="Search by anonymous handle or user UUID..."
+                placeholder="Search by anonymous handle or UUID..."
                 value={userSearchQuery}
                 onChange={(e) => setUserSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm rounded-xl border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="liquid-inset w-full pl-9 pr-4 py-2 text-xs sm:text-sm rounded-full border border-[rgba(141,168,82,0.2)] bg-[#060A06] text-[#F4F6F1] focus:outline-none focus:border-[#8DA852]"
               />
             </div>
 
             <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-gray-400 shrink-0" />
+              <Filter className="h-4 w-4 text-[#6F796D] shrink-0" />
               <select
                 value={userStateFilter}
                 onChange={(e) => setUserStateFilter(e.target.value)}
-                className="text-xs font-semibold px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="text-xs font-semibold px-3 py-2 rounded-full border border-[rgba(141,168,82,0.2)] bg-[#091009] text-[#9DA89A] focus:outline-none focus:border-[#8DA852]"
               >
                 <option value="all">All States</option>
                 <option value="idle">Idle / Available</option>
@@ -679,178 +679,252 @@ export const DeveloperPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Users Table */}
-          <Card className="border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-card">
+          {/* Users List: Mobile Stacked Cards + Desktop Table */}
+          <Card className="overflow-hidden">
             {usersLoading ? (
               <div className="py-16 flex flex-col items-center justify-center space-y-3">
                 <Spinner size="md" variant="brand" label="Fetching online users..." />
-                <p className="text-xs text-gray-400">Querying platform presence registry...</p>
+                <p className="text-xs text-[#6F796D]">Querying platform presence registry...</p>
               </div>
             ) : filteredUsers.length === 0 ? (
               <div className="py-16 text-center space-y-2">
-                <Users className="h-8 w-8 text-gray-400 mx-auto" />
-                <h4 className="text-sm font-bold text-gray-800 dark:text-slate-200">No users found</h4>
-                <p className="text-xs text-gray-500 dark:text-slate-400">
+                <Users className="h-8 w-8 text-[#6F796D] mx-auto" />
+                <h4 className="text-sm font-bold text-[#F4F6F1]">No users found</h4>
+                <p className="text-xs text-[#9DA89A]">
                   {userSearchQuery ? 'No online users match your search query.' : 'No active student sessions detected.'}
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs">
-                  <thead>
-                    <tr className="border-b border-gray-200 dark:border-slate-800 bg-gray-50/70 dark:bg-slate-800/40 text-gray-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-[11px]">
-                      <th className="py-3 px-4">Anonymous Persona</th>
-                      <th className="py-3 px-4">Verification</th>
-                      <th className="py-3 px-4">State</th>
-                      <th className="py-3 px-4">Last Seen</th>
-                      <th className="py-3 px-4">Current Room</th>
-                      <th className="py-3 px-4 text-right">Privileged Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 dark:divide-slate-800/80">
-                    {filteredUsers.map((u) => {
-                      const isSelf = u.user_id === user?.id;
-                      const initials = u.anonymous_username
-                        .split(' ')
-                        .map((w) => w[0])
-                        .join('')
-                        .slice(0, 2)
-                        .toUpperCase();
+              <>
+                {/* Mobile Stacked User Cards */}
+                <div className="block md:hidden divide-y divide-[rgba(141,168,82,0.12)]">
+                  {filteredUsers.map((u) => {
+                    const isSelf = u.user_id === user?.id;
+                    const initials = u.anonymous_username
+                      .split(' ')
+                      .map((w) => w[0])
+                      .join('')
+                      .slice(0, 2)
+                      .toUpperCase();
 
-                      return (
-                        <tr
-                          key={u.user_id}
-                          className="hover:bg-gray-50/80 dark:hover:bg-slate-800/30 transition-colors"
-                        >
-                          {/* Anonymous Persona */}
-                          <td className="py-3 px-4">
-                            <div className="flex items-center gap-2.5">
-                              <Avatar
-                                size="sm"
-                                avatarConfig={u.avatar_config}
-                                initials={initials}
-                                shape="circle"
-                              />
-                              <div>
-                                <div className="font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
-                                  <span>{u.anonymous_username}</span>
-                                  {isSelf && (
-                                    <span className="text-[10px] px-1 py-0.2 rounded bg-brand-100 dark:bg-brand-900/50 text-brand-700 dark:text-brand-300 font-semibold">
-                                      You
-                                    </span>
-                                  )}
-                                  {u.is_staff && (
-                                    <span className="text-[10px] px-1 py-0.2 rounded bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 font-bold">
-                                      {u.staff_role?.toUpperCase() || 'STAFF'}
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="text-[10px] font-mono text-gray-400 dark:text-slate-500">
-                                  {u.user_id.slice(0, 8)}...
-                                </div>
+                    return (
+                      <div key={u.user_id} className="p-4 space-y-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <Avatar
+                              size="md"
+                              avatarConfig={u.avatar_config}
+                              initials={initials}
+                              shape="circle"
+                            />
+                            <div className="min-w-0">
+                              <div className="font-bold text-sm text-[#F4F6F1] flex items-center gap-1.5 truncate">
+                                <span>{u.anonymous_username}</span>
+                                {isSelf && (
+                                  <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-[#121E12] text-[#A2BD63] font-semibold">
+                                    You
+                                  </span>
+                                )}
+                                {u.is_staff && (
+                                  <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-950/60 text-amber-300 font-bold">
+                                    {u.staff_role?.toUpperCase() || 'STAFF'}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-[11px] text-[#9DA89A] flex items-center gap-1.5 mt-0.5">
+                                <span>{u.is_verified_student ? 'Verified RITian' : 'Unverified'}</span>
+                                <span>•</span>
+                                <span>{formatRelativeTime(u.last_seen_at)}</span>
                               </div>
                             </div>
-                          </td>
-
-                          {/* Verification */}
-                          <td className="py-3 px-4">
-                            {u.is_staff ? (
-                              <Badge variant="warning" size="sm">Staff Account</Badge>
-                            ) : u.is_verified_student ? (
-                              <Badge variant="success" size="sm" withDot>Verified Student</Badge>
-                            ) : (
-                              <Badge variant="neutral" size="sm">Unverified</Badge>
-                            )}
-                          </td>
-
-                          {/* State */}
-                          <td className="py-3 px-4">
+                          </div>
+                          <div>
                             {getStateBadge(u.state)}
-                          </td>
+                          </div>
+                        </div>
 
-                          {/* Last Seen */}
-                          <td className="py-3 px-4 text-gray-500 dark:text-slate-400">
-                            {formatRelativeTime(u.last_seen_at)}
-                          </td>
+                        {/* Actions */}
+                        <div className="flex items-center gap-2 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setInspectUserId(u.user_id);
+                              setUserDetails(null);
+                              setInspectError(null);
+                            }}
+                            className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-full text-xs font-semibold text-[#9DA89A] hover:text-[#F4F6F1] bg-[#121E12] border border-[rgba(141,168,82,0.2)] active:scale-95 transition-all"
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                            <span>Inspect</span>
+                          </button>
 
-                          {/* Current Room */}
-                          <td className="py-3 px-4">
-                            {u.current_room_id ? (
-                              <button
-                                type="button"
-                                onClick={() => handleOpenRoomDetails(u.current_room_id!)}
-                                className="font-mono text-[11px] text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1"
-                              >
-                                <span>#{u.current_room_id.slice(0, 8)}</span>
-                                <ExternalLink className="h-3 w-3" />
-                              </button>
-                            ) : (
-                              <span className="text-gray-400 dark:text-slate-600">—</span>
-                            )}
-                          </td>
+                          {!isSelf && (
+                            <button
+                              type="button"
+                              disabled={u.state === 'in_chat' || invitingUserId === u.user_id}
+                              onClick={() => handleSendInvite(u.user_id)}
+                              className="flex-1 liquid-cta-btn inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-full text-xs font-bold text-white disabled:opacity-40 active:scale-95 transition-all shadow-sm"
+                            >
+                              <Send className="h-3.5 w-3.5" />
+                              <span>{invitingUserId === u.user_id ? 'Inviting...' : 'Invite'}</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
 
-                          {/* Actions */}
-                          <td className="py-3 px-4 text-right">
-                            <div className="inline-flex items-center gap-1.5">
-                              {/* Inspect Profile Button */}
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  setInspectUserId(u.user_id);
-                                  setUserDetails(null);
-                                  setInspectError(null);
-                                }}
-                                title="Inspect private student profile (audited)"
-                                className="text-xs h-7 px-2"
-                              >
-                                <Eye className="h-3.5 w-3.5 mr-1" />
-                                Inspect
-                              </Button>
+                {/* Desktop User Table */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="border-b border-[rgba(141,168,82,0.15)] bg-[#091009]/80 text-[#9DA89A] font-semibold uppercase tracking-wider text-[11px]">
+                        <th className="py-3 px-4">Anonymous Persona</th>
+                        <th className="py-3 px-4">Verification</th>
+                        <th className="py-3 px-4">State</th>
+                        <th className="py-3 px-4">Last Seen</th>
+                        <th className="py-3 px-4">Current Room</th>
+                        <th className="py-3 px-4 text-right">Privileged Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[rgba(141,168,82,0.12)]">
+                      {filteredUsers.map((u) => {
+                        const isSelf = u.user_id === user?.id;
+                        const initials = u.anonymous_username
+                          .split(' ')
+                          .map((w) => w[0])
+                          .join('')
+                          .slice(0, 2)
+                          .toUpperCase();
 
-                              {/* Invite to Chat Button */}
-                              {!isSelf && (
-                                <Button
-                                  variant="primary"
+                        return (
+                          <tr
+                            key={u.user_id}
+                            className="hover:bg-[#121E12]/40 transition-colors"
+                          >
+                            {/* Anonymous Persona */}
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-2.5">
+                                <Avatar
                                   size="sm"
-                                  disabled={u.state === 'in_chat' || invitingUserId === u.user_id}
-                                  isLoading={invitingUserId === u.user_id}
-                                  onClick={() => handleSendInvite(u.user_id)}
-                                  title={u.state === 'in_chat' ? 'User is already chatting' : 'Send direct chat invite'}
+                                  avatarConfig={u.avatar_config}
+                                  initials={initials}
+                                  shape="circle"
+                                />
+                                <div>
+                                  <div className="font-bold text-[#F4F6F1] flex items-center gap-1.5">
+                                    <span>{u.anonymous_username}</span>
+                                    {isSelf && (
+                                      <span className="text-[10px] px-1 py-0.2 rounded bg-[#121E12] text-[#A2BD63] font-semibold">
+                                        You
+                                      </span>
+                                    )}
+                                    {u.is_staff && (
+                                      <span className="text-[10px] px-1 py-0.2 rounded bg-amber-950/60 text-amber-300 font-bold">
+                                        {u.staff_role?.toUpperCase() || 'STAFF'}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-[10px] font-mono text-[#6F796D]">
+                                    {u.user_id.slice(0, 8)}...
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+
+                            {/* Verification */}
+                            <td className="py-3 px-4">
+                              {u.is_staff ? (
+                                <Badge variant="warning" size="sm">Staff Account</Badge>
+                              ) : u.is_verified_student ? (
+                                <Badge variant="success" size="sm" withDot>Verified Student</Badge>
+                              ) : (
+                                <Badge variant="neutral" size="sm">Unverified</Badge>
+                              )}
+                            </td>
+
+                            {/* State */}
+                            <td className="py-3 px-4">
+                              {getStateBadge(u.state)}
+                            </td>
+
+                            {/* Last Seen */}
+                            <td className="py-3 px-4 text-[#9DA89A]">
+                              {formatRelativeTime(u.last_seen_at)}
+                            </td>
+
+                            {/* Current Room */}
+                            <td className="py-3 px-4">
+                              {u.current_room_id ? (
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenRoomDetails(u.current_room_id!)}
+                                  className="font-mono text-[11px] text-[#A2BD63] hover:underline flex items-center gap-1"
+                                >
+                                  <span>#{u.current_room_id.slice(0, 8)}</span>
+                                  <ExternalLink className="h-3 w-3" />
+                                </button>
+                              ) : (
+                                <span className="text-[#6F796D]">—</span>
+                              )}
+                            </td>
+
+                            {/* Actions */}
+                            <td className="py-3 px-4 text-right">
+                              <div className="inline-flex items-center gap-1.5">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setInspectUserId(u.user_id);
+                                    setUserDetails(null);
+                                    setInspectError(null);
+                                  }}
+                                  title="Inspect private student profile (audited)"
                                   className="text-xs h-7 px-2"
                                 >
-                                  <Send className="h-3.5 w-3.5 mr-1" />
-                                  Invite
+                                  <Eye className="h-3.5 w-3.5 mr-1" />
+                                  Inspect
                                 </Button>
-                              )}
 
-                              {/* Forced Test Session (Restricted to test/developer accounts only) */}
-                              {!isSelf && (
-                                <Button
-                                  variant="secondary"
-                                  size="sm"
-                                  disabled={!u.is_test_account || testSessionTargetId === u.user_id}
-                                  isLoading={testSessionTargetId === u.user_id}
-                                  onClick={() => handleStartTestSession(u.user_id)}
-                                  title={
-                                    u.is_test_account
-                                      ? 'Start forced test session between test/dev accounts'
-                                      : 'Forced sessions strictly prohibited against normal students'
-                                  }
-                                  className="text-xs h-7 px-2 border-dashed"
-                                >
-                                  <Play className="h-3.5 w-3.5 mr-1 text-amber-500" />
-                                  Test
-                                </Button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                                {!isSelf && (
+                                  <Button
+                                    variant="primary"
+                                    size="sm"
+                                    disabled={u.state === 'in_chat' || invitingUserId === u.user_id}
+                                    isLoading={invitingUserId === u.user_id}
+                                    onClick={() => handleSendInvite(u.user_id)}
+                                    title={u.state === 'in_chat' ? 'User is already chatting' : 'Send direct chat invite'}
+                                    className="text-xs h-7 px-2"
+                                  >
+                                    <Send className="h-3.5 w-3.5 mr-1" />
+                                    Invite
+                                  </Button>
+                                )}
+
+                                {!isSelf && (
+                                  <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    disabled={!u.is_test_account || testSessionTargetId === u.user_id}
+                                    isLoading={testSessionTargetId === u.user_id}
+                                    onClick={() => handleStartTestSession(u.user_id)}
+                                    className="text-xs h-7 px-2 border-dashed"
+                                  >
+                                    <Play className="h-3.5 w-3.5 mr-1 text-amber-500" />
+                                    Test
+                                  </Button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </Card>
         </div>
@@ -862,7 +936,7 @@ export const DeveloperPage: React.FC = () => {
       {activeTab === 'rooms' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-400">
+            <p className="text-xs sm:text-sm text-[#9DA89A]">
               Real-time monitoring of all active 7-minute rooms.
             </p>
             <Button
@@ -876,140 +950,201 @@ export const DeveloperPage: React.FC = () => {
             </Button>
           </div>
 
-          <Card className="border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-card">
+          <Card className="overflow-hidden">
             {roomsLoading ? (
               <div className="py-16 flex flex-col items-center justify-center space-y-3">
                 <Spinner size="md" variant="brand" label="Fetching active rooms..." />
-                <p className="text-xs text-gray-400">Retrieving active chat sessions...</p>
+                <p className="text-xs text-[#6F796D]">Retrieving active chat sessions...</p>
               </div>
             ) : roomsList.length === 0 ? (
               <div className="py-16 text-center space-y-2">
-                <MessageSquare className="h-8 w-8 text-gray-400 mx-auto" />
-                <h4 className="text-sm font-bold text-gray-800 dark:text-slate-200">No active rooms</h4>
-                <p className="text-xs text-gray-500 dark:text-slate-400">
+                <MessageSquare className="h-8 w-8 text-[#6F796D] mx-auto" />
+                <h4 className="text-sm font-bold text-[#F4F6F1]">No active rooms</h4>
+                <p className="text-xs text-[#9DA89A]">
                   There are currently no active 7-minute conversations in progress.
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs">
-                  <thead>
-                    <tr className="border-b border-gray-200 dark:border-slate-800 bg-gray-50/70 dark:bg-slate-800/40 text-gray-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-[11px]">
-                      <th className="py-3 px-4">Room ID</th>
-                      <th className="py-3 px-4">Participant A</th>
-                      <th className="py-3 px-4">Participant B</th>
-                      <th className="py-3 px-4">Remaining</th>
-                      <th className="py-3 px-4">Started At</th>
-                      <th className="py-3 px-4">Msgs</th>
-                      <th className="py-3 px-4 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 dark:divide-slate-800/80">
-                    {roomsList.map((r) => {
-                      const initA = r.participant_a_username.slice(0, 2).toUpperCase();
-                      const initB = r.participant_b_username.slice(0, 2).toUpperCase();
+              <>
+                {/* Mobile Stacked Room Cards */}
+                <div className="block md:hidden divide-y divide-[rgba(141,168,82,0.12)]">
+                  {roomsList.map((r) => {
+                    const initA = r.participant_a_username.slice(0, 2).toUpperCase();
+                    const initB = r.participant_b_username.slice(0, 2).toUpperCase();
 
-                      return (
-                        <tr
-                          key={r.room_id}
-                          className="hover:bg-gray-50/80 dark:hover:bg-slate-800/30 transition-colors"
-                        >
-                          {/* Room ID */}
-                          <td className="py-3 px-4">
-                            <span className="font-mono font-bold text-brand-600 dark:text-brand-400">
-                              #{r.room_id.slice(0, 8)}
+                    return (
+                      <div key={r.room_id} className="p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="font-mono font-bold text-xs text-[#A2BD63]">
+                            Room #{r.room_id.slice(0, 8)}
+                          </span>
+                          {r.timer_paused_at ? (
+                            <span className="inline-flex items-center gap-1 font-mono text-[11px] font-bold text-sky-400 bg-sky-950/60 px-2.5 py-0.5 rounded-full border border-sky-500/40">
+                              ⏸ {formatSeconds(r.remaining_seconds)} PAUSED
                             </span>
-                          </td>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 font-mono text-[11px] font-bold text-amber-300 bg-amber-950/50 px-2.5 py-0.5 rounded-full border border-amber-500/30">
+                              <Clock className="h-3 w-3" />
+                              {formatSeconds(r.remaining_seconds)}
+                            </span>
+                          )}
+                        </div>
 
-                          {/* Participant A */}
-                          <td className="py-3 px-4">
-                            <div className="flex items-center gap-2">
-                              <Avatar
-                                size="xs"
-                                avatarConfig={r.participant_a_avatar}
-                                initials={initA}
-                                shape="circle"
-                              />
-                              <span className="font-medium text-gray-900 dark:text-white">
-                                {r.participant_a_username}
+                        <div className="flex items-center justify-between text-xs text-[#F4F6F1]">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <Avatar size="xs" avatarConfig={r.participant_a_avatar} initials={initA} shape="circle" />
+                            <span className="truncate font-semibold">{r.participant_a_username}</span>
+                          </div>
+                          <span className="text-[#6F796D] px-2 font-bold">↔</span>
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <Avatar size="xs" avatarConfig={r.participant_b_avatar} initials={initB} shape="circle" />
+                            <span className="truncate font-semibold">{r.participant_b_username}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-1">
+                          <span className="text-[11px] text-[#9DA89A]">
+                            {r.message_count} messages
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenRoomDetails(r.room_id)}
+                              className="px-3 py-1.5 rounded-full text-xs font-semibold text-[#9DA89A] hover:text-[#F4F6F1] bg-[#121E12] border border-[rgba(141,168,82,0.2)] active:scale-95 transition-all"
+                            >
+                              Details
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setTranscriptRoomId(r.room_id);
+                                setTranscriptMessages(null);
+                                setTranscriptError(null);
+                              }}
+                              className="px-3 py-1.5 rounded-full text-xs font-semibold text-amber-300 bg-amber-950/40 border border-amber-500/30 active:scale-95 transition-all"
+                            >
+                              Moderation
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Desktop Room Table */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="border-b border-[rgba(141,168,82,0.15)] bg-[#091009]/80 text-[#9DA89A] font-semibold uppercase tracking-wider text-[11px]">
+                        <th className="py-3 px-4">Room ID</th>
+                        <th className="py-3 px-4">Participant A</th>
+                        <th className="py-3 px-4">Participant B</th>
+                        <th className="py-3 px-4">Remaining</th>
+                        <th className="py-3 px-4">Started At</th>
+                        <th className="py-3 px-4">Msgs</th>
+                        <th className="py-3 px-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[rgba(141,168,82,0.12)]">
+                      {roomsList.map((r) => {
+                        const initA = r.participant_a_username.slice(0, 2).toUpperCase();
+                        const initB = r.participant_b_username.slice(0, 2).toUpperCase();
+
+                        return (
+                          <tr
+                            key={r.room_id}
+                            className="hover:bg-[#121E12]/40 transition-colors"
+                          >
+                            <td className="py-3 px-4">
+                              <span className="font-mono font-bold text-[#A2BD63]">
+                                #{r.room_id.slice(0, 8)}
                               </span>
-                            </div>
-                          </td>
+                            </td>
 
-                          {/* Participant B */}
-                          <td className="py-3 px-4">
-                            <div className="flex items-center gap-2">
-                              <Avatar
-                                size="xs"
-                                avatarConfig={r.participant_b_avatar}
-                                initials={initB}
-                                shape="circle"
-                              />
-                              <span className="font-medium text-gray-900 dark:text-white">
-                                {r.participant_b_username}
-                              </span>
-                            </div>
-                          </td>
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-2">
+                                <Avatar
+                                  size="xs"
+                                  avatarConfig={r.participant_a_avatar}
+                                  initials={initA}
+                                  shape="circle"
+                                />
+                                <span className="font-medium text-[#F4F6F1]">
+                                  {r.participant_a_username}
+                                </span>
+                              </div>
+                            </td>
 
-                          {/* Remaining */}
-                          <td className="py-3 px-4">
-                            {r.timer_paused_at ? (
-                              <span className="inline-flex items-center gap-1 font-mono font-bold text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/50 px-2 py-0.5 rounded border border-sky-200 dark:border-sky-800">
-                                <span>⏸</span>
-                                <span>{formatSeconds(r.remaining_seconds)}</span>
-                                <span className="text-[10px] uppercase tracking-wider font-semibold ml-0.5">PAUSED</span>
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 font-mono font-bold text-amber-600 dark:text-amber-400">
-                                <Clock className="h-3 w-3" />
-                                {formatSeconds(r.remaining_seconds)}
-                              </span>
-                            )}
-                          </td>
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-2">
+                                <Avatar
+                                  size="xs"
+                                  avatarConfig={r.participant_b_avatar}
+                                  initials={initB}
+                                  shape="circle"
+                                />
+                                <span className="font-medium text-[#F4F6F1]">
+                                  {r.participant_b_username}
+                                </span>
+                              </div>
+                            </td>
 
-                          {/* Started At */}
-                          <td className="py-3 px-4 text-gray-500 dark:text-slate-400">
-                            {new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </td>
+                            <td className="py-3 px-4">
+                              {r.timer_paused_at ? (
+                                <span className="inline-flex items-center gap-1 font-mono font-bold text-sky-400 bg-sky-950/50 px-2 py-0.5 rounded border border-sky-500/40">
+                                  <span>⏸</span>
+                                  <span>{formatSeconds(r.remaining_seconds)}</span>
+                                  <span className="text-[10px] uppercase tracking-wider font-semibold ml-0.5">PAUSED</span>
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 font-mono font-bold text-amber-400">
+                                  <Clock className="h-3 w-3" />
+                                  {formatSeconds(r.remaining_seconds)}
+                                </span>
+                              )}
+                            </td>
 
-                          {/* Message Count */}
-                          <td className="py-3 px-4 font-mono text-gray-600 dark:text-slate-300">
-                            {r.message_count}
-                          </td>
+                            <td className="py-3 px-4 text-[#9DA89A]">
+                              {new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </td>
 
-                          {/* Actions */}
-                          <td className="py-3 px-4 text-right">
-                            <div className="inline-flex items-center gap-1.5">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleOpenRoomDetails(r.room_id)}
-                                className="text-xs h-7 px-2"
-                              >
-                                Details
-                              </Button>
+                            <td className="py-3 px-4 font-mono text-[#F4F6F1]">
+                              {r.message_count}
+                            </td>
 
-                              <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={() => {
-                                  setTranscriptRoomId(r.room_id);
-                                  setTranscriptMessages(null);
-                                  setTranscriptError(null);
-                                }}
-                                title="Read moderation chat transcript (audited)"
-                                className="text-xs h-7 px-2"
-                              >
-                                Moderation
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                            <td className="py-3 px-4 text-right">
+                              <div className="inline-flex items-center gap-1.5">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleOpenRoomDetails(r.room_id)}
+                                  className="text-xs h-7 px-2"
+                                >
+                                  Details
+                                </Button>
+
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  onClick={() => {
+                                    setTranscriptRoomId(r.room_id);
+                                    setTranscriptMessages(null);
+                                    setTranscriptError(null);
+                                  }}
+                                  className="text-xs h-7 px-2"
+                                >
+                                  Moderation
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </Card>
         </div>
@@ -1021,7 +1156,7 @@ export const DeveloperPage: React.FC = () => {
       {activeTab === 'audit' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-400">
+            <p className="text-xs sm:text-sm text-[#9DA89A]">
               Append-only audit trail. Every privileged access and moderation query is recorded here.
             </p>
             <Button
@@ -1035,77 +1170,105 @@ export const DeveloperPage: React.FC = () => {
             </Button>
           </div>
 
-          <Card className="border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-card">
+          <Card className="overflow-hidden">
             {auditLoading ? (
               <div className="py-16 flex flex-col items-center justify-center space-y-3">
                 <Spinner size="md" variant="brand" label="Fetching audit records..." />
-                <p className="text-xs text-gray-400">Querying immutable admin_audit_log...</p>
+                <p className="text-xs text-[#6F796D]">Querying immutable admin_audit_log...</p>
               </div>
             ) : auditLogs.length === 0 ? (
               <div className="py-16 text-center space-y-2">
-                <FileText className="h-8 w-8 text-gray-400 mx-auto" />
-                <h4 className="text-sm font-bold text-gray-800 dark:text-slate-200">No audit records yet</h4>
-                <p className="text-xs text-gray-500 dark:text-slate-400">
+                <FileText className="h-8 w-8 text-[#6F796D] mx-auto" />
+                <h4 className="text-sm font-bold text-[#F4F6F1]">No audit records yet</h4>
+                <p className="text-xs text-[#9DA89A]">
                   Privileged actions will automatically create entries here.
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs">
-                  <thead>
-                    <tr className="border-b border-gray-200 dark:border-slate-800 bg-gray-50/70 dark:bg-slate-800/40 text-gray-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-[11px]">
-                      <th className="py-3 px-4">Timestamp</th>
-                      <th className="py-3 px-4">Action</th>
-                      <th className="py-3 px-4">Actor</th>
-                      <th className="py-3 px-4">Target / Room</th>
-                      <th className="py-3 px-4">Mandatory Reason</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 dark:divide-slate-800/80">
-                    {auditLogs.map((log) => (
-                      <tr
-                        key={log.id}
-                        className="hover:bg-gray-50/80 dark:hover:bg-slate-800/30 transition-colors"
-                      >
-                        <td className="py-3 px-4 font-mono text-gray-500 dark:text-slate-400 whitespace-nowrap">
-                          {new Date(log.created_at).toLocaleString()}
-                        </td>
+              <>
+                {/* Mobile Stacked Audit Cards */}
+                <div className="block md:hidden divide-y divide-[rgba(141,168,82,0.12)]">
+                  {auditLogs.map((log) => (
+                    <div key={log.id} className="p-3.5 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono font-bold text-xs text-[#A2BD63]">
+                          {log.action}
+                        </span>
+                        <span className="font-mono text-[10px] text-[#6F796D]">
+                          {new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <div className="text-xs text-[#9DA89A] flex items-center justify-between">
+                        <span>Actor: {log.actor_email || log.actor_role}</span>
+                        {log.room_id && <span>Room: #{log.room_id.slice(0, 6)}</span>}
+                      </div>
+                      {log.reason && (
+                        <p className="text-[11px] text-[#F4F6F1] bg-[#091009] p-2 rounded-xl border border-[rgba(141,168,82,0.15)] leading-relaxed">
+                          {log.reason}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
 
-                        <td className="py-3 px-4">
-                          <span className="font-mono font-bold text-brand-600 dark:text-brand-400">
-                            {log.action}
-                          </span>
-                        </td>
-
-                        <td className="py-3 px-4">
-                          <div>
-                            <span className="font-semibold text-gray-900 dark:text-white block">
-                              {log.actor_email || log.actor_role.toUpperCase()}
-                            </span>
-                            <span className="font-mono text-[10px] text-gray-400">
-                              {log.actor_user_id.slice(0, 8)}...
-                            </span>
-                          </div>
-                        </td>
-
-                        <td className="py-3 px-4 font-mono text-[11px] text-gray-600 dark:text-slate-300">
-                          {log.target_user_id && (
-                            <div>User: {log.target_user_id.slice(0, 8)}...</div>
-                          )}
-                          {log.room_id && (
-                            <div>Room: #{log.room_id.slice(0, 8)}</div>
-                          )}
-                          {!log.target_user_id && !log.room_id && <span className="text-gray-400">—</span>}
-                        </td>
-
-                        <td className="py-3 px-4 text-gray-700 dark:text-slate-300 max-w-xs truncate">
-                          {log.reason || '—'}
-                        </td>
+                {/* Desktop Audit Table */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="border-b border-[rgba(141,168,82,0.15)] bg-[#091009]/80 text-[#9DA89A] font-semibold uppercase tracking-wider text-[11px]">
+                        <th className="py-3 px-4">Timestamp</th>
+                        <th className="py-3 px-4">Action</th>
+                        <th className="py-3 px-4">Actor</th>
+                        <th className="py-3 px-4">Target / Room</th>
+                        <th className="py-3 px-4">Mandatory Reason</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-[rgba(141,168,82,0.12)]">
+                      {auditLogs.map((log) => (
+                        <tr
+                          key={log.id}
+                          className="hover:bg-[#121E12]/40 transition-colors"
+                        >
+                          <td className="py-3 px-4 font-mono text-[#9DA89A] whitespace-nowrap">
+                            {new Date(log.created_at).toLocaleString()}
+                          </td>
+
+                          <td className="py-3 px-4">
+                            <span className="font-mono font-bold text-[#A2BD63]">
+                              {log.action}
+                            </span>
+                          </td>
+
+                          <td className="py-3 px-4">
+                            <div>
+                              <span className="font-semibold text-[#F4F6F1] block">
+                                {log.actor_email || log.actor_role.toUpperCase()}
+                              </span>
+                              <span className="font-mono text-[10px] text-[#6F796D]">
+                                {log.actor_user_id.slice(0, 8)}...
+                              </span>
+                            </div>
+                          </td>
+
+                          <td className="py-3 px-4 font-mono text-[11px] text-[#9DA89A]">
+                            {log.target_user_id && (
+                              <div>User: {log.target_user_id.slice(0, 8)}...</div>
+                            )}
+                            {log.room_id && (
+                              <div>Room: #{log.room_id.slice(0, 8)}</div>
+                            )}
+                            {!log.target_user_id && !log.room_id && <span className="text-[#6F796D]">—</span>}
+                          </td>
+
+                          <td className="py-3 px-4 text-[#9DA89A] max-w-xs truncate">
+                            {log.reason || '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </Card>
         </div>

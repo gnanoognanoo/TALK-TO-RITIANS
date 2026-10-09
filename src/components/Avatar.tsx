@@ -26,9 +26,9 @@ const sizeClasses: Record<AvatarSize, { box: string; text: string; dot: string; 
 };
 
 const presenceClasses: Record<Exclude<PresenceStatus, 'none'>, string> = {
-  online: 'bg-emerald-500 ring-2 ring-white',
-  matching: 'bg-amber-400 ring-2 ring-white animate-pulse',
-  offline: 'bg-gray-300 ring-2 ring-white',
+  online: 'bg-emerald-500 ring-2 ring-white dark:ring-[#050805]',
+  matching: 'bg-amber-400 ring-2 ring-white dark:ring-[#050805] animate-pulse',
+  offline: 'bg-gray-300 ring-2 ring-white dark:ring-[#050805]',
 };
 
 export const Avatar: React.FC<AvatarProps> = ({
@@ -63,7 +63,7 @@ export const Avatar: React.FC<AvatarProps> = ({
     <div
       className={`
         relative inline-flex items-center justify-center shrink-0 select-none overflow-hidden
-        bg-brand-50 border border-brand-200 text-brand-700
+        bg-brand-50 dark:bg-[#101D11] border border-brand-200 dark:border-[rgba(140,170,110,0.3)] text-brand-700 dark:text-[#A2BD63]
         ${radius} ${config.box} ${className}
       `.trim()}
       role="img"

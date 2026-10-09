@@ -104,10 +104,10 @@ export const AvatarBuilderPage: React.FC = () => {
         <Badge variant="brand" size="sm" withDot>
           Profile Customization &bull; Modular Avatar
         </Badge>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-[#F4F6F1] tracking-tight">
           Create Your Avatar
         </h1>
-        <p className="text-xs sm:text-sm text-gray-500 max-w-lg mx-auto leading-relaxed">
+        <p className="text-xs sm:text-sm text-gray-500 dark:text-[#9DA89A] max-w-lg mx-auto leading-relaxed">
           Express yourself with a unique avatar. Handcrafted vector artwork, 100% anonymous.
         </p>
       </div>
@@ -116,14 +116,14 @@ export const AvatarBuilderPage: React.FC = () => {
           LOCKED STATE: If college ID is not yet linked
           ========================================================================= */}
       {!isVerified ? (
-        <Card className="border-gray-200 bg-white shadow-card text-center p-8 space-y-5 animate-in fade-in">
-          <div className="h-16 w-16 rounded-full bg-amber-50 text-amber-600 border border-amber-200 mx-auto flex items-center justify-center">
+        <Card className="border border-gray-200/80 dark:border-[rgba(140,170,110,0.22)] bg-white/95 dark:bg-[#091009]/90 backdrop-blur-md shadow-card dark:shadow-liquid-outer rounded-[28px] text-center p-8 space-y-5 animate-in fade-in">
+          <div className="h-16 w-16 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800 mx-auto flex items-center justify-center shadow-sm">
             <Lock className="h-8 w-8" />
           </div>
 
           <div className="space-y-2 max-w-sm mx-auto">
-            <h3 className="text-lg font-bold text-gray-900">College Verification Required</h3>
-            <p className="text-xs text-gray-600 leading-relaxed">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-[#F4F6F1]">College Verification Required</h3>
+            <p className="text-xs text-gray-600 dark:text-[#9DA89A] leading-relaxed">
               Avatar customization is unlocked for verified Rajalakshmi Institute of Technology
               students. Please verify your physical ID card first.
             </p>
@@ -145,17 +145,17 @@ export const AvatarBuilderPage: React.FC = () => {
         /* =========================================================================
            UNLOCKED CUSTOMIZATION STUDIO (Matching Reference Phase 7)
            ========================================================================= */
-        <Card className="border-gray-200 bg-white shadow-card overflow-hidden">
-          <CardHeader className="border-b border-gray-100 pb-4">
+        <Card className="border border-gray-200/80 dark:border-[rgba(140,170,110,0.22)] bg-white/95 dark:bg-[#091009]/90 backdrop-blur-md shadow-card dark:shadow-liquid-outer rounded-[28px] overflow-hidden">
+          <CardHeader className="border-b border-gray-100 dark:border-[rgba(140,170,110,0.14)] pb-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
-                <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                <h2 className="text-base font-bold text-gray-900 dark:text-[#F4F6F1] flex items-center gap-2">
                   <span>Customization Studio</span>
                   <Badge variant="success" size="sm">
                     Verified
                   </Badge>
                 </h2>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 dark:text-[#9DA89A]">
                   Pick your look using the tabs below or roll the dice for inspiration.
                 </p>
               </div>
@@ -167,7 +167,7 @@ export const AvatarBuilderPage: React.FC = () => {
                   variant="secondary"
                   size="sm"
                   onClick={handleRandomize}
-                  leftIcon={<Dices className={`h-4 w-4 text-brand-600 ${justRandomized ? 'animate-spin' : ''}`} />}
+                  leftIcon={<Dices className={`h-4 w-4 text-brand-600 dark:text-[#8DA852] ${justRandomized ? 'animate-spin' : ''}`} />}
                 >
                   Randomize
                 </Button>
@@ -194,24 +194,24 @@ export const AvatarBuilderPage: React.FC = () => {
               {/* 2-Column Studio: Left Preview & Right Controls */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 {/* LEFT: Large Avatar Preview Card */}
-                <div className="lg:col-span-5 p-6 rounded-2xl bg-gray-50/70 border border-gray-200 flex flex-col items-center justify-center space-y-4">
+                <div className="lg:col-span-5 p-6 rounded-[24px] bg-gray-50/80 dark:bg-[#0D160E]/80 border border-gray-200 dark:border-[rgba(140,170,110,0.2)] flex flex-col items-center justify-center space-y-4 shadow-sm">
                   <AvatarPreview
                     config={avatarConfig}
                     size="xl"
                   />
 
                   <div className="text-center space-y-1">
-                    <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-[#6F796D]">
                       Your Active Alias
                     </span>
-                    <h3 className="text-lg font-bold text-gray-900 flex items-center justify-center gap-1.5">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-[#F4F6F1] flex items-center justify-center gap-1.5">
                       <span>{profile?.display_username || 'SkyRider'}</span>
-                      <CheckCircle2 className="h-4 w-4 text-brand-600" />
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 dark:text-[#8DA852]" />
                     </h3>
                   </div>
 
-                  <div className="flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 text-xs">
-                    <Shield className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                  <div className="flex items-center gap-1 text-emerald-700 dark:text-[#8DA852] bg-emerald-50 dark:bg-[#101D11] px-2.5 py-1 rounded-xl border border-emerald-200 dark:border-[rgba(140,170,110,0.25)] text-xs">
+                    <Shield className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-[#8DA852]" />
                     <span>Zero Personal Metadata</span>
                   </div>
                 </div>
@@ -226,7 +226,7 @@ export const AvatarBuilderPage: React.FC = () => {
               </div>
             </CardContent>
 
-            <CardFooter className="flex items-center justify-between border-t border-gray-100 pt-5 mt-2">
+            <CardFooter className="flex items-center justify-between border-t border-gray-100 dark:border-[rgba(140,170,110,0.14)] pt-5 mt-2">
               <Button
                 type="button"
                 variant="secondary"
