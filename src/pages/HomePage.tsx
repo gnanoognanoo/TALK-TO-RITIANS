@@ -26,7 +26,7 @@ import { getEffectivePersona } from '../utils/persona';
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const { profile, isStaff, staffRole } = useAuth();
+  const { profile, isStaff } = useAuth();
 
   const effectivePersona = getEffectivePersona(profile, isStaff);
   const isVerified = effectivePersona.isVerified;
@@ -51,7 +51,7 @@ export const HomePage: React.FC = () => {
             className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-950/40 border border-amber-500/40 text-amber-300 text-xs font-semibold shadow-[0_2px_10px_rgba(227,163,41,0.15)] hover:bg-amber-950/60 active:scale-95 transition-all"
           >
             <Sparkles className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-            <span>⚡ {staffRole || 'Developer'} Mode</span>
+            <span>⚡ Developer Access Active</span>
             <span className="text-amber-400/60">•</span>
             <span className="text-[11px] text-amber-200/90 underline font-normal">Console</span>
             <ArrowRight className="h-3 w-3 text-amber-400" />
@@ -121,7 +121,7 @@ export const HomePage: React.FC = () => {
             to="/settings"
             className="text-xs text-[#8DA852] hover:text-[#A2BD63] hover:underline font-semibold inline-flex items-center gap-1 pt-0.5"
           >
-            <span>{isVerified ? 'Customize Persona' : isStaff ? 'Developer Settings' : 'Verify to Unlock Persona'}</span>
+            <span>{isStaff ? 'Edit Developer Persona' : isVerified ? 'Customize Persona' : 'Verify to Unlock Persona'}</span>
             <ArrowRight className="h-3 w-3" />
           </Link>
         </div>

@@ -44,7 +44,13 @@ import { profileService } from '../services/profileService';
 
 export const ProfileSetupPage: React.FC = () => {
   const navigate = useNavigate();
-  const { profile, refreshProfile } = useAuth();
+  const { profile, refreshProfile, isStaff } = useAuth();
+
+  useEffect(() => {
+    if (isStaff) {
+      navigate('/home', { replace: true });
+    }
+  }, [isStaff, navigate]);
 
   const isCollegeVerified = Boolean(profile?.college_identity_linked);
   const isGenderLocked = Boolean(profile?.gender_locked_at || (profile?.gender && profile.gender.trim() !== ''));

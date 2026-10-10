@@ -6,7 +6,7 @@
  * Free-text username entry is prohibited to prevent leaking real identities.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   RefreshCw,
@@ -34,6 +34,12 @@ import { getEffectivePersona } from '../utils/persona';
 export const UsernameSelectionPage: React.FC = () => {
   const navigate = useNavigate();
   const { profile, refreshProfile, isStaff } = useAuth();
+
+  useEffect(() => {
+    if (isStaff) {
+      navigate('/settings', { replace: true });
+    }
+  }, [isStaff, navigate]);
 
   const effectivePersona = getEffectivePersona(profile, isStaff);
   const isVerified = effectivePersona.isVerified;

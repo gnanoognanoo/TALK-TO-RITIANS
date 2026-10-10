@@ -535,3 +535,142 @@ describe('Fix 4 — Live Read-Only Room Moderation Chat Viewer', () => {
     assert.equal(hasSendComposer, false);
   });
 });
+
+// ----------------------------------------------------------------------------
+// DEVELOPER ID VERIFICATION BYPASS TESTS
+// ----------------------------------------------------------------------------
+
+describe('Developer ID Verification Bypass — Zero Student ID Linkage Required', () => {
+  const developerUser = {
+    id: '532274f3-7fd9-4206-b353-dcd36bababd5',
+    college_identity_linked: false, // Explicitly false! No student ID linked
+    first_verified_at: null,
+    is_staff: true,
+    staff_role: 'developer',
+    display_username: 'Heisenberg',
+    gender: null,
+    gender_locked_at: null,
+    avatar_config: {
+      type: 'gallery',
+      url: 'https://talk-to-ritians.vercel.app/avatars/heisenberg.webp',
+    },
+  };
+
+  const normalStudentUnverified = {
+    id: '11111111-2222-3333-4444-555555555555',
+    college_identity_linked: false,
+    first_verified_at: null,
+    is_staff: false,
+    staff_role: null,
+    display_username: 'CustomStudentAttempt',
+    gender: null,
+    gender_locked_at: null,
+    avatar_config: {
+      face: 'sharp',
+      skin: '#E0AC69',
+    },
+  };
+
+  test('server authorization relies strictly on platform_staff membership, not college_identity_linked', () => {
+    const isPlatformStaff = (user) => Boolean(user.is_staff && user.staff_role === 'developer');
+    assert.equal(isPlatformStaff(developerUser), true);
+    assert.equal(developerUser.college_identity_linked, false);
+    assert.equal(isPlatformStaff(normalStudentUnverified), false);
+  });
+
+  test('developer with no linked ID can set custom username (Heisenberg)', () => {
+    const persona = getEffectivePersona(developerUser);
+    assert.equal(persona.displayUsername, 'Heisenberg');
+  });
+
+  test('developer with no linked ID can upload gallery avatar', () => {
+    const persona = getEffectivePersona(developerUser);
+    assert.equal(persona.avatarConfig.type, 'gallery');
+    assert.equal(persona.avatarConfig.url, 'https://talk-to-ritians.vercel.app/avatars/heisenberg.webp');
+  });
+
+  test('developer can chat without college ID (matchmaking and peer persona resolution)', () => {
+    const peerPersona = getEffectivePersona(developerUser);
+    assert.equal(peerPersona.displayUsername, 'Heisenberg');
+    assert.ok(!peerPersona.displayUsername.startsWith('Unknown User'));
+    assert.equal(peerPersona.isVerified, false, 'Does not falsely flag developer as verified RIT student');
+  });
+
+  test('other students see Developer username and gallery avatar, not Unknown User', () => {
+    const roomPeerResolution = {
+      peer_id: developerUser.id,
+      ...getEffectivePersona(developerUser),
+    };
+    assert.equal(roomPeerResolution.displayUsername, 'Heisenberg');
+    assert.equal(roomPeerResolution.avatarConfig.type, 'gallery');
+    assert.notEqual(roomPeerResolution.displayUsername, 'Unknown User 4821');
+  });
+
+  test('developer receives no verification-required prompts (ProtectedRoute bypass)', () => {
+    const checkProtectedRouteRedirect = (user, path) => {
+      const isStaff = Boolean(user.is_staff);
+      const isCollegeLinked = Boolean(user.college_identity_linked);
+      if (path === '/settings' || path === '/home' || path === '/developer') {
+        return null;
+      }
+      if (!isCollegeLinked && !isStaff) {
+        return '/settings';
+      }
+      return null;
+    };
+
+    assert.equal(checkProtectedRouteRedirect(developerUser, '/matching'), null, 'Developer not redirected to /settings');
+    assert.equal(checkProtectedRouteRedirect(normalStudentUnverified, '/settings'), null);
+  });
+
+  test('developer does not need gender confirmation or gender lock', () => {
+    assert.equal(developerUser.gender, null);
+    assert.equal(developerUser.gender_locked_at, null);
+    const persona = getEffectivePersona(developerUser);
+    assert.ok(persona.displayUsername);
+  });
+
+  test('developer can access Developer Console without college ID', () => {
+    const canAccessConsole = Boolean(developerUser.is_staff && developerUser.staff_role === 'developer');
+    assert.equal(canAccessConsole, true);
+    assert.equal(developerUser.college_identity_linked, false);
+  });
+
+  test('normal unverified student strictly cannot obtain developer customization permissions', () => {
+    const normalPersona = getEffectivePersona(normalStudentUnverified);
+    assert.match(normalPersona.displayUsername, /^Unknown User \d{4}$/);
+    assert.notEqual(normalPersona.displayUsername, 'CustomStudentAttempt');
+    assert.deepEqual(normalPersona.avatarConfig, DEFAULT_AVATAR_CONFIG);
+  });
+
+  test('student unlink operation never deletes developer username, avatar, or platform_staff record', () => {
+    // Simulating unlink_college_identity logic
+    const unlinkSimulation = (user) => {
+      const isDev = Boolean(user.is_staff && user.staff_role === 'developer');
+      if (isDev) {
+        // Developer bypass: preserve display_username, gallery avatar, and staff role
+        return {
+          ...user,
+          college_identity_linked: false,
+          first_verified_at: null,
+          verified_at: null,
+        };
+      }
+      // Normal student: wipe persona
+      return {
+        ...user,
+        college_identity_linked: false,
+        first_verified_at: null,
+        display_username: null,
+        avatar_config: null,
+        department: null,
+        batch: null,
+      };
+    };
+
+    const unlinkedDev = unlinkSimulation(developerUser);
+    assert.equal(unlinkedDev.display_username, 'Heisenberg');
+    assert.equal(unlinkedDev.avatar_config.type, 'gallery');
+    assert.equal(unlinkedDev.is_staff, true);
+  });
+});

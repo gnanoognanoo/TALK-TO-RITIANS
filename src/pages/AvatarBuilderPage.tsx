@@ -30,7 +30,13 @@ import { profileService } from '../services/profileService';
 
 export const AvatarBuilderPage: React.FC = () => {
   const navigate = useNavigate();
-  const { profile, refreshProfile } = useAuth();
+  const { profile, refreshProfile, isStaff } = useAuth();
+
+  useEffect(() => {
+    if (isStaff) {
+      navigate('/settings', { replace: true });
+    }
+  }, [isStaff, navigate]);
 
   const isVerified = Boolean(profile?.college_identity_linked);
 

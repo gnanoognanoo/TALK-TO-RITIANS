@@ -17,7 +17,7 @@ export interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { user, session, profile, loading } = useAuth();
+  const { user, session, profile, loading, isStaff } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -36,9 +36,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   const path = location.pathname;
 
-  // Unverified users accessing customization sub-routes are redirected to settings
+  // Unverified normal students accessing customization sub-routes are redirected to settings
   if (
     !profile?.college_identity_linked &&
+    !isStaff &&
     (path.startsWith('/username') || path.startsWith('/avatar') || path.startsWith('/profile/setup'))
   ) {
     return <Navigate to="/settings" replace />;

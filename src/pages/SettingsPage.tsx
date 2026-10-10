@@ -51,7 +51,7 @@ import { presenceService } from '../services/presenceService';
 
 export const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, profile, isStaff, staffRole, refreshProfile, unlinkCollegeIdentity, signOut } = useAuth();
+  const { user, profile, isStaff, refreshProfile, unlinkCollegeIdentity, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
 
   const effectivePersona = getEffectivePersona(profile, isStaff);
@@ -273,6 +273,10 @@ export const SettingsPage: React.FC = () => {
       {/* =========================================================================
           DEVELOPER SECTION (Authorized Staff Only)
           ========================================================================= */}
+      {/* =========================================================================
+          DEVELOPER SECTION (Authorized Staff Only)
+          Developers do not need college ID verification or linkage.
+          ========================================================================= */}
       {isStaff && (
         <Card className="border-amber-500/40 bg-[#14120A] shadow-[0_4px_20px_rgba(227,163,41,0.12)]">
           <CardHeader>
@@ -280,15 +284,15 @@ export const SettingsPage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Terminal className="h-5 w-5 text-amber-400" />
                 <CardTitle className="text-base sm:text-lg text-[#F4F6F1]">
-                  Developer Controls
+                  Developer Persona
                 </CardTitle>
               </div>
-              <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[11px] font-bold uppercase tracking-wider">
-                {staffRole?.toUpperCase() || 'DEVELOPER'}
+              <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[11px] font-bold tracking-wide">
+                ⚡ Developer Access Active
               </span>
             </div>
             <CardDescription className="text-xs text-[#9DA89A]">
-              Platform administration, realtime analytics &amp; custom staff persona.
+              Independent custom identity with gallery avatar bypass. Physical college ID is not required.
             </CardDescription>
           </CardHeader>
 
@@ -309,11 +313,11 @@ export const SettingsPage: React.FC = () => {
             </div>
 
             {/* Developer Persona Customization */}
-            <div className="space-y-3 pt-1">
+            <div className="space-y-4 pt-1">
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label htmlFor="dev-username-input" className="text-xs font-semibold text-[#9DA89A] uppercase tracking-wider block">
-                    Custom Anonymous Handle
+                    Developer Username
                   </label>
                   <span className="text-[11px] font-mono text-[#6F796D]">
                     {devUsername.length}/20 chars
@@ -341,12 +345,12 @@ export const SettingsPage: React.FC = () => {
                 />
                 <div className="space-y-1.5 flex-1">
                   <span className="text-xs font-bold text-[#F4F6F1] block">
-                    Gallery Avatar Upload
+                    Developer Gallery Avatar
                   </span>
                   <div className="flex items-center gap-2">
                     <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#121E12] border border-[rgba(141,168,82,0.25)] text-xs font-semibold text-[#A2BD63] hover:bg-[#182B18] cursor-pointer transition-all active:scale-95">
                       <Upload className="h-3.5 w-3.5" />
-                      <span>{isUploadingDevAvatar ? 'Uploading...' : 'Upload Image'}</span>
+                      <span>{isUploadingDevAvatar ? 'Uploading...' : devAvatarUrl ? 'Change Avatar' : 'Upload Image'}</span>
                       <input
                         type="file"
                         accept="image/jpeg,image/png,image/webp"
@@ -390,280 +394,280 @@ export const SettingsPage: React.FC = () => {
       )}
 
       {/* =========================================================================
-          SECTION 1: PERSONA
+          STUDENT PERSONA & VERIFICATION (Normal Students Only)
+          Developers bypass student persona & ID verification completely.
           ========================================================================= */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-[#8DA852]" />
-              <CardTitle className="text-base sm:text-lg text-[#F4F6F1]">
-                Persona
-              </CardTitle>
-            </div>
-            {isStaff ? (
-              <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[11px] font-semibold">
-                Staff Persona
-              </span>
-            ) : isVerified ? (
-              <span className="px-2.5 py-0.5 rounded-full bg-[#121E12] border border-[rgba(141,168,82,0.3)] text-[#A2BD63] text-[11px] font-semibold">
-                ✓ Unlocked
-              </span>
-            ) : (
-              <span className="px-2.5 py-0.5 rounded-full bg-[#14120A] border border-amber-500/30 text-amber-300 text-[11px] font-semibold">
-                Locked
-              </span>
-            )}
-          </div>
-          <CardDescription className="text-xs text-[#9DA89A]">
-            {isVerified
-              ? 'Customize your anonymous identity and avatar for 7-minute chats.'
-              : 'Link your physical RIT ID to unlock anonymous handle & avatar customization.'}
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent className="space-y-5 pt-1">
-          {!isVerified && !isStaff ? (
-            /* Locked State */
-            <div className="p-5 rounded-2xl bg-[#091009]/80 border border-[rgba(141,168,82,0.18)] text-center space-y-3">
-              <div className="h-10 w-10 rounded-full bg-[#121E12] text-[#8DA852] flex items-center justify-center mx-auto border border-[rgba(141,168,82,0.2)]">
-                <Lock className="h-5 w-5" />
-              </div>
-              <div className="space-y-1">
-                <h4 className="text-sm font-bold text-[#F4F6F1]">
-                  Profile Customization Locked
-                </h4>
-                <p className="text-xs text-[#9DA89A] max-w-sm mx-auto leading-relaxed">
-                  You are currently chatting as <span className="font-mono text-[#A2BD63]">{displayUsername}</span>. Scan your physical RIT student ID to unlock custom alias rerolling and modular avatars.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => navigate('/verify')}
-                className="liquid-cta-btn inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold text-white shadow-sm active:scale-95 transition-all"
-              >
-                <span>Verify RIT ID Now</span>
-                <ArrowRight className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          ) : (
-            /* Verified Persona Controls */
-            <div className="space-y-5">
-              {/* Alias Reroll UI */}
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-[#9DA89A] uppercase tracking-wider block">
-                    Anonymous Handle
-                  </span>
-                  {aliasSuccessMessage && (
-                    <span className="text-xs font-semibold text-[#A2BD63]">
-                      ✓ {aliasSuccessMessage}
-                    </span>
-                  )}
+      {!isStaff && (
+        <>
+          {/* SECTION 1: PERSONA */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-[#8DA852]" />
+                  <CardTitle className="text-base sm:text-lg text-[#F4F6F1]">
+                    Persona
+                  </CardTitle>
                 </div>
+                {isVerified ? (
+                  <span className="px-2.5 py-0.5 rounded-full bg-[#121E12] border border-[rgba(141,168,82,0.3)] text-[#A2BD63] text-[11px] font-semibold">
+                    ✓ Unlocked
+                  </span>
+                ) : (
+                  <span className="px-2.5 py-0.5 rounded-full bg-[#14120A] border border-amber-500/30 text-amber-300 text-[11px] font-semibold">
+                    Locked
+                  </span>
+                )}
+              </div>
+              <CardDescription className="text-xs text-[#9DA89A]">
+                {isVerified
+                  ? 'Customize your anonymous identity and avatar for 7-minute chats.'
+                  : 'Link your physical RIT ID to unlock anonymous handle & avatar customization.'}
+              </CardDescription>
+            </CardHeader>
 
-                <div className="p-4 rounded-2xl bg-[#091009]/90 border border-[rgba(141,168,82,0.2)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)]">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-[#121E12] border border-[rgba(141,168,82,0.25)] flex items-center justify-center text-[#A2BD63] font-bold text-sm shrink-0">
-                      {aliasCandidate.slice(0, 2).toUpperCase()}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span id="alias-candidate-display" className="text-lg sm:text-xl font-extrabold text-[#F4F6F1] tracking-tight">
-                          {aliasCandidate}
-                        </span>
-                        <button
-                          type="button"
-                          id="alias-refresh-button"
-                          onClick={handleRefreshAlias}
-                          title="Generate another alias"
-                          className="p-1.5 rounded-full text-[#9DA89A] hover:text-[#F4F6F1] hover:bg-[#121E12] active:scale-95 transition-all"
-                        >
-                          <RefreshCw className="h-4 w-4" />
-                        </button>
-                      </div>
-                      <span className="text-[11px] text-[#6F796D]">
-                        {aliasCandidate === displayUsername ? 'Active handle' : 'Candidate preview — tap Use to apply'}
-                      </span>
-                    </div>
+            <CardContent className="space-y-5 pt-1">
+              {!isVerified ? (
+                /* Locked State */
+                <div className="p-5 rounded-2xl bg-[#091009]/80 border border-[rgba(141,168,82,0.18)] text-center space-y-3">
+                  <div className="h-10 w-10 rounded-full bg-[#121E12] text-[#8DA852] flex items-center justify-center mx-auto border border-[rgba(141,168,82,0.2)]">
+                    <Lock className="h-5 w-5" />
                   </div>
-
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-bold text-[#F4F6F1]">
+                      Profile Customization Locked
+                    </h4>
+                    <p className="text-xs text-[#9DA89A] max-w-sm mx-auto leading-relaxed">
+                      You are currently chatting as <span className="font-mono text-[#A2BD63]">{displayUsername}</span>. Scan your physical RIT student ID to unlock custom alias rerolling and modular avatars.
+                    </p>
+                  </div>
                   <button
                     type="button"
-                    id="alias-save-button"
-                    disabled={isSavingAlias || aliasCandidate === displayUsername}
-                    onClick={handleSaveAlias}
-                    className="liquid-cta-btn px-4 py-2 rounded-full text-xs font-bold text-white disabled:opacity-40 active:scale-95 transition-all shadow-sm shrink-0"
+                    onClick={() => navigate('/verify')}
+                    className="liquid-cta-btn inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold text-white shadow-sm active:scale-95 transition-all"
                   >
-                    {aliasCandidate === displayUsername ? 'Active' : `Use ${aliasCandidate}`}
+                    <span>Verify RIT ID Now</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
                   </button>
                 </div>
-                {aliasError && (
-                  <p className="text-xs text-rose-400">{aliasError}</p>
-                )}
-              </div>
+              ) : (
+                /* Verified Persona Controls */
+                <div className="space-y-5">
+                  {/* Alias Reroll UI */}
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-[#9DA89A] uppercase tracking-wider block">
+                        Anonymous Handle
+                      </span>
+                      {aliasSuccessMessage && (
+                        <span className="text-xs font-semibold text-[#A2BD63]">
+                          ✓ {aliasSuccessMessage}
+                        </span>
+                      )}
+                    </div>
 
-              {/* Avatar Selection */}
-              <div className="p-3.5 rounded-2xl bg-[#091009]/70 border border-[rgba(141,168,82,0.18)] flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <Avatar
-                    size="lg"
-                    avatarConfig={effectivePersona.avatarConfig}
-                    initials={effectivePersona.initials}
-                    shape="circle"
-                  />
-                  <div>
-                    <span className="text-xs font-bold text-[#F4F6F1] block">Modular Avatar</span>
-                    <span className="text-[11px] text-[#9DA89A]">Face, hairstyles, expressions &amp; clothing</span>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => navigate('/avatar')}
-                  className="px-3.5 py-2 rounded-full text-xs font-semibold text-[#A2BD63] bg-[#121E12] border border-[rgba(141,168,82,0.25)] hover:bg-[#182B18] active:scale-95 transition-all shrink-0 inline-flex items-center gap-1.5"
-                >
-                  <Edit2 className="h-3.5 w-3.5" />
-                  <span>Customize</span>
-                </button>
-              </div>
+                    <div className="p-4 rounded-2xl bg-[#091009]/90 border border-[rgba(141,168,82,0.2)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)]">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-[#121E12] border border-[rgba(141,168,82,0.25)] flex items-center justify-center text-[#A2BD63] font-bold text-sm shrink-0">
+                          {aliasCandidate.slice(0, 2).toUpperCase()}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span id="alias-candidate-display" className="text-lg sm:text-xl font-extrabold text-[#F4F6F1] tracking-tight">
+                              {aliasCandidate}
+                            </span>
+                            <button
+                              type="button"
+                              id="alias-refresh-button"
+                              onClick={handleRefreshAlias}
+                              title="Generate another alias"
+                              className="p-1.5 rounded-full text-[#9DA89A] hover:text-[#F4F6F1] hover:bg-[#121E12] active:scale-95 transition-all"
+                            >
+                              <RefreshCw className="h-4 w-4" />
+                            </button>
+                          </div>
+                          <span className="text-[11px] text-[#6F796D]">
+                            {aliasCandidate === displayUsername ? 'Active handle' : 'Candidate preview — tap Use to apply'}
+                          </span>
+                        </div>
+                      </div>
 
-              {/* Private Gender Selection & Freeze */}
-              <div className="space-y-2 pt-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-[#9DA89A] uppercase tracking-wider block">
-                    Private Gender
-                  </span>
-                  {genderSuccessMessage && (
-                    <span className="text-xs font-semibold text-[#A2BD63]">
-                      ✓ {genderSuccessMessage}
-                    </span>
-                  )}
-                </div>
-
-                {isGenderLocked ? (
-                  <div className="p-3 rounded-xl bg-[#091009]/80 border border-[rgba(141,168,82,0.18)] flex items-center justify-between text-xs">
-                    <span className="text-[#9DA89A]">
-                      Gender: <strong className="text-[#F4F6F1] ml-1">{profile?.gender || selectedGender}</strong>
-                    </span>
-                    <span className="text-[11px] font-semibold text-[#A2BD63] px-2 py-0.5 rounded-full bg-[#121E12]">
-                      ✓ Locked
-                    </span>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {GENDER_OPTIONS.map((gOption) => (
                       <button
-                        key={gOption}
                         type="button"
-                        onClick={() => setGenderToConfirm(gOption)}
-                        className="py-2 px-3 rounded-xl border border-[rgba(141,168,82,0.2)] bg-[#091009] text-xs font-medium text-[#F4F6F1] hover:border-[#8DA852] hover:bg-[#121E12] active:scale-95 transition-all"
+                        id="alias-save-button"
+                        disabled={isSavingAlias || aliasCandidate === displayUsername}
+                        onClick={handleSaveAlias}
+                        className="liquid-cta-btn px-4 py-2 rounded-full text-xs font-bold text-white disabled:opacity-40 active:scale-95 transition-all shadow-sm shrink-0"
                       >
-                        {gOption}
+                        {aliasCandidate === displayUsername ? 'Active' : `Use ${aliasCandidate}`}
                       </button>
-                    ))}
+                    </div>
+                    {aliasError && (
+                      <p className="text-xs text-rose-400">{aliasError}</p>
+                    )}
                   </div>
+
+                  {/* Avatar Selection */}
+                  <div className="p-3.5 rounded-2xl bg-[#091009]/70 border border-[rgba(141,168,82,0.18)] flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <Avatar
+                        size="lg"
+                        avatarConfig={effectivePersona.avatarConfig}
+                        initials={effectivePersona.initials}
+                        shape="circle"
+                      />
+                      <div>
+                        <span className="text-xs font-bold text-[#F4F6F1] block">Modular Avatar</span>
+                        <span className="text-[11px] text-[#9DA89A]">Face, hairstyles, expressions &amp; clothing</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => navigate('/avatar')}
+                      className="px-3.5 py-2 rounded-full text-xs font-semibold text-[#A2BD63] bg-[#121E12] border border-[rgba(141,168,82,0.25)] hover:bg-[#182B18] active:scale-95 transition-all shrink-0 inline-flex items-center gap-1.5"
+                    >
+                      <Edit2 className="h-3.5 w-3.5" />
+                      <span>Customize</span>
+                    </button>
+                  </div>
+
+                  {/* Private Gender Selection & Freeze */}
+                  <div className="space-y-2 pt-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-[#9DA89A] uppercase tracking-wider block">
+                        Private Gender
+                      </span>
+                      {genderSuccessMessage && (
+                        <span className="text-xs font-semibold text-[#A2BD63]">
+                          ✓ {genderSuccessMessage}
+                        </span>
+                      )}
+                    </div>
+
+                    {isGenderLocked ? (
+                      <div className="p-3 rounded-xl bg-[#091009]/80 border border-[rgba(141,168,82,0.18)] flex items-center justify-between text-xs">
+                        <span className="text-[#9DA89A]">
+                          Gender: <strong className="text-[#F4F6F1] ml-1">{profile?.gender || selectedGender}</strong>
+                        </span>
+                        <span className="text-[11px] font-semibold text-[#A2BD63] px-2 py-0.5 rounded-full bg-[#121E12]">
+                          ✓ Locked
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {GENDER_OPTIONS.map((gOption) => (
+                          <button
+                            key={gOption}
+                            type="button"
+                            onClick={() => setGenderToConfirm(gOption)}
+                            className="py-2 px-3 rounded-xl border border-[rgba(141,168,82,0.2)] bg-[#091009] text-xs font-medium text-[#F4F6F1] hover:border-[#8DA852] hover:bg-[#121E12] active:scale-95 transition-all"
+                          >
+                            {gOption}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {genderError && <p className="text-xs text-rose-400">{genderError}</p>}
+                  </div>
+
+                  {/* Verified Student Credentials (Immutable) */}
+                  <div className="space-y-1.5 pt-1">
+                    <span className="text-xs font-semibold text-[#9DA89A] uppercase tracking-wider block">
+                      Student Verification Details
+                    </span>
+                    <div className="p-3.5 rounded-xl bg-[#091009]/80 border border-[rgba(141,168,82,0.15)] text-xs space-y-1.5">
+                      <div className="flex justify-between py-0.5 border-b border-[rgba(141,168,82,0.1)]">
+                        <span className="text-[#9DA89A]">Name</span>
+                        <span className="font-bold text-[#F4F6F1]">{profile?.name || profile?.full_name || 'Verified Student'}</span>
+                      </div>
+                      <div className="flex justify-between py-0.5 border-b border-[rgba(141,168,82,0.1)]">
+                        <span className="text-[#9DA89A]">Department</span>
+                        <span className="font-semibold text-[#A2BD63]">{profile?.department || 'RIT'}</span>
+                      </div>
+                      <div className="flex justify-between py-0.5">
+                        <span className="text-[#9DA89A]">Batch</span>
+                        <span className="font-mono text-[#F4F6F1]">{profile?.batch || '—'}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* SECTION 2: VERIFICATION */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5 text-[#8DA852]" />
+                  <CardTitle className="text-base sm:text-lg text-[#F4F6F1]">
+                    Verification
+                  </CardTitle>
+                </div>
+                {isVerified ? (
+                  <span className="px-2.5 py-0.5 rounded-full bg-[#121E12] text-[#A2BD63] text-[11px] font-semibold">
+                    ✓ Verified
+                  </span>
+                ) : (
+                  <span className="px-2.5 py-0.5 rounded-full bg-[#14120A] text-amber-300 text-[11px] font-semibold">
+                    Unverified
+                  </span>
                 )}
-                {genderError && <p className="text-xs text-rose-400">{genderError}</p>}
               </div>
+              <CardDescription className="text-xs text-[#9DA89A]">
+                {isVerified
+                  ? 'Your RIT identity is cryptographically linked.'
+                  : 'Scan your physical RIT student ID to link your campus status.'}
+              </CardDescription>
+            </CardHeader>
 
-              {/* Verified Student Credentials (Immutable) */}
-              <div className="space-y-1.5 pt-1">
-                <span className="text-xs font-semibold text-[#9DA89A] uppercase tracking-wider block">
-                  Student Verification Details
-                </span>
-                <div className="p-3.5 rounded-xl bg-[#091009]/80 border border-[rgba(141,168,82,0.15)] text-xs space-y-1.5">
-                  <div className="flex justify-between py-0.5 border-b border-[rgba(141,168,82,0.1)]">
-                    <span className="text-[#9DA89A]">Name</span>
-                    <span className="font-bold text-[#F4F6F1]">{profile?.name || profile?.full_name || 'Verified Student'}</span>
+            <CardContent className="space-y-4 pt-1">
+              {!isVerified ? (
+                <div className="p-4 rounded-2xl bg-[#091009]/80 border border-[rgba(141,168,82,0.18)] space-y-3">
+                  <div className="space-y-1">
+                    <span className="text-xs font-bold text-[#F4F6F1] block">
+                      Verify your RIT identity
+                    </span>
+                    <p className="text-xs text-[#9DA89A] leading-relaxed">
+                      Scan the QR code on your card to link your student status and unlock your custom persona.
+                    </p>
                   </div>
-                  <div className="flex justify-between py-0.5 border-b border-[rgba(141,168,82,0.1)]">
-                    <span className="text-[#9DA89A]">Department</span>
-                    <span className="font-semibold text-[#A2BD63]">{profile?.department || 'RIT'}</span>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/verify')}
+                    className="liquid-cta-btn inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold text-white shadow-sm active:scale-95 transition-all"
+                  >
+                    <CreditCard className="h-3.5 w-3.5" />
+                    <span>Scan Physical RIT ID</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <div className="p-4 rounded-2xl bg-[#091009]/80 border border-[rgba(141,168,82,0.18)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-full bg-[#121E12] text-[#8DA852] flex items-center justify-center shrink-0 border border-[rgba(141,168,82,0.25)]">
+                      <CheckCircle2 className="h-5 w-5" />
+                    </div>
+                    <div className="text-xs">
+                      <span className="font-bold text-[#F4F6F1] block">Physical RIT ID Verified</span>
+                      <span className="text-[#9DA89A]">{profile?.department ? `${profile.department} • Batch ${profile.batch || ''}` : 'Active enrollment linked'}</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between py-0.5">
-                    <span className="text-[#9DA89A]">Batch</span>
-                    <span className="font-mono text-[#F4F6F1]">{profile?.batch || '—'}</span>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowUnlinkModal(true)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-rose-300 hover:text-rose-200 bg-rose-950/20 border border-rose-500/30 hover:bg-rose-950/40 active:scale-95 transition-all shrink-0"
+                  >
+                    <Unlink className="h-3.5 w-3.5" />
+                    <span>Unlink ID</span>
+                  </button>
                 </div>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* =========================================================================
-          SECTION 2: VERIFICATION
-          ========================================================================= */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-[#8DA852]" />
-              <CardTitle className="text-base sm:text-lg text-[#F4F6F1]">
-                Verification
-              </CardTitle>
-            </div>
-            {isVerified ? (
-              <span className="px-2.5 py-0.5 rounded-full bg-[#121E12] text-[#A2BD63] text-[11px] font-semibold">
-                ✓ Verified
-              </span>
-            ) : (
-              <span className="px-2.5 py-0.5 rounded-full bg-[#14120A] text-amber-300 text-[11px] font-semibold">
-                Unverified
-              </span>
-            )}
-          </div>
-          <CardDescription className="text-xs text-[#9DA89A]">
-            {isVerified
-              ? 'Your RIT identity is cryptographically linked.'
-              : 'Scan your physical RIT student ID to link your campus status.'}
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent className="space-y-4 pt-1">
-          {!isVerified ? (
-            <div className="p-4 rounded-2xl bg-[#091009]/80 border border-[rgba(141,168,82,0.18)] space-y-3">
-              <div className="space-y-1">
-                <span className="text-xs font-bold text-[#F4F6F1] block">
-                  Verify your RIT identity
-                </span>
-                <p className="text-xs text-[#9DA89A] leading-relaxed">
-                  Scan the QR code on your card to link your student status and unlock your custom persona.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => navigate('/verify')}
-                className="liquid-cta-btn inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold text-white shadow-sm active:scale-95 transition-all"
-              >
-                <CreditCard className="h-3.5 w-3.5" />
-                <span>Scan Physical RIT ID</span>
-                <ArrowRight className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          ) : (
-            <div className="p-4 rounded-2xl bg-[#091009]/80 border border-[rgba(141,168,82,0.18)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-full bg-[#121E12] text-[#8DA852] flex items-center justify-center shrink-0 border border-[rgba(141,168,82,0.25)]">
-                  <CheckCircle2 className="h-5 w-5" />
-                </div>
-                <div className="text-xs">
-                  <span className="font-bold text-[#F4F6F1] block">Physical RIT ID Verified</span>
-                  <span className="text-[#9DA89A]">{profile?.department ? `${profile.department} • Batch ${profile.batch || ''}` : 'Active enrollment linked'}</span>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowUnlinkModal(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-rose-300 hover:text-rose-200 bg-rose-950/20 border border-rose-500/30 hover:bg-rose-950/40 active:scale-95 transition-all shrink-0"
-              >
-                <Unlink className="h-3.5 w-3.5" />
-                <span>Unlink ID</span>
-              </button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              )}
+            </CardContent>
+          </Card>
+        </>
+      )}
 
       {/* =========================================================================
           SECTION 3: APPEARANCE
