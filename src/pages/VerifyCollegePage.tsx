@@ -857,13 +857,13 @@ export const VerifyCollegePage: React.FC = () => {
       <Modal
         isOpen={showUnlinkModal}
         onClose={() => setShowUnlinkModal(false)}
-        title="Unlink College Identity"
+        title="Unlink RIT ID?"
       >
         <div className="space-y-4">
-          <div className="flex items-start gap-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-xs leading-relaxed">
+          <div className="flex items-start gap-3 p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-xs leading-relaxed">
             <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
             <p>
-              Unlinking your verification resets your public profile persona to an anonymous guest during chats. Active chat rooms will immediately see your persona revert to Unknown User.
+              This will remove your verified student information, gender selection, anonymous student persona and ID link. You can verify again later as a fresh verification.
             </p>
           </div>
 
@@ -890,10 +890,10 @@ export const VerifyCollegePage: React.FC = () => {
               variant="danger"
               size="sm"
               isLoading={isUnlinking}
-              loadingText="Unlinking..."
+              loadingText="Unlinking & Resetting..."
               onClick={handleUnlink}
             >
-              Confirm Unlink
+              Unlink &amp; Reset
             </Button>
           </div>
         </div>

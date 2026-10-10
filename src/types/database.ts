@@ -562,6 +562,12 @@ export interface Database {
         };
         Returns: string;
       };
+      close_room_moderation_session: {
+        Args: {
+          p_room_id: string;
+        };
+        Returns: Json;
+      };
     };
   };
 }

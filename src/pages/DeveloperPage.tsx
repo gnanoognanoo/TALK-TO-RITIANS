@@ -12,7 +12,7 @@
  * - Append-only admin audit log inspector
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Terminal,
@@ -34,6 +34,7 @@ import {
   ExternalLink,
   Radio,
   Check,
+  ChevronDown,
 } from 'lucide-react';
 import {
   Button,
@@ -50,6 +51,7 @@ import {
 } from '../components';
 import { useAuth } from '../context';
 import { staffService } from '../services/staffService';
+import { supabase } from '../lib/supabase';
 import {
   AdminDashboardStats,
   AdminOnlineUser,
@@ -57,6 +59,7 @@ import {
   AdminActiveRoom,
   AdminRoomDetails,
   ModerationTranscriptMessage,
+  RoomModerationData,
   AdminAuditLogRow,
   AdminUserState,
 } from '../types';
@@ -110,12 +113,19 @@ export const DeveloperPage: React.FC = () => {
   const [roomDetailsLoading, setRoomDetailsLoading] = useState<boolean>(false);
   const [roomDetailsError, setRoomDetailsError] = useState<string | null>(null);
 
-  // 3. Moderation Transcript
+  // 3. Moderation Transcript (Live Read-Only Chat Viewer)
   const [transcriptRoomId, setTranscriptRoomId] = useState<string | null>(null);
   const [transcriptReason, setTranscriptReason] = useState<string>('Investigating reported incident');
   const [transcriptMessages, setTranscriptMessages] = useState<ModerationTranscriptMessage[] | null>(null);
+  const [moderationData, setModerationData] = useState<RoomModerationData | null>(null);
+  const [liveStatus, setLiveStatus] = useState<'connecting' | 'live' | 'reconnecting' | 'ended'>('connecting');
+  const [hasUnreadMessages, setHasUnreadMessages] = useState<boolean>(false);
   const [transcriptLoading, setTranscriptLoading] = useState<boolean>(false);
   const [transcriptError, setTranscriptError] = useState<string | null>(null);
+
+  const chatContainerRef = useRef<HTMLDivElement | null>(null);
+  const chatEndRef = useRef<HTMLDivElement | null>(null);
+  const isNearBottomRef = useRef<boolean>(true);
 
   // Action pending states
   const [invitingUserId, setInvitingUserId] = useState<string | null>(null);
@@ -297,9 +307,138 @@ export const DeveloperPage: React.FC = () => {
       return;
     }
 
-    setTranscriptMessages(res.data);
+    setModerationData(res.data);
+    setTranscriptMessages(res.data.messages);
+    setLiveStatus(res.data.room_status === 'ended' ? 'ended' : 'live');
     fetchAuditLogs();
   };
+
+  // Realtime Room Moderation Chat Viewer
+  useEffect(() => {
+    if (!transcriptRoomId || !moderationData) return;
+
+    const roomId = transcriptRoomId;
+    let isSubscribed = true;
+
+    const channel = supabase
+      .channel(`live_moderation_${roomId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_messages',
+          filter: `room_id=eq.${roomId}`,
+        },
+        (payload) => {
+          if (!isSubscribed) return;
+          const newMsg = payload.new as any;
+          if (!newMsg || newMsg.room_id !== roomId) return;
+
+          setTranscriptMessages((prev) => {
+            if (!prev) return prev;
+            if (prev.some((m) => m.id === newMsg.id)) return prev;
+
+            const senderUsername =
+              newMsg.sender_id === moderationData.participant_a.id
+                ? moderationData.participant_a.username
+                : newMsg.sender_id === moderationData.participant_b.id
+                ? moderationData.participant_b.username
+                : 'Participant';
+
+            const fullMsg: ModerationTranscriptMessage = {
+              id: newMsg.id,
+              room_id: newMsg.room_id,
+              sender_id: newMsg.sender_id,
+              sender_username: senderUsername,
+              content: newMsg.content,
+              message_type: newMsg.message_type || 'text',
+              created_at: newMsg.created_at,
+            };
+
+            const next = [...prev, fullMsg].sort(
+              (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+            );
+            return next;
+          });
+
+          if (isNearBottomRef.current) {
+            setTimeout(() => {
+              chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }, 50);
+          } else {
+            setHasUnreadMessages(true);
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'chat_rooms',
+          filter: `id=eq.${roomId}`,
+        },
+        (payload) => {
+          if (!isSubscribed) return;
+          const updatedRoom = payload.new as any;
+          if (updatedRoom && updatedRoom.status === 'ended') {
+            setLiveStatus('ended');
+          }
+        }
+      )
+      .subscribe((status) => {
+        if (!isSubscribed) return;
+        if (status === 'SUBSCRIBED') {
+          setLiveStatus(moderationData.room_status === 'ended' ? 'ended' : 'live');
+        } else if (status === 'TIMED_OUT' || status === 'CHANNEL_ERROR') {
+          setLiveStatus('reconnecting');
+        }
+      });
+
+    return () => {
+      isSubscribed = false;
+      supabase.removeChannel(channel);
+    };
+  }, [transcriptRoomId, moderationData]);
+
+  // Initial scroll to bottom when moderation transcript opens
+  useEffect(() => {
+    if (transcriptMessages && transcriptMessages.length > 0) {
+      chatEndRef.current?.scrollIntoView({ behavior: 'auto' });
+    }
+  }, [moderationData]);
+
+  const handleModerationScroll = () => {
+    const el = chatContainerRef.current;
+    if (!el) return;
+    const threshold = 60;
+    const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= threshold;
+    isNearBottomRef.current = isAtBottom;
+    if (isAtBottom) {
+      setHasUnreadMessages(false);
+    }
+  };
+
+  const scrollToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    setHasUnreadMessages(false);
+    isNearBottomRef.current = true;
+  };
+
+  const handleCloseModeration = useCallback(async () => {
+    const roomId = transcriptRoomId;
+    setTranscriptRoomId(null);
+    setTranscriptMessages(null);
+    setModerationData(null);
+    setTranscriptError(null);
+    setHasUnreadMessages(false);
+    setLiveStatus('connecting');
+
+    if (roomId) {
+      await staffService.closeRoomModerationSession(roomId);
+    }
+  }, [transcriptRoomId]);
 
   /**
    * Filtered Users List
@@ -318,6 +457,13 @@ export const DeveloperPage: React.FC = () => {
       return matchesSearch && matchesState;
     });
   }, [usersList, userSearchQuery, userStateFilter]);
+
+  const isUserOnline = (u: AdminOnlineUser) => {
+    if (!u.is_online) return false;
+    if (!u.last_seen_at) return false;
+    const diffMs = Date.now() - new Date(u.last_seen_at).getTime();
+    return diffMs <= 30000;
+  };
 
   const formatSeconds = (sec: number) => {
     const mins = Math.floor(sec / 60);
@@ -734,7 +880,14 @@ export const DeveloperPage: React.FC = () => {
                               <div className="text-[11px] text-[#9DA89A] flex items-center gap-1.5 mt-0.5">
                                 <span>{u.is_verified_student ? 'Verified RITian' : 'Unverified'}</span>
                                 <span>•</span>
-                                <span>{formatRelativeTime(u.last_seen_at)}</span>
+                                {isUserOnline(u) ? (
+                                  <span className="inline-flex items-center gap-1 text-[#A2BD63] font-semibold">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-[#A2BD63]" />
+                                    Online
+                                  </span>
+                                ) : (
+                                  <span>Last seen {formatRelativeTime(u.last_seen_at)}</span>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -850,8 +1003,17 @@ export const DeveloperPage: React.FC = () => {
                             </td>
 
                             {/* Last Seen */}
-                            <td className="py-3 px-4 text-[#9DA89A]">
-                              {formatRelativeTime(u.last_seen_at)}
+                            <td className="py-3 px-4">
+                              {isUserOnline(u) ? (
+                                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#A2BD63]">
+                                  <span className="h-2 w-2 rounded-full bg-[#A2BD63] animate-pulse" />
+                                  Online
+                                </span>
+                              ) : (
+                                <span className="text-xs text-[#9DA89A]">
+                                  {formatRelativeTime(u.last_seen_at)}
+                                </span>
+                              )}
                             </td>
 
                             {/* Current Room */}
@@ -1568,17 +1730,13 @@ export const DeveloperPage: React.FC = () => {
       </Modal>
 
       {/* =====================================================================
-          MODAL 3: MODERATION TRANSCRIPT VIEW (Audited Inspection)
+          MODAL 3: MODERATION TRANSCRIPT VIEW (Live Read-Only Chat Overview)
           ===================================================================== */}
       <Modal
         isOpen={Boolean(transcriptRoomId)}
-        onClose={() => {
-          setTranscriptRoomId(null);
-          setTranscriptMessages(null);
-          setTranscriptError(null);
-        }}
-        title="Room Moderation Transcript"
-        maxWidth="lg"
+        onClose={handleCloseModeration}
+        title={transcriptMessages ? undefined : 'Room Moderation'}
+        maxWidth="xl"
       >
         <div className="space-y-4">
           {!transcriptMessages ? (
@@ -1590,8 +1748,6 @@ export const DeveloperPage: React.FC = () => {
                   <strong>Mandatory Auditing:</strong> Opening a student conversation transcript creates an immutable log in <code className="font-mono">public.admin_audit_log</code>. Enter a specific operational or moderation reason (minimum 5 characters).
                 </p>
               </div>
-
-
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-gray-700 dark:text-slate-300 uppercase tracking-wider block">
@@ -1616,7 +1772,7 @@ export const DeveloperPage: React.FC = () => {
                 <Button
                   variant="secondary"
                   size="sm"
-                  onClick={() => setTranscriptRoomId(null)}
+                  onClick={handleCloseModeration}
                 >
                   Cancel
                 </Button>
@@ -1627,61 +1783,124 @@ export const DeveloperPage: React.FC = () => {
                   onClick={handleOpenModerationTranscript}
                   leftIcon={<Eye className="h-3.5 w-3.5" />}
                 >
-                  Confirm &amp; Load Transcript
+                  Confirm &amp; Inspect Live Chat
                 </Button>
               </div>
             </div>
           ) : (
-            /* Transcript Display */
-            <div className="space-y-4 animate-in fade-in">
-              <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 text-xs flex items-center justify-between">
-                <span className="font-semibold flex items-center gap-1.5">
-                  <CheckCircle2 className="h-4 w-4" />
-                  Audited Transcript Inspection Active
-                </span>
-                <span className="font-mono text-[11px]">
-                  Room #{transcriptRoomId?.slice(0, 8)}
-                </span>
+            /* Live Chat Overview Display */
+            <div className="space-y-3 animate-in fade-in">
+              {/* Live Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[rgba(141,168,82,0.15)]">
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-bold text-sm sm:text-base text-[#F4F6F1]">Room Moderation</h3>
+                    <span className="font-mono text-xs text-[#A2BD63]">
+                      Room #{transcriptRoomId?.slice(0, 8)}
+                    </span>
+                    {liveStatus === 'live' && (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/40">
+                        <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                        LIVE
+                      </span>
+                    )}
+                    {liveStatus === 'reconnecting' && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold text-amber-400 bg-amber-950/60 border border-amber-500/40">
+                        <RefreshCw className="h-3 w-3 animate-spin" />
+                        Reconnecting...
+                      </span>
+                    )}
+                    {liveStatus === 'ended' && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold text-[#9DA89A] bg-[#121E12] border border-[rgba(141,168,82,0.2)]">
+                        Room ended
+                      </span>
+                    )}
+                  </div>
+                  {moderationData && (
+                    <p className="text-xs text-[#9DA89A] mt-1 flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[#A2BD63] font-semibold">{moderationData.participant_a.username}</span>
+                      <span className="text-[#6F796D] font-bold">↔</span>
+                      <span className="text-emerald-400 font-semibold">{moderationData.participant_b.username}</span>
+                    </p>
+                  )}
+                </div>
+
+                <div className="p-1.5 px-2.5 rounded-xl bg-emerald-950/30 border border-emerald-800/40 text-emerald-400 text-[11px] inline-flex items-center gap-1.5 self-start sm:self-auto">
+                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                  <span>Audited inspection active</span>
+                </div>
               </div>
 
-              {/* Chronological Chat Messages */}
-              <div className="max-h-96 overflow-y-auto p-4 rounded-xl bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 space-y-3">
+              {/* Realtime Live Chat Messages Viewport */}
+              <div
+                ref={chatContainerRef}
+                onScroll={handleModerationScroll}
+                className="h-[55vh] sm:h-[450px] overflow-y-auto p-4 rounded-2xl bg-[#091009] border border-[rgba(141,168,82,0.18)] space-y-3 relative flex flex-col"
+              >
                 {transcriptMessages.length === 0 ? (
-                  <p className="text-center text-xs text-gray-400 py-6">
-                    No messages sent in this room yet.
-                  </p>
+                  <div className="flex-1 flex flex-col items-center justify-center text-center text-[#6F796D] py-12 space-y-1">
+                    <MessageSquare className="h-8 w-8 text-[#6F796D]/60" />
+                    <p className="text-xs">No messages sent in this room yet.</p>
+                    <p className="text-[11px] text-[#4A5448]">Live incoming messages will appear automatically.</p>
+                  </div>
                 ) : (
-                  transcriptMessages.map((m) => (
-                    <div
-                      key={m.id}
-                      className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-gray-200/80 dark:border-slate-800 space-y-1"
-                    >
-                      <div className="flex items-center justify-between text-[11px]">
-                        <span className="font-bold text-brand-600 dark:text-brand-400">
+                  transcriptMessages.map((m) => {
+                    const isParticipantA = m.sender_id === moderationData?.participant_a.id;
+
+                    if (isParticipantA) {
+                      return (
+                        <div key={m.id} className="flex flex-col items-start max-w-[85%] sm:max-w-[75%] space-y-1">
+                          <span className="text-[10px] font-bold text-[#A2BD63] px-1">
+                            {m.sender_username}
+                          </span>
+                          <div className="rounded-2xl rounded-tl-sm px-4 py-2.5 bg-[#121E12] border border-[rgba(141,168,82,0.22)] text-[#F4F6F1] text-xs shadow-sm break-words leading-relaxed">
+                            <p className="whitespace-pre-wrap">{m.content}</p>
+                            <span className="block text-[10px] text-[#6F796D] text-right mt-1 font-mono">
+                              {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div key={m.id} className="flex flex-col items-end max-w-[85%] sm:max-w-[75%] ml-auto space-y-1">
+                        <span className="text-[10px] font-bold text-emerald-400 px-1">
                           {m.sender_username}
                         </span>
-                        <span className="text-gray-400 font-mono">
-                          {new Date(m.created_at).toLocaleTimeString()}
-                        </span>
+                        <div className="rounded-2xl rounded-tr-sm px-4 py-2.5 bg-[#1F2F1D] border border-emerald-500/30 text-[#F4F6F1] text-xs shadow-sm break-words leading-relaxed">
+                          <p className="whitespace-pre-wrap">{m.content}</p>
+                          <span className="block text-[10px] text-[#8DA852] text-right mt-1 font-mono">
+                            {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
                       </div>
-                      <p className="text-xs text-gray-800 dark:text-slate-200 break-words">
-                        {m.content}
-                      </p>
-                    </div>
-                  ))
+                    );
+                  })
+                )}
+                <div ref={chatEndRef} />
+
+                {/* Floating New Messages Jump Button */}
+                {hasUnreadMessages && (
+                  <button
+                    type="button"
+                    onClick={scrollToBottom}
+                    className="sticky bottom-2 mx-auto px-3.5 py-1.5 rounded-full bg-[#A2BD63] text-[#091009] text-xs font-bold shadow-lg flex items-center gap-1.5 hover:bg-[#b0cc6e] active:scale-95 transition-all animate-bounce z-10"
+                  >
+                    <ChevronDown className="h-3.5 w-3.5" />
+                    <span>New messages</span>
+                  </button>
                 )}
               </div>
 
-              <div className="flex justify-end pt-2">
+              {/* Close Action */}
+              <div className="flex justify-end pt-1">
                 <Button
                   variant="secondary"
                   size="sm"
-                  onClick={() => {
-                    setTranscriptRoomId(null);
-                    setTranscriptMessages(null);
-                  }}
+                  onClick={handleCloseModeration}
                 >
-                  Close Transcript
+                  Close
                 </Button>
               </div>
             </div>

@@ -118,3 +118,18 @@ export interface ModerationTranscriptMessage {
   message_type: string;
   created_at: string;
 }
+
+export interface RoomModerationData {
+  room_id: string;
+  room_status: string;
+  participant_a: {
+    id: string;
+    username: string;
+  };
+  participant_b: {
+    id: string;
+    username: string;
+  };
+  messages: ModerationTranscriptMessage[];
+}
+

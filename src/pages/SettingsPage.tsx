@@ -810,16 +810,14 @@ export const SettingsPage: React.FC = () => {
       <Modal
         isOpen={showUnlinkModal}
         onClose={() => setShowUnlinkModal(false)}
-        title="Unlink College Identity"
+        title="Unlink RIT ID?"
       >
         <div className="space-y-4">
           <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-amber-950/30 border border-amber-500/30 text-amber-200 text-xs leading-relaxed">
             <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
             <div>
-              <p className="font-semibold mb-1 text-white">Are you sure you want to unlink your ID?</p>
               <p>
-                You can still chat anonymously using the safe fallback persona (Unknown User).
-                Custom username and avatar customization will be locked until you link your ID again.
+                This will remove your verified student information, gender selection, anonymous student persona and ID link. You can verify again later as a fresh verification.
               </p>
             </div>
           </div>
@@ -847,7 +845,7 @@ export const SettingsPage: React.FC = () => {
               onClick={handleUnlink}
               className="px-4 py-2 rounded-full text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 active:scale-95 transition-all"
             >
-              {isUnlinking ? 'Unlinking...' : 'Confirm Unlink'}
+              {isUnlinking ? 'Unlinking & Resetting...' : 'Unlink & Reset'}
             </button>
           </div>
         </div>

@@ -20,6 +20,7 @@ import {
   AdminActiveRoom,
   AdminRoomDetails,
   ModerationTranscriptMessage,
+  RoomModerationData,
   AdminAuditLogRow,
 } from '../types';
 
@@ -264,12 +265,13 @@ export class StaffService {
   }
 
   /**
-   * Fetches moderation transcript with a mandatory operational/moderation reason.
+   * Fetches moderation transcript with a mandatory operational/moderation reason
+   * and authorizes a temporary live moderation session.
    */
   async getRoomModerationTranscript(
     roomId: string,
     reason: string
-  ): Promise<ApiResponse<ModerationTranscriptMessage[]>> {
+  ): Promise<ApiResponse<RoomModerationData>> {
     try {
       if (!reason || reason.trim().length < 5) {
         return {
@@ -303,7 +305,44 @@ export class StaffService {
 
       return {
         success: true,
-        data: (res.messages || []) as ModerationTranscriptMessage[],
+        data: {
+          room_id: res.room_id || roomId,
+          room_status: res.room_status || 'active',
+          participant_a: res.participant_a || { id: '', username: 'Participant A' },
+          participant_b: res.participant_b || { id: '', username: 'Participant B' },
+          messages: (res.messages || []) as ModerationTranscriptMessage[],
+        },
+        error: null,
+      };
+    } catch (err: unknown) {
+      return {
+        success: false,
+        data: null,
+        error: { code: 'CLIENT_ERROR', message: err instanceof Error ? err.message : 'Unknown error' },
+      };
+    }
+  }
+
+  /**
+   * Closes an active server-authorized room moderation session.
+   */
+  async closeRoomModerationSession(roomId: string): Promise<ApiResponse<boolean>> {
+    try {
+      const { error } = await supabase.rpc('close_room_moderation_session', {
+        p_room_id: roomId,
+      });
+
+      if (error) {
+        return {
+          success: false,
+          data: null,
+          error: { code: error.code || 'CLOSE_SESSION_FAILED', message: error.message },
+        };
+      }
+
+      return {
+        success: true,
+        data: true,
         error: null,
       };
     } catch (err: unknown) {
