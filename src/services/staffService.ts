@@ -38,17 +38,40 @@ export class StaffService {
         return { isStaff: false, role: null, email: null };
       }
 
+      // 1. Primary check via check_staff_status RPC
       const { data, error } = await supabase.rpc('check_staff_status');
-      if (error || !data) {
-        return { isStaff: false, role: null, email: null };
+      if (!error && data) {
+        const res = data as { is_staff?: boolean; role?: PlatformStaffRole; email?: string };
+        if (res.is_staff) {
+          return {
+            isStaff: true,
+            role: res.role || 'developer',
+            email: res.email || null,
+          };
+        }
       }
 
-      const res = data as { is_staff?: boolean; role?: PlatformStaffRole; email?: string };
-      return {
-        isStaff: Boolean(res.is_staff),
-        role: res.role || null,
-        email: res.email || null,
-      };
+      // 2. Fallback check via zero-argument is_platform_staff RPC
+      const { data: isStaffDirect, error: isStaffError } = await supabase.rpc('is_platform_staff');
+      if (!isStaffError && Boolean(isStaffDirect)) {
+        return {
+          isStaff: true,
+          role: 'developer',
+          email: null,
+        };
+      }
+
+      // 3. Fallback check via get_staff_role RPC
+      const { data: staffRoleDirect, error: roleError } = await supabase.rpc('get_staff_role');
+      if (!roleError && staffRoleDirect === 'developer') {
+        return {
+          isStaff: true,
+          role: 'developer',
+          email: null,
+        };
+      }
+
+      return { isStaff: false, role: null, email: null };
     } catch {
       return { isStaff: false, role: null, email: null };
     }

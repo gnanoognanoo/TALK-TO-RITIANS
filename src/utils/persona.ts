@@ -119,7 +119,7 @@ export function getEffectivePersona(
     const displayUsername =
       rawUsername && !rawUsername.startsWith('Unknown User')
         ? rawUsername
-        : rawUsername || 'Heisenberg';
+        : 'Heisenberg';
 
     const isGalleryAvatar =
       profile?.avatar_config &&

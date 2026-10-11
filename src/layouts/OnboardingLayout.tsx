@@ -33,7 +33,7 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({ children }) 
       {/* Top Navbar */}
       <header className="relative z-10 border-b border-gray-200 dark:border-[rgba(120,160,100,0.14)] bg-white/95 dark:bg-[#080D09]/95 backdrop-blur-md px-4 sm:px-8 py-3.5 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-          <Logo size="sm" />
+          <Logo size="sm" onDark={false} />
         </Link>
 
         <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-[#AEB9AE]">

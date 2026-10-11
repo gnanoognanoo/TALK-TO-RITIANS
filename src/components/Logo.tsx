@@ -4,9 +4,15 @@ export interface LogoProps {
   size?: 'sm' | 'md' | 'lg';
   showText?: boolean;
   className?: string;
+  onDark?: boolean;
 }
 
-export const Logo: React.FC<LogoProps> = ({ size = 'md', showText = true, className = '' }) => {
+export const Logo: React.FC<LogoProps> = ({
+  size = 'md',
+  showText = true,
+  className = '',
+  onDark = true,
+}) => {
   // Visual sizing targets:
   // Mobile: 40px–48px square
   // Desktop: 42px–50px square
@@ -21,6 +27,21 @@ export const Logo: React.FC<LogoProps> = ({ size = 'md', showText = true, classN
     md: 'text-lg',
     lg: 'text-2xl',
   };
+
+  // Text contrast strategy:
+  // On dark navbar (default):
+  //   Light Mode: "Talk to" is crisp white (#FFFFFF), "RITians" is vibrant high-contrast purple (#A78BFA / text-brand-400)
+  //   Dark Mode: "Talk to" is off-white (#F2F5F2), "RITians" is muted chemical green (#8FAF56)
+  // On light surface (when onDark = false):
+  //   Light Mode: "Talk to" is dark navy/slate (#111827 / text-gray-900), "RITians" is primary brand purple (#6C4CF5 / text-brand-600)
+  //   Dark Mode: "Talk to" is off-white (#F2F5F2), "RITians" is muted chemical green (#8FAF56)
+  const talkToColor = onDark
+    ? 'text-white dark:text-[#F2F5F2]'
+    : 'text-gray-900 dark:text-[#F2F5F2]';
+
+  const ritiansColor = onDark
+    ? 'text-brand-400 dark:text-[#8FAF56]'
+    : 'text-brand-600 dark:text-[#8FAF56]';
 
   return (
     <div className={`inline-flex items-center gap-2.5 select-none ${className}`}>
@@ -37,8 +58,8 @@ export const Logo: React.FC<LogoProps> = ({ size = 'md', showText = true, classN
       </div>
 
       {showText && (
-        <span className={`font-bold tracking-tight text-gray-900 dark:text-[#F2F5F2] ${textSizes[size]}`}>
-          Talk to <span className="text-brand-600 dark:text-[#8FAF56]">RITians</span>
+        <span className={`font-bold tracking-tight ${talkToColor} ${textSizes[size]}`}>
+          Talk to <span className={ritiansColor}>RITians</span>
         </span>
       )}
     </div>

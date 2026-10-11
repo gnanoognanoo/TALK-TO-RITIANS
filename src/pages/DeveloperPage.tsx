@@ -645,71 +645,71 @@ export const DeveloperPage: React.FC = () => {
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
             {/* 1. Online Users */}
             <Card className="p-4 sm:p-5">
-              <div className="flex items-center justify-between text-[#9DA89A]">
+              <div className="flex items-center justify-between text-gray-500 dark:text-[#9DA89A]">
                 <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider">Online Users</span>
-                <Users className="h-4 w-4 text-[#8DA852]" />
+                <Users className="h-4 w-4 text-brand-600 dark:text-[#8DA852]" />
               </div>
-              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#F4F6F1]">
+              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-[#F4F6F1]">
                 {statsLoading ? '...' : stats?.online_users ?? 0}
               </div>
-              <div className="mt-1 flex items-center gap-1.5 text-[11px] text-[#A2BD63] font-medium">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#8DA852] animate-pulse" />
+              <div className="mt-1 flex items-center gap-1.5 text-[11px] text-brand-700 dark:text-[#A2BD63] font-medium">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-[#8DA852] animate-pulse" />
                 Active heartbeats
               </div>
             </Card>
 
             {/* 2. Currently Chatting */}
             <Card className="p-4 sm:p-5">
-              <div className="flex items-center justify-between text-[#9DA89A]">
+              <div className="flex items-center justify-between text-gray-500 dark:text-[#9DA89A]">
                 <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider">In Chat</span>
-                <MessageSquare className="h-4 w-4 text-[#8DA852]" />
+                <MessageSquare className="h-4 w-4 text-brand-600 dark:text-[#8DA852]" />
               </div>
-              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#F4F6F1]">
+              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-[#F4F6F1]">
                 {statsLoading ? '...' : stats?.users_chatting ?? 0}
               </div>
-              <div className="mt-1 text-[11px] text-[#6F796D]">
+              <div className="mt-1 text-[11px] text-gray-500 dark:text-[#6F796D]">
                 In 7-minute rooms
               </div>
             </Card>
 
             {/* 3. Users Idle */}
             <Card className="p-4 sm:p-5">
-              <div className="flex items-center justify-between text-[#9DA89A]">
+              <div className="flex items-center justify-between text-gray-500 dark:text-[#9DA89A]">
                 <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider">Users Idle</span>
-                <Clock className="h-4 w-4 text-amber-400" />
+                <Clock className="h-4 w-4 text-amber-500 dark:text-amber-400" />
               </div>
-              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#F4F6F1]">
+              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-[#F4F6F1]">
                 {statsLoading ? '...' : stats?.users_idle ?? 0}
               </div>
-              <div className="mt-1 text-[11px] text-[#6F796D]">
+              <div className="mt-1 text-[11px] text-gray-500 dark:text-[#6F796D]">
                 Available on campus
               </div>
             </Card>
 
             {/* 4. Active Rooms */}
             <Card className="p-4 sm:p-5">
-              <div className="flex items-center justify-between text-[#9DA89A]">
+              <div className="flex items-center justify-between text-gray-500 dark:text-[#9DA89A]">
                 <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider">Active Rooms</span>
-                <Radio className="h-4 w-4 text-[#A2BD63]" />
+                <Radio className="h-4 w-4 text-brand-600 dark:text-[#A2BD63]" />
               </div>
-              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#F4F6F1]">
+              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-[#F4F6F1]">
                 {statsLoading ? '...' : stats?.active_rooms ?? 0}
               </div>
-              <div className="mt-1 text-[11px] text-[#6F796D]">
+              <div className="mt-1 text-[11px] text-gray-500 dark:text-[#6F796D]">
                 Realtime sessions
               </div>
             </Card>
 
             {/* 5. Pending Chat Requests */}
             <Card className="p-4 sm:p-5 col-span-2 lg:col-span-1">
-              <div className="flex items-center justify-between text-[#9DA89A]">
+              <div className="flex items-center justify-between text-gray-500 dark:text-[#9DA89A]">
                 <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider">Pending Requests</span>
-                <Send className="h-4 w-4 text-amber-400" />
+                <Send className="h-4 w-4 text-amber-500 dark:text-amber-400" />
               </div>
-              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#F4F6F1]">
+              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-[#F4F6F1]">
                 {statsLoading ? '...' : stats?.pending_requests ?? 0}
               </div>
-              <div className="mt-1 text-[11px] text-[#6F796D]">
+              <div className="mt-1 text-[11px] text-gray-500 dark:text-[#6F796D]">
                 Awaiting response
               </div>
             </Card>

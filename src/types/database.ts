@@ -495,6 +495,14 @@ export interface Database {
         Args: Record<PropertyKey, never>;
         Returns: Json;
       };
+      is_platform_staff: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
+      };
+      get_staff_role: {
+        Args: Record<PropertyKey, never>;
+        Returns: string | null;
+      };
       get_admin_dashboard_stats: {
         Args: Record<PropertyKey, never>;
         Returns: Json;

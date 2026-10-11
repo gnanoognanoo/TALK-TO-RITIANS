@@ -68,8 +68,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (data) {
         if (!data.display_username) {
-          const tempUsername = generateTemporaryUsername();
-          const defaultAvatar = { emoji: '👤', theme: 'indigo' };
+          const tempUsername = staffRes.isStaff ? 'Heisenberg' : generateTemporaryUsername();
+          const defaultAvatar = staffRes.isStaff && data.avatar_config
+            ? data.avatar_config
+            : { emoji: '👤', theme: 'indigo' };
           try {
             await supabase
               .from('profiles')
@@ -81,12 +83,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setProfile({ ...data, display_username: tempUsername, avatar_config: defaultAvatar });
           return;
         }
+
+        // If verified staff and display_username was reverted to Unknown User, restore Heisenberg
+        if (staffRes.isStaff && data.display_username.startsWith('Unknown User')) {
+          const devUsername = 'Heisenberg';
+          try {
+            await supabase
+              .from('profiles')
+              .update({ display_username: devUsername })
+              .eq('id', userId);
+          } catch {
+            // Non-critical
+          }
+          setProfile({ ...data, display_username: devUsername });
+          return;
+        }
+
         setProfile(data);
         return;
       }
 
       // If profile does not exist yet, provision one with defaults
-      const tempUsername = generateTemporaryUsername();
+      const tempUsername = staffRes.isStaff ? 'Heisenberg' : generateTemporaryUsername();
       const defaultAvatar = { emoji: '👤', theme: 'indigo' };
 
       const { data: inserted, error: insertError } = await supabase
@@ -96,7 +114,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           display_username: tempUsername,
           avatar_config: defaultAvatar,
           college_identity_linked: false,
-          profile_completed: false,
+          profile_completed: staffRes.isStaff,
         })
         .select()
         .single();
@@ -109,7 +127,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           display_username: tempUsername,
           avatar_config: defaultAvatar,
           college_identity_linked: false,
-          profile_completed: false,
+          profile_completed: staffRes.isStaff,
           name: null,
           full_name: null,
           department: null,
@@ -137,11 +155,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   /**
-   * Manually refetch profile (e.g. after onboarding steps)
+   * Manually refetch profile (e.g. after onboarding steps or unlinking)
    */
   const refreshProfile = useCallback(async () => {
     if (user?.id) {
       await loadProfile(user.id);
+    } else {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData?.session?.user?.id) {
+        await loadProfile(sessionData.session.user.id);
+      }
     }
   }, [user?.id, loadProfile]);
 
@@ -180,6 +203,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (event === 'SIGNED_OUT') {
         setProfile(null);
+        setIsStaff(false);
+        setStaffRole(null);
         setLoading(false);
         // Clean up any local storage UI caches
         if (typeof window !== 'undefined') {
@@ -189,6 +214,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         await loadProfile(currentSession.user.id);
       } else {
         setProfile(null);
+        setIsStaff(false);
+        setStaffRole(null);
         setLoading(false);
       }
     });
@@ -315,7 +342,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     profile,
     loading,
     isStaff,
-    isDeveloper: isStaff && staffRole === 'developer',
+    isDeveloper: Boolean(isStaff && (staffRole === 'developer' || !staffRole)),
     staffRole,
     signInWithEmail,
     signInWithPassword,
