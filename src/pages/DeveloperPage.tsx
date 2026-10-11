@@ -24,7 +24,6 @@ import {
   FileText,
   Eye,
   Send,
-  Play,
   RefreshCw,
   AlertTriangle,
   CheckCircle2,
@@ -35,6 +34,7 @@ import {
   Radio,
   Check,
   ChevronDown,
+  Zap,
 } from 'lucide-react';
 import {
   Button,
@@ -129,7 +129,11 @@ export const DeveloperPage: React.FC = () => {
 
   // Action pending states
   const [invitingUserId, setInvitingUserId] = useState<string | null>(null);
-  const [testSessionTargetId, setTestSessionTargetId] = useState<string | null>(null);
+  const [forceChatTarget, setForceChatTarget] = useState<AdminOnlineUser | null>(null);
+  const [isForcingChat, setIsForcingChat] = useState<boolean>(false);
+  const [revealedRegisterNumber, setRevealedRegisterNumber] = useState<string | null>(null);
+  const [isRevealingRegNo, setIsRevealingRegNo] = useState<boolean>(false);
+  const [revealError, setRevealError] = useState<string | null>(null);
   const [copiedText, setCopiedText] = useState<string | null>(null);
 
   const showNotification = (type: 'success' | 'error', message: string) => {
@@ -256,20 +260,43 @@ export const DeveloperPage: React.FC = () => {
     fetchAuditLogs();
   };
 
-  const handleStartTestSession = async (targetUserId: string) => {
-    setTestSessionTargetId(targetUserId);
-    const res = await staffService.createTestSession(targetUserId);
-    setTestSessionTargetId(null);
+  const handleConfirmForceChat = async () => {
+    if (!forceChatTarget) return;
+    setIsForcingChat(true);
+    const res = await staffService.forceDeveloperChat(forceChatTarget.user_id);
+    setIsForcingChat(false);
 
     if (!res.success || !res.data) {
-      showNotification('error', res.error?.message || 'Forced test session failed.');
+      showNotification('error', res.error?.message || 'Failed to start direct Developer chat.');
+      setForceChatTarget(null);
       return;
     }
 
-    showNotification('success', 'Test session created! Redirecting to chat room...');
+    showNotification('success', 'Direct Developer chat started! Redirecting to chat room...');
+    const roomId = res.data.roomId;
+    setForceChatTarget(null);
     setTimeout(() => {
-      navigate(`/chat/${res.data!.roomId}`);
-    }, 800);
+      navigate(`/chat/${roomId}`);
+    }, 600);
+  };
+
+  const handleRevealRegisterNumber = async () => {
+    if (!userDetails) return;
+    setIsRevealingRegNo(true);
+    setRevealError(null);
+    const res = await staffService.revealStudentRegisterNumber(
+      userDetails.user_id,
+      inspectReason || 'Developer profile inspection'
+    );
+    setIsRevealingRegNo(false);
+
+    if (!res.success || !res.data) {
+      setRevealError(res.error?.message || 'Failed to decrypt register number.');
+      return;
+    }
+
+    setRevealedRegisterNumber(res.data);
+    fetchAuditLogs();
   };
 
   const handleOpenRoomDetails = async (roomId: string) => {
@@ -731,7 +758,7 @@ export const DeveloperPage: React.FC = () => {
                 <div className="flex items-start gap-2.5">
                   <CheckCircle2 className="h-4 w-4 text-[#8DA852] shrink-0 mt-0.5" />
                   <div>
-                    <strong className="text-[#F4F6F1]">Zero Raw Register Numbers:</strong> Raw student IDs are never stored in the database. Identity verification references use one-way salted hashes and masked fingerprints.
+                    <strong className="text-[#F4F6F1]">Encrypted Register Numbers:</strong> Student register numbers are AES-256 encrypted server-side with strict developer-only audited reveal, and are permanently purged upon ID unlink.
                   </div>
                 </div>
                 <div className="flex items-start gap-2.5">
@@ -749,7 +776,7 @@ export const DeveloperPage: React.FC = () => {
                 <div className="flex items-start gap-2.5">
                   <CheckCircle2 className="h-4 w-4 text-[#8DA852] shrink-0 mt-0.5" />
                   <div>
-                    <strong className="text-[#F4F6F1]">Forced Test Isolation:</strong> Forced test sessions succeed exclusively when both participants are staff/test accounts.
+                    <strong className="text-[#F4F6F1]">Privileged Force Chat:</strong> Authorized developers can initiate a direct 7-minute chat session with any online student, fully audited with transparent participant notification.
                   </div>
                 </div>
               </CardContent>
@@ -896,18 +923,20 @@ export const DeveloperPage: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* Actions */}
-                        <div className="flex items-center gap-2 pt-1">
+                        {/* Actions: Inspect, Invite, Force (Mobile 44px min touch target) */}
+                        <div className="flex items-center gap-2 pt-1 flex-wrap">
                           <button
                             type="button"
                             onClick={() => {
                               setInspectUserId(u.user_id);
                               setUserDetails(null);
                               setInspectError(null);
+                              setRevealedRegisterNumber(null);
+                              setRevealError(null);
                             }}
-                            className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-full text-xs font-semibold text-[#9DA89A] hover:text-[#F4F6F1] bg-[#121E12] border border-[rgba(141,168,82,0.2)] active:scale-95 transition-all"
+                            className="flex-1 min-h-[44px] inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-full text-xs font-semibold text-[#9DA89A] hover:text-[#F4F6F1] bg-[#121E12] border border-[rgba(141,168,82,0.2)] active:scale-95 transition-all"
                           >
-                            <Eye className="h-3.5 w-3.5" />
+                            <Eye className="h-4 w-4" />
                             <span>Inspect</span>
                           </button>
 
@@ -916,10 +945,29 @@ export const DeveloperPage: React.FC = () => {
                               type="button"
                               disabled={u.state === 'in_chat' || invitingUserId === u.user_id}
                               onClick={() => handleSendInvite(u.user_id)}
-                              className="flex-1 liquid-cta-btn inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-full text-xs font-bold text-white disabled:opacity-40 active:scale-95 transition-all shadow-sm"
+                              className="flex-1 min-h-[44px] liquid-cta-btn inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-full text-xs font-bold text-white disabled:opacity-40 active:scale-95 transition-all shadow-sm"
                             >
-                              <Send className="h-3.5 w-3.5" />
+                              <Send className="h-4 w-4" />
                               <span>{invitingUserId === u.user_id ? 'Inviting...' : 'Invite'}</span>
+                            </button>
+                          )}
+
+                          {!isSelf && (
+                            <button
+                              type="button"
+                              disabled={u.state === 'in_chat' || !isUserOnline(u)}
+                              onClick={() => setForceChatTarget(u)}
+                              title={
+                                u.state === 'in_chat'
+                                  ? 'User is already chatting'
+                                  : !isUserOnline(u)
+                                  ? 'User is offline'
+                                  : 'Force direct chat session (privileged)'
+                              }
+                              className="flex-1 min-h-[44px] inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-full text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 disabled:opacity-40 active:scale-95 transition-all"
+                            >
+                              <Zap className="h-4 w-4 text-amber-500" />
+                              <span>Force</span>
                             </button>
                           )}
                         </div>
@@ -1042,9 +1090,11 @@ export const DeveloperPage: React.FC = () => {
                                     setInspectUserId(u.user_id);
                                     setUserDetails(null);
                                     setInspectError(null);
+                                    setRevealedRegisterNumber(null);
+                                    setRevealError(null);
                                   }}
                                   title="Inspect private student profile (audited)"
-                                  className="text-xs h-7 px-2"
+                                  className="text-xs h-7 px-2.5"
                                 >
                                   <Eye className="h-3.5 w-3.5 mr-1" />
                                   Inspect
@@ -1058,7 +1108,7 @@ export const DeveloperPage: React.FC = () => {
                                     isLoading={invitingUserId === u.user_id}
                                     onClick={() => handleSendInvite(u.user_id)}
                                     title={u.state === 'in_chat' ? 'User is already chatting' : 'Send direct chat invite'}
-                                    className="text-xs h-7 px-2"
+                                    className="text-xs h-7 px-2.5"
                                   >
                                     <Send className="h-3.5 w-3.5 mr-1" />
                                     Invite
@@ -1069,13 +1119,19 @@ export const DeveloperPage: React.FC = () => {
                                   <Button
                                     variant="secondary"
                                     size="sm"
-                                    disabled={!u.is_test_account || testSessionTargetId === u.user_id}
-                                    isLoading={testSessionTargetId === u.user_id}
-                                    onClick={() => handleStartTestSession(u.user_id)}
-                                    className="text-xs h-7 px-2 border-dashed"
+                                    disabled={u.state === 'in_chat' || !isUserOnline(u)}
+                                    onClick={() => setForceChatTarget(u)}
+                                    title={
+                                      u.state === 'in_chat'
+                                        ? 'User is already chatting'
+                                        : !isUserOnline(u)
+                                        ? 'User is offline'
+                                        : 'Force direct chat session (privileged)'
+                                    }
+                                    className="text-xs h-7 px-2.5 font-bold text-amber-700 dark:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 active:scale-95 transition-all"
                                   >
-                                    <Play className="h-3.5 w-3.5 mr-1 text-amber-500" />
-                                    Test
+                                    <Zap className="h-3.5 w-3.5 mr-1 text-amber-500" />
+                                    Force
                                   </Button>
                                 )}
                               </div>
@@ -1445,9 +1501,31 @@ export const DeveloperPage: React.FC = () => {
           setInspectUserId(null);
           setUserDetails(null);
           setInspectError(null);
+          setRevealedRegisterNumber(null);
+          setRevealError(null);
         }}
         title="Privileged Student Profile Inspection"
         maxWidth="md"
+        footer={
+          userDetails ? (
+            <div className="flex justify-end w-full">
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => {
+                  setInspectUserId(null);
+                  setUserDetails(null);
+                  setInspectError(null);
+                  setRevealedRegisterNumber(null);
+                  setRevealError(null);
+                }}
+                className="w-full sm:w-auto min-h-[44px] min-w-[120px] font-semibold"
+              >
+                Close
+              </Button>
+            </div>
+          ) : undefined
+        }
       >
         <div className="space-y-4">
           {!userDetails ? (
@@ -1459,8 +1537,6 @@ export const DeveloperPage: React.FC = () => {
                   <strong>Mandatory Auditing:</strong> Inspecting private student credentials creates an immutable log in <code className="font-mono">public.admin_audit_log</code>. Enter a specific operational or moderation reason.
                 </p>
               </div>
-
-
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-gray-700 dark:text-slate-300 uppercase tracking-wider block">
@@ -1486,6 +1562,7 @@ export const DeveloperPage: React.FC = () => {
                   variant="secondary"
                   size="sm"
                   onClick={() => setInspectUserId(null)}
+                  className="min-h-[44px] min-w-[90px]"
                 >
                   Cancel
                 </Button>
@@ -1495,6 +1572,7 @@ export const DeveloperPage: React.FC = () => {
                   isLoading={inspectLoading}
                   onClick={handleInspectUser}
                   leftIcon={<Eye className="h-3.5 w-3.5" />}
+                  className="min-h-[44px]"
                 >
                   Confirm &amp; Inspect Profile
                 </Button>
@@ -1508,7 +1586,7 @@ export const DeveloperPage: React.FC = () => {
                   <CheckCircle2 className="h-4 w-4" />
                   Access Logged to Audit Trail
                 </span>
-                <span className="text-[10px] text-emerald-600 dark:text-emerald-500">
+                <span className="text-[10px] text-emerald-600 dark:text-emerald-500 font-mono">
                   Action: VIEW_PRIVATE_PROFILE
                 </span>
               </div>
@@ -1521,11 +1599,11 @@ export const DeveloperPage: React.FC = () => {
                   initials={userDetails.anonymous_username.slice(0, 2).toUpperCase()}
                   shape="circle"
                 />
-                <div className="space-y-0.5">
-                  <h3 className="text-base font-bold text-gray-900 dark:text-white">
+                <div className="space-y-0.5 min-w-0">
+                  <h3 className="text-base font-bold text-gray-900 dark:text-white truncate">
                     {userDetails.anonymous_username}
                   </h3>
-                  <div className="text-xs text-gray-500 dark:text-slate-400 flex items-center gap-2">
+                  <div className="text-xs text-gray-500 dark:text-slate-400 flex items-center gap-2 flex-wrap">
                     <span>User UUID:</span>
                     <button
                       type="button"
@@ -1539,12 +1617,63 @@ export const DeveloperPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Credential Attributes */}
+              {/* SECTION 1: ACCOUNT DETAILS */}
               <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700 space-y-2 text-xs">
+                <h4 className="text-[11px] font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider pb-1.5 border-b border-gray-200/60 dark:border-slate-700/60">
+                  Account Details
+                </h4>
+
                 <div className="flex justify-between py-1 border-b border-gray-200/60 dark:border-slate-700/60">
-                  <span className="text-gray-500 dark:text-slate-400">Real Verified Name</span>
+                  <span className="text-gray-500 dark:text-slate-400">Anonymous Username</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">
+                    {userDetails.anonymous_username}
+                  </span>
+                </div>
+
+                <div className="py-1 border-b border-gray-200/60 dark:border-slate-700/60 space-y-0.5">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500 dark:text-slate-400">Google Account Name</span>
+                    <span className="font-bold text-gray-900 dark:text-white">
+                      {userDetails.google_name || 'Not available'}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-amber-600 dark:text-amber-400/90 block text-right font-medium">
+                    Unverified account display name
+                  </span>
+                </div>
+
+                <div className="flex justify-between py-1 border-b border-gray-200/60 dark:border-slate-700/60">
+                  <span className="text-gray-500 dark:text-slate-400">User UUID</span>
+                  <span className="font-mono text-[11px] text-gray-700 dark:text-slate-300">
+                    {userDetails.user_id}
+                  </span>
+                </div>
+
+                <div className="flex justify-between py-1 border-b border-gray-200/60 dark:border-slate-700/60">
+                  <span className="text-gray-500 dark:text-slate-400">Account Created</span>
+                  <span className="text-gray-700 dark:text-slate-300">
+                    {new Date(userDetails.account_created_at).toLocaleDateString()}
+                  </span>
+                </div>
+
+                <div className="flex justify-between py-1">
+                  <span className="text-gray-500 dark:text-slate-400">Current Presence</span>
+                  <span className="font-semibold text-brand-600 dark:text-[#A2BD63] capitalize">
+                    {userDetails.presence_state || (userDetails.is_verified ? 'Active' : 'Idle')}
+                  </span>
+                </div>
+              </div>
+
+              {/* SECTION 2: VERIFIED COLLEGE DETAILS */}
+              <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700 space-y-2 text-xs">
+                <h4 className="text-[11px] font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider pb-1.5 border-b border-gray-200/60 dark:border-slate-700/60">
+                  Verified College Details
+                </h4>
+
+                <div className="flex justify-between py-1 border-b border-gray-200/60 dark:border-slate-700/60">
+                  <span className="text-gray-500 dark:text-slate-400">Verified Student Name</span>
                   <span className="font-bold text-gray-900 dark:text-white">
-                    {userDetails.real_name || 'Not Linked / Anonymous'}
+                    {userDetails.is_verified && userDetails.real_name ? userDetails.real_name : 'Not verified'}
                   </span>
                 </div>
 
@@ -1585,35 +1714,111 @@ export const DeveloperPage: React.FC = () => {
                   </span>
                 </div>
 
-                <div className="flex justify-between py-1 border-b border-gray-200/60 dark:border-slate-700/60">
-                  <span className="text-gray-500 dark:text-slate-400">Identity Fingerprint (Masked)</span>
-                  <span className="font-mono text-[11px] text-gray-700 dark:text-slate-300">
-                    {userDetails.fingerprint_suffix || 'None'}
-                  </span>
-                </div>
+                {/* Register Number (Secure Encrypted Storage & Audited Reveal) */}
+                <div className="py-1 space-y-1">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500 dark:text-slate-400 font-medium">Register Number</span>
+                    <div>
+                      {!userDetails.is_verified ? (
+                        <span className="text-gray-400 dark:text-slate-500">Not verified</span>
+                      ) : revealedRegisterNumber ? (
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-bold text-brand-600 dark:text-[#A2BD63] text-sm">
+                            {revealedRegisterNumber}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleCopy(revealedRegisterNumber, 'regno')}
+                            title="Copy Register Number"
+                            className="p-1 rounded-lg text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                          >
+                            {copiedText === 'regno' ? (
+                              <Check className="h-3.5 w-3.5 text-emerald-500" />
+                            ) : (
+                              <Copy className="h-3.5 w-3.5" />
+                            )}
+                          </button>
+                        </div>
+                      ) : userDetails.has_encrypted_register_number ? (
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-gray-400 dark:text-slate-500 tracking-wider text-xs">
+                            ••••••••••••
+                          </span>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            isLoading={isRevealingRegNo}
+                            onClick={handleRevealRegisterNumber}
+                            className="text-xs h-6 px-2 font-semibold"
+                          >
+                            Reveal
+                          </Button>
+                        </div>
+                      ) : (
+                        <span className="text-amber-600 dark:text-amber-400 text-[11px] font-medium">
+                          Unavailable — re-verification required
+                        </span>
+                      )}
+                    </div>
+                  </div>
 
-                <div className="flex justify-between py-1">
-                  <span className="text-gray-500 dark:text-slate-400">Account Created</span>
-                  <span className="text-gray-600 dark:text-slate-400">
-                    {new Date(userDetails.account_created_at).toLocaleDateString()}
-                  </span>
+                  {revealError && (
+                    <p className="text-[11px] text-rose-500 font-medium text-right">
+                      {revealError}
+                    </p>
+                  )}
                 </div>
-              </div>
-
-              <div className="flex justify-end pt-2">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => {
-                    setInspectUserId(null);
-                    setUserDetails(null);
-                  }}
-                >
-                  Close
-                </Button>
               </div>
             </div>
           )}
+        </div>
+      </Modal>
+
+      {/* =====================================================================
+          MODAL 1B: DEVELOPER FORCE CHAT CONFIRMATION
+          ===================================================================== */}
+      <Modal
+        isOpen={Boolean(forceChatTarget)}
+        onClose={() => !isForcingChat && setForceChatTarget(null)}
+        title="Force Chat"
+        maxWidth="sm"
+        footer={
+          <div className="flex items-center justify-end gap-2.5 w-full">
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={isForcingChat}
+              onClick={() => setForceChatTarget(null)}
+              className="min-h-[44px] min-w-[90px]"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              isLoading={isForcingChat}
+              onClick={handleConfirmForceChat}
+              className="min-h-[44px] min-w-[120px] bg-amber-600 hover:bg-amber-700 text-white font-bold"
+            >
+              Start Chat
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-3 text-xs">
+          <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 text-amber-800 dark:text-amber-300 flex items-start gap-2.5">
+            <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+            <p className="leading-relaxed">
+              Start a direct Developer-initiated chat with{' '}
+              <strong className="text-amber-900 dark:text-amber-200 font-bold">
+                {forceChatTarget?.anonymous_username}
+              </strong>
+              ? This bypasses the normal invitation acceptance step.
+            </p>
+          </div>
+          <p className="text-[#9DA89A] leading-relaxed">
+            The recipient will be transparently notified that a developer-initiated chat has started and can leave at any time.
+          </p>
         </div>
       </Modal>
 
@@ -1629,6 +1834,34 @@ export const DeveloperPage: React.FC = () => {
         }}
         title="Active Room Details"
         maxWidth="md"
+        footer={
+          roomDetails ? (
+            <div className="flex justify-between items-center w-full gap-2">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  const rId = selectedRoomId;
+                  setSelectedRoomId(null);
+                  setTranscriptRoomId(rId);
+                  setTranscriptMessages(null);
+                }}
+                leftIcon={<Eye className="h-3.5 w-3.5" />}
+                className="min-h-[44px]"
+              >
+                Open Moderation
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setSelectedRoomId(null)}
+                className="min-h-[44px] min-w-[90px]"
+              >
+                Close
+              </Button>
+            </div>
+          ) : undefined
+        }
       >
         <div className="space-y-4">
           {roomDetailsLoading ? (
@@ -1700,30 +1933,6 @@ export const DeveloperPage: React.FC = () => {
                   </span>
                 </div>
               </div>
-
-              <div className="flex justify-between items-center pt-2">
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => {
-                    const rId = selectedRoomId;
-                    setSelectedRoomId(null);
-                    setTranscriptRoomId(rId);
-                    setTranscriptMessages(null);
-                  }}
-                  leftIcon={<Eye className="h-3.5 w-3.5" />}
-                >
-                  Open Moderation Transcript
-                </Button>
-
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setSelectedRoomId(null)}
-                >
-                  Close
-                </Button>
-              </div>
             </div>
           ) : null}
         </div>
@@ -1737,6 +1946,20 @@ export const DeveloperPage: React.FC = () => {
         onClose={handleCloseModeration}
         title={transcriptMessages ? undefined : 'Room Moderation'}
         maxWidth="xl"
+        footer={
+          transcriptMessages ? (
+            <div className="flex justify-end w-full">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleCloseModeration}
+                className="min-h-[44px] min-w-[100px]"
+              >
+                Close
+              </Button>
+            </div>
+          ) : undefined
+        }
       >
         <div className="space-y-4">
           {!transcriptMessages ? (
@@ -1773,6 +1996,7 @@ export const DeveloperPage: React.FC = () => {
                   variant="secondary"
                   size="sm"
                   onClick={handleCloseModeration}
+                  className="min-h-[44px] min-w-[90px]"
                 >
                   Cancel
                 </Button>
@@ -1782,6 +2006,7 @@ export const DeveloperPage: React.FC = () => {
                   isLoading={transcriptLoading}
                   onClick={handleOpenModerationTranscript}
                   leftIcon={<Eye className="h-3.5 w-3.5" />}
+                  className="min-h-[44px]"
                 >
                   Confirm &amp; Inspect Live Chat
                 </Button>
@@ -1891,17 +2116,6 @@ export const DeveloperPage: React.FC = () => {
                     <span>New messages</span>
                   </button>
                 )}
-              </div>
-
-              {/* Close Action */}
-              <div className="flex justify-end pt-1">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleCloseModeration}
-                >
-                  Close
-                </Button>
               </div>
             </div>
           )}

@@ -547,6 +547,19 @@ export interface Database {
         };
         Returns: Json;
       };
+      force_developer_chat: {
+        Args: {
+          p_target_user_id: string;
+        };
+        Returns: Json;
+      };
+      reveal_student_register_number: {
+        Args: {
+          p_target_user_id: string;
+          p_reason: string;
+        };
+        Returns: Json;
+      };
       get_admin_audit_logs: {
         Args: {
           p_limit?: number;

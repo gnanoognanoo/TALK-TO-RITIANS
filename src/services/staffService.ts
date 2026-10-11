@@ -466,6 +466,93 @@ export class StaffService {
   }
 
   /**
+   * Initiates a direct Developer-initiated chat session with an eligible online student.
+   * Atomic, audited, and notifies recipient through Realtime.
+   */
+  async forceDeveloperChat(targetUserId: string): Promise<ApiResponse<{ roomId: string; createdAt: string; expiresAt: string }>> {
+    try {
+      const { data, error } = await supabase.rpc('force_developer_chat', {
+        p_target_user_id: targetUserId,
+      });
+
+      if (error) {
+        return {
+          success: false,
+          data: null,
+          error: { code: error.code || 'FORCE_CHAT_FAILED', message: error.message },
+        };
+      }
+
+      const res = data as any;
+      if (!res?.success) {
+        return {
+          success: false,
+          data: null,
+          error: { code: res?.error || 'USER_UNAVAILABLE', message: res?.message || 'User is unavailable for direct chat.' },
+        };
+      }
+
+      return {
+        success: true,
+        data: {
+          roomId: res.room_id,
+          createdAt: res.created_at,
+          expiresAt: res.expires_at,
+        },
+        error: null,
+      };
+    } catch (err: unknown) {
+      return {
+        success: false,
+        data: null,
+        error: { code: 'CLIENT_ERROR', message: err instanceof Error ? err.message : 'Unknown error' },
+      };
+    }
+  }
+
+  /**
+   * Securely decrypts and reveals the student's register number for authorized Developer inspection.
+   * Audited under VIEW_STUDENT_REGISTER_NUMBER without logging plaintext to audit metadata.
+   */
+  async revealStudentRegisterNumber(targetUserId: string, reason: string): Promise<ApiResponse<string>> {
+    try {
+      const { data, error } = await supabase.rpc('reveal_student_register_number', {
+        p_target_user_id: targetUserId,
+        p_reason: reason,
+      });
+
+      if (error) {
+        return {
+          success: false,
+          data: null,
+          error: { code: error.code || 'REVEAL_FAILED', message: error.message },
+        };
+      }
+
+      const res = data as any;
+      if (!res?.success) {
+        return {
+          success: false,
+          data: null,
+          error: { code: res?.error || 'UNAVAILABLE', message: res?.message || 'Unavailable — re-verification required' },
+        };
+      }
+
+      return {
+        success: true,
+        data: res.register_number,
+        error: null,
+      };
+    } catch (err: unknown) {
+      return {
+        success: false,
+        data: null,
+        error: { code: 'CLIENT_ERROR', message: err instanceof Error ? err.message : 'Unknown error' },
+      };
+    }
+  }
+
+  /**
    * Fetches recent entries from the immutable admin audit log.
    */
   async getAdminAuditLogs(limit: number = 50): Promise<ApiResponse<AdminAuditLogRow[]>> {

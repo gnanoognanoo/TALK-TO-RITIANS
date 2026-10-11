@@ -404,6 +404,17 @@ export const VerifyCollegePage: React.FC = () => {
                   <ShieldCheck className="h-3.5 w-3.5" />
                   <span>Zero image persistence • Card images never leave your device</span>
                 </div>
+
+                {/* Privacy & Encryption Disclosure */}
+                <div className="p-3.5 rounded-2xl bg-brand-50/60 dark:bg-[#101D11] border border-brand-100 dark:border-[rgba(140,170,110,0.22)] text-left text-xs text-gray-600 dark:text-[#9DA89A] space-y-1.5 mt-2">
+                  <div className="flex items-center gap-1.5 text-brand-700 dark:text-[#A2BD63] font-semibold">
+                    <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-[#8DA852]" />
+                    <span>Security &amp; Encryption Disclosure</span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed">
+                    By verifying, your student register number is encrypted server-side using AES-256 for duplicate card prevention and privileged developer security auditing. It is never exposed in public profiles or chats, and is permanently purged if you unlink your ID.
+                  </p>
+                </div>
               </div>
 
               {/* Supporting Text */}
@@ -620,6 +631,13 @@ export const VerifyCollegePage: React.FC = () => {
                     </span>
                   </div>
                 </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-gray-50 dark:bg-[#091009] border border-gray-200 dark:border-[rgba(140,170,110,0.18)] text-[11px] text-gray-500 dark:text-[#9DA89A] flex items-start gap-2">
+                <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-[#8DA852] shrink-0 mt-0.5" />
+                <p>
+                  Your register number is encrypted server-side with AES-256 for duplicate-card prevention and audited inspection. It is permanently deleted if you unlink.
+                </p>
               </div>
 
               {physicalError && (
@@ -858,30 +876,15 @@ export const VerifyCollegePage: React.FC = () => {
         isOpen={showUnlinkModal}
         onClose={() => setShowUnlinkModal(false)}
         title="Unlink RIT ID?"
-      >
-        <div className="space-y-4">
-          <div className="flex items-start gap-3 p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-xs leading-relaxed">
-            <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-            <p>
-              This will remove your verified student information, gender selection, anonymous student persona and ID link. You can verify again later as a fresh verification.
-            </p>
-          </div>
-
-          {unlinkError && (
-            <ErrorMessage
-              title="Unlink Error"
-              message={unlinkError}
-              onDismiss={() => setUnlinkError(null)}
-            />
-          )}
-
-          <div className="flex gap-3 justify-end pt-2">
+        footer={
+          <div className="flex gap-2.5 justify-end w-full">
             <Button
               type="button"
               variant="secondary"
               size="sm"
               disabled={isUnlinking}
               onClick={() => setShowUnlinkModal(false)}
+              className="min-h-[44px] min-w-[90px]"
             >
               Cancel
             </Button>
@@ -892,10 +895,28 @@ export const VerifyCollegePage: React.FC = () => {
               isLoading={isUnlinking}
               loadingText="Unlinking & Resetting..."
               onClick={handleUnlink}
+              className="min-h-[44px] min-w-[130px]"
             >
               Unlink &amp; Reset
             </Button>
           </div>
+        }
+      >
+        <div className="space-y-4">
+          <div className="flex items-start gap-3 p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-xs leading-relaxed">
+            <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+            <p>
+              This will remove your verified student information, gender selection, anonymous student persona, ID link, and permanently delete your encrypted register number. You can verify again later as a fresh verification.
+            </p>
+          </div>
+
+          {unlinkError && (
+            <ErrorMessage
+              title="Unlink Error"
+              message={unlinkError}
+              onDismiss={() => setUnlinkError(null)}
+            />
+          )}
         </div>
       </Modal>
 
@@ -905,6 +926,31 @@ export const VerifyCollegePage: React.FC = () => {
         onClose={() => setGenderToConfirm(null)}
         title="Confirm your gender"
         maxWidth="sm"
+        footer={
+          <div className="flex gap-2.5 justify-end w-full">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={isSavingGender}
+              onClick={() => setGenderToConfirm(null)}
+              className="min-h-[44px] min-w-[90px]"
+            >
+              Back
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              isLoading={isSavingGender}
+              loadingText="Confirming..."
+              onClick={handleConfirmGender}
+              className="min-h-[44px] min-w-[100px]"
+            >
+              Confirm
+            </Button>
+          </div>
+        }
       >
         <div className="space-y-4">
           <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700 space-y-1">
@@ -925,28 +971,6 @@ export const VerifyCollegePage: React.FC = () => {
               onDismiss={() => setGenderError(null)}
             />
           )}
-
-          <div className="flex gap-3 justify-end pt-2">
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              disabled={isSavingGender}
-              onClick={() => setGenderToConfirm(null)}
-            >
-              Back
-            </Button>
-            <Button
-              type="button"
-              variant="primary"
-              size="sm"
-              isLoading={isSavingGender}
-              loadingText="Confirming..."
-              onClick={handleConfirmGender}
-            >
-              Confirm
-            </Button>
-          </div>
         </div>
       </Modal>
     </>

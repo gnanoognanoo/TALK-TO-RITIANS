@@ -20,11 +20,13 @@ import {
   IncomingChatRequest,
 } from '../services/chatRequestService';
 import { IncomingChatRequestModal } from './IncomingChatRequestModal';
+import { DeveloperForcedChatModal } from './DeveloperForcedChatModal';
 
 export const IncomingChatRequestManager: React.FC = () => {
   const { user } = useAuth();
   const location = useLocation();
   const [activeRequest, setActiveRequest] = useState<IncomingChatRequest | null>(null);
+  const [forcedRoomId, setForcedRoomId] = useState<string | null>(null);
   const locationRef = useRef(location.pathname);
   locationRef.current = location.pathname;
 
@@ -94,14 +96,19 @@ export const IncomingChatRequestManager: React.FC = () => {
             return;
           }
 
-          if (row?.status === 'pending') {
+          if (row?.status === 'developer_forced' && row?.room_id) {
+            setForcedRoomId(row.room_id);
+            setActiveRequest(null);
+          } else if (row?.status === 'pending') {
+            setForcedRoomId(null);
             const res = await chatRequestService.getPendingRequest();
             if (isMounted && res.success && res.data) {
               setActiveRequest(res.data);
             }
           } else {
-            // Dismiss popup if status is no longer pending (accepted elsewhere, rejected, expired, cancelled)
+            // Dismiss popups if status is no longer pending or forced
             setActiveRequest(null);
+            setForcedRoomId(null);
           }
         }
       )
@@ -119,7 +126,20 @@ export const IncomingChatRequestManager: React.FC = () => {
     location.pathname.startsWith('/verify') ||
     location.pathname.startsWith('/matching');
 
-  if (isSuppressedRoute || !activeRequest) {
+  if (isSuppressedRoute) {
+    return null;
+  }
+
+  if (forcedRoomId) {
+    return (
+      <DeveloperForcedChatModal
+        roomId={forcedRoomId}
+        onDismiss={() => setForcedRoomId(null)}
+      />
+    );
+  }
+
+  if (!activeRequest) {
     return null;
   }
 

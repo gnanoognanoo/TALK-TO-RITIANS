@@ -58,6 +58,7 @@ export interface AdminUserDetails {
   user_id: string;
   anonymous_username: string;
   avatar_config: Record<string, unknown>;
+  google_name?: string | null;
   real_name: string | null;
   department: string | null;
   batch: string | null;
@@ -68,9 +69,11 @@ export interface AdminUserDetails {
   verified_at: string | null;
   identity_id: string | null;
   fingerprint_suffix: string | null;
+  has_encrypted_register_number?: boolean;
   account_created_at: string;
   last_seen_at: string | null;
   is_online: boolean;
+  presence_state?: string;
 }
 
 export interface AdminActiveRoom {
