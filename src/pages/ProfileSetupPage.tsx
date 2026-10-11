@@ -188,24 +188,24 @@ export const ProfileSetupPage: React.FC = () => {
         <Badge variant="brand" size="sm" withDot>
           Profile Customization &bull; Cohort Details
         </Badge>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-[#F4F6F1] tracking-tight">
           Complete Your Profile
         </h1>
-        <p className="text-xs sm:text-sm text-gray-500 max-w-md mx-auto leading-relaxed">
+        <p className="text-xs sm:text-sm text-slate-600 dark:text-[#C0CCBC] max-w-md mx-auto leading-relaxed">
           Help us keep the community relevant and safe.
         </p>
       </div>
 
       {/* Verification Gate */}
       {!isCollegeVerified ? (
-        <Card className="border-gray-200 bg-white shadow-card text-center p-8 space-y-5 animate-in fade-in">
+        <Card className="border-slate-200 bg-white dark:bg-[#091009] dark:border-[rgba(140,170,110,0.22)] shadow-card text-center p-8 space-y-5 animate-in fade-in">
           <div className="h-16 w-16 rounded-full bg-amber-50 text-amber-600 border border-amber-200 mx-auto flex items-center justify-center">
             <Lock className="h-8 w-8" />
           </div>
 
           <div className="space-y-2 max-w-sm mx-auto">
-            <h3 className="text-lg font-bold text-gray-900">College ID Required</h3>
-            <p className="text-xs text-gray-600 leading-relaxed">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-[#F4F6F1]">College ID Required</h3>
+            <p className="text-xs text-slate-600 dark:text-[#C0CCBC] leading-relaxed">
               Academic profile setup is restricted to verified students. Please scan your physical ID card first.
             </p>
           </div>
@@ -223,24 +223,24 @@ export const ProfileSetupPage: React.FC = () => {
           </div>
         </Card>
       ) : (
-        <Card className="border border-gray-200/80 dark:border-[rgba(140,170,110,0.22)] bg-white/95 dark:bg-[#091009]/90 backdrop-blur-md shadow-card dark:shadow-liquid-outer rounded-[28px] overflow-hidden">
+        <Card className="border border-slate-200/80 dark:border-[rgba(140,170,110,0.22)] bg-white/95 dark:bg-[#091009]/90 backdrop-blur-md shadow-card dark:shadow-liquid-outer rounded-[28px] overflow-hidden">
           {/* Privacy Guarantee Banner */}
-          <div className="bg-gray-50/80 dark:bg-[#0D160E]/80 border-b border-gray-100 dark:border-[rgba(140,170,110,0.14)] p-4 sm:p-5 flex items-start gap-3.5">
+          <div className="bg-slate-50/80 dark:bg-[#0D160E]/80 border-b border-slate-200 dark:border-[rgba(140,170,110,0.14)] p-4 sm:p-5 flex items-start gap-3.5">
             <div className="h-9 w-9 rounded-xl bg-emerald-50 dark:bg-[#101D11] border border-emerald-200 dark:border-[rgba(140,170,110,0.25)] text-emerald-600 dark:text-[#8DA852] flex items-center justify-center shrink-0 mt-0.5">
               <ShieldCheck className="h-5 w-5" />
             </div>
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <h2 className="text-xs font-bold text-gray-900 dark:text-[#F4F6F1] uppercase tracking-wider">
+                <h2 className="text-xs font-bold text-slate-900 dark:text-[#F4F6F1] uppercase tracking-wider">
                   Privacy Guarantee
                 </h2>
                 <Badge variant="success" size="sm">
                   Sealed
                 </Badge>
               </div>
-              <p className="text-[11px] sm:text-xs text-gray-500 dark:text-[#9DA89A] leading-relaxed">
-                These academic fields are strictly <strong className="text-gray-700 dark:text-[#D1D8CE] font-semibold">private matching metadata</strong>.
-                Chat partners will <strong className="text-gray-700 dark:text-[#D1D8CE] font-semibold">never</strong> see your real details.
+              <p className="text-[11px] sm:text-xs text-slate-600 dark:text-[#C0CCBC] leading-relaxed">
+                These academic fields are strictly <strong className="text-slate-700 dark:text-[#D1D8CE] font-semibold">private matching metadata</strong>.
+                Chat partners will <strong className="text-slate-700 dark:text-[#D1D8CE] font-semibold">never</strong> see your real details.
               </p>
             </div>
           </div>
@@ -256,9 +256,9 @@ export const ProfileSetupPage: React.FC = () => {
               )}
 
               {/* Verified Student Information (Read-Only & Immutable) */}
-              <div className="rounded-2xl border border-gray-200 dark:border-[rgba(140,170,110,0.18)] bg-gray-50/80 dark:bg-[#0D160E]/70 p-4 space-y-3">
+              <div className="rounded-2xl border border-slate-200 dark:border-[rgba(140,170,110,0.18)] bg-slate-50/80 dark:bg-[#0D160E]/70 p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-gray-700 dark:text-[#D1D8CE] uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-[#D1D8CE] uppercase tracking-wider flex items-center gap-1.5">
                     <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-[#8DA852]" />
                     Verified Student Information
                   </span>
@@ -268,26 +268,26 @@ export const ProfileSetupPage: React.FC = () => {
                   </span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                  <div className="p-3 bg-white dark:bg-[#091009] rounded-xl border border-gray-200 dark:border-[rgba(140,170,110,0.2)]">
-                    <span className="text-gray-500 dark:text-[#9DA89A] block text-[11px]">Name</span>
-                    <span className="font-bold text-gray-900 dark:text-[#F4F6F1] truncate block mt-0.5">
+                  <div className="p-3 bg-white dark:bg-[#091009] rounded-xl border border-slate-200 dark:border-[rgba(140,170,110,0.2)]">
+                    <span className="text-slate-600 dark:text-[#C0CCBC] block text-[11px]">Name</span>
+                    <span className="font-bold text-slate-900 dark:text-[#F4F6F1] truncate block mt-0.5">
                       {profile?.name || profile?.full_name || 'Verified Student'}
                     </span>
                   </div>
-                  <div className="p-3 bg-white dark:bg-[#091009] rounded-xl border border-gray-200 dark:border-[rgba(140,170,110,0.2)]">
-                    <span className="text-gray-500 dark:text-[#9DA89A] block text-[11px]">Department</span>
+                  <div className="p-3 bg-white dark:bg-[#091009] rounded-xl border border-slate-200 dark:border-[rgba(140,170,110,0.2)]">
+                    <span className="text-slate-600 dark:text-[#C0CCBC] block text-[11px]">Department</span>
                     <span className="font-semibold text-brand-600 dark:text-[#8DA852] block mt-0.5">
                       {department}
                     </span>
                   </div>
-                  <div className="p-3 bg-white dark:bg-[#091009] rounded-xl border border-gray-200 dark:border-[rgba(140,170,110,0.2)]">
-                    <span className="text-gray-500 dark:text-[#9DA89A] block text-[11px]">Batch</span>
-                    <span className="font-mono font-semibold text-gray-800 dark:text-[#D1D8CE] block mt-0.5">
+                  <div className="p-3 bg-white dark:bg-[#091009] rounded-xl border border-slate-200 dark:border-[rgba(140,170,110,0.2)]">
+                    <span className="text-slate-600 dark:text-[#C0CCBC] block text-[11px]">Batch</span>
+                    <span className="font-mono font-semibold text-slate-800 dark:text-[#D1D8CE] block mt-0.5">
                       {batch}
                     </span>
                   </div>
                 </div>
-                <p className="text-[11px] text-gray-400 dark:text-[#6F796D]">
+                <p className="text-[11px] text-slate-500 dark:text-[#A2B09D]">
                   Institutional credentials from your verified ID. Permanently immutable and cannot be edited.
                 </p>
               </div>
@@ -298,7 +298,7 @@ export const ProfileSetupPage: React.FC = () => {
                 <div className="space-y-1.5">
                   <label
                     htmlFor="class-select"
-                    className="block text-xs font-semibold text-gray-700 dark:text-[#F4F6F1] flex items-center gap-1.5"
+                    className="block text-xs font-semibold text-slate-700 dark:text-[#F4F6F1] flex items-center gap-1.5"
                   >
                     <GraduationCap className="h-3.5 w-3.5 text-brand-600 dark:text-[#8DA852]" />
                     <span>Class</span>
@@ -313,10 +313,10 @@ export const ProfileSetupPage: React.FC = () => {
                         setFieldErrors((prev) => ({ ...prev, className: undefined }));
                       }
                     }}
-                    className="w-full bg-white dark:bg-[#0D160E] text-gray-900 dark:text-[#F4F6F1] rounded-xl border border-gray-200 dark:border-[rgba(140,170,110,0.22)] hover:border-gray-300 dark:hover:border-[rgba(140,170,110,0.35)] px-4 py-2.5 text-sm focus-visible:outline-none focus-visible:border-brand-600 dark:focus-visible:border-[#8DA852] focus-visible:ring-4 focus-visible:ring-brand-500/10 dark:focus-visible:ring-[#8DA852]/15"
+                    className="w-full bg-white dark:bg-[#0D160E] text-slate-900 dark:text-[#F4F6F1] rounded-xl border border-slate-200 dark:border-[rgba(140,170,110,0.22)] hover:border-slate-300 dark:hover:border-[rgba(140,170,110,0.35)] px-4 py-2.5 text-sm focus-visible:outline-none focus-visible:border-brand-600 dark:focus-visible:border-[#8DA852] focus-visible:ring-4 focus-visible:ring-brand-500/10 dark:focus-visible:ring-[#8DA852]/15"
                   >
                     {CLASS_OPTIONS.map((c) => (
-                      <option key={c} value={c} className="text-gray-900 dark:text-[#F4F6F1] bg-white dark:bg-[#0D160E]">
+                      <option key={c} value={c} className="text-slate-900 dark:text-[#F4F6F1] bg-white dark:bg-[#0D160E]">
                         {c}
                       </option>
                     ))}
@@ -330,7 +330,7 @@ export const ProfileSetupPage: React.FC = () => {
                 <div className="space-y-1.5">
                   <label
                     htmlFor="section-select"
-                    className="block text-xs font-semibold text-gray-700 dark:text-[#F4F6F1] flex items-center gap-1.5"
+                    className="block text-xs font-semibold text-slate-700 dark:text-[#F4F6F1] flex items-center gap-1.5"
                   >
                     <Layers className="h-3.5 w-3.5 text-brand-600 dark:text-[#8DA852]" />
                     <span>Section</span>
@@ -345,10 +345,10 @@ export const ProfileSetupPage: React.FC = () => {
                         setFieldErrors((prev) => ({ ...prev, section: undefined }));
                       }
                     }}
-                    className="w-full bg-white dark:bg-[#0D160E] text-gray-900 dark:text-[#F4F6F1] rounded-xl border border-gray-200 dark:border-[rgba(140,170,110,0.22)] hover:border-gray-300 dark:hover:border-[rgba(140,170,110,0.35)] px-4 py-2.5 text-sm focus-visible:outline-none focus-visible:border-brand-600 dark:focus-visible:border-[#8DA852] focus-visible:ring-4 focus-visible:ring-brand-500/10 dark:focus-visible:ring-[#8DA852]/15"
+                    className="w-full bg-white dark:bg-[#0D160E] text-slate-900 dark:text-[#F4F6F1] rounded-xl border border-slate-200 dark:border-[rgba(140,170,110,0.22)] hover:border-slate-300 dark:hover:border-[rgba(140,170,110,0.35)] px-4 py-2.5 text-sm focus-visible:outline-none focus-visible:border-brand-600 dark:focus-visible:border-[#8DA852] focus-visible:ring-4 focus-visible:ring-brand-500/10 dark:focus-visible:ring-[#8DA852]/15"
                   >
                     {SECTION_OPTIONS.map((sec) => (
-                      <option key={sec} value={sec} className="text-gray-900 dark:text-[#F4F6F1] bg-white dark:bg-[#0D160E]">
+                      <option key={sec} value={sec} className="text-slate-900 dark:text-[#F4F6F1] bg-white dark:bg-[#0D160E]">
                         Section {sec}
                       </option>
                     ))}
@@ -365,7 +365,7 @@ export const ProfileSetupPage: React.FC = () => {
                 <div className="space-y-1.5">
                   <label
                     htmlFor="grad-year-select"
-                    className="block text-xs font-semibold text-gray-700 dark:text-[#F4F6F1] flex items-center gap-1.5"
+                    className="block text-xs font-semibold text-slate-700 dark:text-[#F4F6F1] flex items-center gap-1.5"
                   >
                     <Calendar className="h-3.5 w-3.5 text-brand-600 dark:text-[#8DA852]" />
                     <span>Graduation Year</span>
@@ -380,10 +380,10 @@ export const ProfileSetupPage: React.FC = () => {
                         setFieldErrors((prev) => ({ ...prev, graduationYear: undefined }));
                       }
                     }}
-                    className="w-full bg-white dark:bg-[#0D160E] text-gray-900 dark:text-[#F4F6F1] rounded-xl border border-gray-200 dark:border-[rgba(140,170,110,0.22)] hover:border-gray-300 dark:hover:border-[rgba(140,170,110,0.35)] px-4 py-2.5 text-sm focus-visible:outline-none focus-visible:border-brand-600 dark:focus-visible:border-[#8DA852] focus-visible:ring-4 focus-visible:ring-brand-500/10 dark:focus-visible:ring-[#8DA852]/15"
+                    className="w-full bg-white dark:bg-[#0D160E] text-slate-900 dark:text-[#F4F6F1] rounded-xl border border-slate-200 dark:border-[rgba(140,170,110,0.22)] hover:border-slate-300 dark:hover:border-[rgba(140,170,110,0.35)] px-4 py-2.5 text-sm focus-visible:outline-none focus-visible:border-brand-600 dark:focus-visible:border-[#8DA852] focus-visible:ring-4 focus-visible:ring-brand-500/10 dark:focus-visible:ring-[#8DA852]/15"
                   >
                     {GRADUATION_YEAR_OPTIONS.map((yr) => (
-                      <option key={yr} value={yr} className="text-gray-900 dark:text-[#F4F6F1] bg-white dark:bg-[#0D160E]">
+                      <option key={yr} value={yr} className="text-slate-900 dark:text-[#F4F6F1] bg-white dark:bg-[#0D160E]">
                         Class of {yr}
                       </option>
                     ))}
@@ -398,21 +398,21 @@ export const ProfileSetupPage: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <label
                       htmlFor="gender-select"
-                      className="block text-xs font-semibold text-gray-700 dark:text-[#F4F6F1] flex items-center gap-1.5"
+                      className="block text-xs font-semibold text-slate-700 dark:text-[#F4F6F1] flex items-center gap-1.5"
                     >
                       <Users className="h-3.5 w-3.5 text-brand-600 dark:text-[#8DA852]" />
                       <span>Gender</span>
                       <span className="text-rose-500">*</span>
                     </label>
                     {isGenderLocked && (
-                      <span className="inline-flex items-center gap-1 text-[11px] text-gray-500 dark:text-[#9DA89A] bg-gray-100 dark:bg-[#101D11] border border-gray-200 dark:border-[rgba(140,170,110,0.2)] px-2 py-0.5 rounded-full font-medium">
-                        <Lock className="h-3 w-3 text-gray-500 dark:text-[#8DA852]" />
+                      <span className="inline-flex items-center gap-1 text-[11px] text-slate-600 dark:text-[#9DA89A] bg-slate-100 dark:bg-[#101D11] border border-slate-200 dark:border-[rgba(140,170,110,0.2)] px-2 py-0.5 rounded-full font-medium">
+                        <Lock className="h-3 w-3 text-slate-600 dark:text-[#8DA852]" />
                         Locked
                       </span>
                     )}
                   </div>
                   {isGenderLocked ? (
-                    <div className="w-full bg-gray-50 dark:bg-[#0D160E] text-gray-800 dark:text-[#F4F6F1] rounded-xl border border-gray-200 dark:border-[rgba(140,170,110,0.22)] px-4 py-2.5 text-sm font-semibold">
+                    <div className="w-full bg-slate-50 dark:bg-[#0D160E] text-slate-800 dark:text-[#F4F6F1] rounded-xl border border-slate-200 dark:border-[rgba(140,170,110,0.22)] px-4 py-2.5 text-sm font-semibold">
                       {profile?.gender || gender}
                     </div>
                   ) : (
@@ -425,10 +425,10 @@ export const ProfileSetupPage: React.FC = () => {
                           setFieldErrors((prev) => ({ ...prev, gender: undefined }));
                         }
                       }}
-                      className="w-full bg-white dark:bg-[#0D160E] text-gray-900 dark:text-[#F4F6F1] rounded-xl border border-gray-200 dark:border-[rgba(140,170,110,0.22)] hover:border-gray-300 dark:hover:border-[rgba(140,170,110,0.35)] px-4 py-2.5 text-sm focus-visible:outline-none focus-visible:border-brand-600 dark:focus-visible:border-[#8DA852] focus-visible:ring-4 focus-visible:ring-brand-500/10 dark:focus-visible:ring-[#8DA852]/15"
+                      className="w-full bg-white dark:bg-[#0D160E] text-slate-900 dark:text-[#F4F6F1] rounded-xl border border-slate-200 dark:border-[rgba(140,170,110,0.22)] hover:border-slate-300 dark:hover:border-[rgba(140,170,110,0.35)] px-4 py-2.5 text-sm focus-visible:outline-none focus-visible:border-brand-600 dark:focus-visible:border-[#8DA852] focus-visible:ring-4 focus-visible:ring-brand-500/10 dark:focus-visible:ring-[#8DA852]/15"
                     >
                       {GENDER_OPTIONS.map((g) => (
-                        <option key={g} value={g} className="text-gray-900 dark:text-[#F4F6F1] bg-white dark:bg-[#0D160E]">
+                        <option key={g} value={g} className="text-slate-900 dark:text-[#F4F6F1] bg-white dark:bg-[#0D160E]">
                           {g}
                         </option>
                       ))}
@@ -437,7 +437,7 @@ export const ProfileSetupPage: React.FC = () => {
                   {fieldErrors.gender && (
                     <p className="text-xs text-rose-600 mt-1">{fieldErrors.gender}</p>
                   )}
-                  <p className="text-[11px] text-gray-400 dark:text-[#6F796D]">
+                  <p className="text-[11px] text-slate-500 dark:text-[#A2B09D]">
                     {isGenderLocked
                       ? 'Gender is frozen and permanently immutable.'
                       : 'You will choose gender once, after which it cannot be modified.'}
@@ -446,7 +446,7 @@ export const ProfileSetupPage: React.FC = () => {
               </div>
             </CardContent>
 
-            <CardFooter className="flex items-center justify-between border-t border-gray-100 dark:border-[rgba(140,170,110,0.14)] pt-5">
+            <CardFooter className="flex items-center justify-between border-t border-slate-200 dark:border-[rgba(140,170,110,0.14)] pt-5">
               <Button
                 type="button"
                 variant="secondary"
@@ -480,14 +480,14 @@ export const ProfileSetupPage: React.FC = () => {
         maxWidth="sm"
       >
         <div className="space-y-4">
-          <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200 space-y-1">
-            <span className="text-xs text-gray-500 block">Selected:</span>
-            <span className="text-base font-bold text-gray-900 block">
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 dark:bg-[#091009] dark:border-[rgba(140,170,110,0.22)] space-y-1">
+            <span className="text-xs text-slate-600 dark:text-[#9DA89A] block">Selected:</span>
+            <span className="text-base font-bold text-slate-900 dark:text-[#F4F6F1] block">
               {genderToConfirm}
             </span>
           </div>
 
-          <p className="text-xs text-gray-500 leading-relaxed">
+          <p className="text-xs text-slate-600 dark:text-[#9DA89A] leading-relaxed">
             You won't be able to change this after confirming.
           </p>
 

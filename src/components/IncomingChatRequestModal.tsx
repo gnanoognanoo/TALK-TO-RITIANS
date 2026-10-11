@@ -109,13 +109,13 @@ export const IncomingChatRequestModal: React.FC<IncomingChatRequestModalProps> =
       <div className="text-center space-y-4 pt-1 pb-1">
         {/* Top Countdown Badge */}
         <div className="flex items-center justify-between text-xs font-semibold px-1">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#121E12] text-[#A2BD63] border border-[rgba(141,168,82,0.2)]">
-            <MessageSquare className="h-3.5 w-3.5 text-[#8DA852]" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-50 text-brand-700 border border-brand-200 dark:bg-[#121E12] dark:text-[#A2BD63] dark:border-[rgba(150,175,120,0.24)]">
+            <MessageSquare className="h-3.5 w-3.5 text-brand-600 dark:text-[#8DA852]" />
             <span>Chat Request</span>
           </div>
 
-          <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-950/40 text-amber-300 border border-amber-500/30">
-            <Clock className="h-3.5 w-3.5 text-amber-400 animate-spin" />
+          <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-500/30">
+            <Clock className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 animate-spin" />
             <span>{secondsRemaining}s</span>
           </div>
         </div>
@@ -130,23 +130,23 @@ export const IncomingChatRequestModal: React.FC<IncomingChatRequestModalProps> =
           />
 
           <div className="space-y-1">
-            <h3 className="text-xl font-bold text-[#F4F6F1] tracking-tight">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-[#F4F6F1] tracking-tight">
               {request.requester.anonymousUsername} wants to chat
             </h3>
-            <p className="text-xs text-[#9DA89A]">
+            <p className="text-xs text-slate-600 dark:text-[#A2B09D]">
               7-minute anonymous conversation
             </p>
           </div>
         </div>
 
         {/* Privacy Note */}
-        <div className="px-3.5 py-2 rounded-xl bg-[#091009]/80 border border-[rgba(141,168,82,0.15)] text-left flex items-center gap-2 text-[11px] text-[#9DA89A]">
-          <Shield className="h-3.5 w-3.5 text-[#8DA852] shrink-0" />
+        <div className="px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 dark:bg-[#091009]/80 dark:border-[rgba(150,175,120,0.24)] dark:text-[#C0CCBC] text-left flex items-center gap-2 text-[11px]">
+          <Shield className="h-3.5 w-3.5 text-emerald-600 dark:text-[#8DA852] shrink-0" />
           <span>Real identity &amp; credentials remain permanently sealed.</span>
         </div>
 
         {actionError && (
-          <p className="text-xs text-rose-400 font-medium">
+          <p className="text-xs text-rose-600 dark:text-rose-400 font-medium">
             {actionError}
           </p>
         )}
@@ -157,7 +157,7 @@ export const IncomingChatRequestModal: React.FC<IncomingChatRequestModalProps> =
             type="button"
             disabled={isAccepting || isRejecting}
             onClick={handleReject}
-            className="py-3 px-4 rounded-full text-sm font-semibold text-[#9DA89A] hover:text-[#F4F6F1] bg-[#0E170E] border border-[rgba(141,168,82,0.2)] hover:border-rose-500/40 hover:text-rose-300 hover:bg-rose-950/20 active:scale-95 transition-all disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
+            className="py-3 px-4 rounded-full text-sm font-semibold text-slate-700 hover:text-slate-900 bg-white border border-slate-300 hover:bg-slate-50 hover:border-rose-300 hover:text-rose-700 dark:bg-[#0E170E] dark:text-[#C0CCBC] dark:hover:text-[#F4F6F1] dark:border-[rgba(150,175,120,0.24)] dark:hover:border-rose-500/40 dark:hover:text-rose-300 dark:hover:bg-rose-950/20 active:scale-95 transition-all disabled:opacity-50 inline-flex items-center justify-center gap-1.5 shadow-sm"
           >
             <X className="h-4 w-4" />
             <span>{isRejecting ? 'Rejecting...' : 'Reject'}</span>

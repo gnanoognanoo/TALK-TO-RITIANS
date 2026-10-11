@@ -11,7 +11,7 @@ export const Logo: React.FC<LogoProps> = ({
   size = 'md',
   showText = true,
   className = '',
-  onDark = true,
+  onDark = false,
 }) => {
   // Visual sizing targets:
   // Mobile: 40px–48px square
@@ -29,19 +29,18 @@ export const Logo: React.FC<LogoProps> = ({
   };
 
   // Text contrast strategy:
-  // On dark navbar (default):
-  //   Light Mode: "Talk to" is crisp white (#FFFFFF), "RITians" is vibrant high-contrast purple (#A78BFA / text-brand-400)
-  //   Dark Mode: "Talk to" is off-white (#F2F5F2), "RITians" is muted chemical green (#8FAF56)
-  // On light surface (when onDark = false):
-  //   Light Mode: "Talk to" is dark navy/slate (#111827 / text-gray-900), "RITians" is primary brand purple (#6C4CF5 / text-brand-600)
-  //   Dark Mode: "Talk to" is off-white (#F2F5F2), "RITians" is muted chemical green (#8FAF56)
+  // Default (theme-aware):
+  //   Light Mode: "Talk to" is dark slate (#0F172A / text-slate-900), "RITians" is primary purple (#6D42E8 / text-brand-600)
+  //   Dark Mode: "Talk to" is off-white (#F4F6F1), "RITians" is chemical green (#A2BD63)
+  // When explicitly on dark background (onDark = true):
+  //   "Talk to" is pure white (#FFFFFF), "RITians" is accent green (#A2BD63)
   const talkToColor = onDark
-    ? 'text-white dark:text-[#F2F5F2]'
-    : 'text-gray-900 dark:text-[#F2F5F2]';
+    ? 'text-white dark:text-[#F4F6F1]'
+    : 'text-slate-900 dark:text-[#F4F6F1]';
 
   const ritiansColor = onDark
-    ? 'text-brand-400 dark:text-[#8FAF56]'
-    : 'text-brand-600 dark:text-[#8FAF56]';
+    ? 'text-[#A2BD63] dark:text-[#A2BD63]'
+    : 'text-[#6D42E8] dark:text-[#A2BD63]';
 
   return (
     <div className={`inline-flex items-center gap-2.5 select-none ${className}`}>

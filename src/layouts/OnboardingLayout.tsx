@@ -26,27 +26,27 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({ children }) 
   const currentStepIdx = getCurrentStepIndex();
 
   return (
-    <div className="relative min-h-screen bg-[#F8FAFC] dark:bg-[#050806] text-gray-900 dark:text-[#F2F5F2] flex flex-col selection:bg-brand-600 dark:selection:bg-[#8FAF56] selection:text-white dark:selection:text-[#050806]">
+    <div className="relative min-h-screen bg-[#F8FAFC] dark:bg-[#050806] text-slate-900 dark:text-[#F2F5F2] flex flex-col selection:bg-brand-600 dark:selection:bg-[#8FAF56] selection:text-white dark:selection:text-[#050806]">
       {/* Dark Chemical Atmospheric Backdrop (Active only in dark mode) */}
       <DarkChemicalBackdrop />
 
       {/* Top Navbar */}
-      <header className="relative z-10 border-b border-gray-200 dark:border-[rgba(120,160,100,0.14)] bg-white/95 dark:bg-[#080D09]/95 backdrop-blur-md px-4 sm:px-8 py-3.5 flex items-center justify-between">
+      <header className="relative z-10 border-b border-slate-200 dark:border-[rgba(120,160,100,0.14)] bg-white/95 dark:bg-[#080D09]/95 backdrop-blur-md px-4 sm:px-8 py-3.5 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
           <Logo size="sm" onDark={false} />
         </Link>
 
-        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-[#AEB9AE]">
+        <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-[#AEB9AE]">
           <Shield className="h-4 w-4 text-brand-600 dark:text-[#8FAF56]" />
           <span className="hidden sm:inline">Onboarding:</span>
-          <span className="font-semibold text-gray-900 dark:text-[#F2F5F2]">
+          <span className="font-semibold text-slate-900 dark:text-[#F2F5F2]">
             Step {currentStepIdx + 1} of {steps.length}
           </span>
         </div>
       </header>
 
       {/* Stepper Progress Indicator */}
-      <div className="relative z-10 border-b border-gray-200 dark:border-[rgba(120,160,100,0.14)] bg-white dark:bg-[#0D150F] py-4 px-4 sm:px-8 shadow-subtle">
+      <div className="relative z-10 border-b border-slate-200 dark:border-[rgba(120,160,100,0.14)] bg-white dark:bg-[#0D150F] py-4 px-4 sm:px-8 shadow-subtle">
         <div className="max-w-2xl mx-auto">
           <nav aria-label="Onboarding Progress">
             <ol className="flex items-center justify-between gap-2">
@@ -66,7 +66,7 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({ children }) 
                             ? 'text-brand-600 font-bold'
                             : isCompleted
                             ? 'text-emerald-700 hover:text-emerald-800'
-                            : 'text-gray-400 hover:text-gray-600'
+                            : 'text-slate-500 hover:text-slate-700 dark:text-[#9DA89A] dark:hover:text-[#F4F6F1]'
                         }
                       `.trim()}
                     >
@@ -78,7 +78,7 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({ children }) 
                               ? 'bg-brand-600 text-white shadow-sm ring-2 ring-brand-100'
                               : isCompleted
                               ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
-                              : 'bg-gray-100 text-gray-400 border border-gray-200'
+                              : 'bg-slate-100 text-slate-500 border border-slate-200 dark:bg-[#121E12] dark:text-[#9DA89A] dark:border-[rgba(141,168,82,0.2)]'
                           }
                         `.trim()}
                       >
@@ -95,7 +95,7 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({ children }) 
                       <div
                         className={`
                           flex-1 h-0.5 mx-1 sm:mx-2 rounded-full transition-colors
-                          ${idx < currentStepIdx ? 'bg-emerald-400' : 'bg-gray-200'}
+                          ${idx < currentStepIdx ? 'bg-emerald-400' : 'bg-slate-200 dark:bg-[rgba(141,168,82,0.15)]'}
                         `}
                       />
                     )}
@@ -115,7 +115,7 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({ children }) 
       </main>
 
       {/* Onboarding Footer */}
-      <footer className="relative z-10 border-t border-gray-200 dark:border-[rgba(120,160,100,0.14)] bg-white dark:bg-[#080D09] py-4 text-center text-xs text-gray-400 dark:text-[#758275]">
+      <footer className="relative z-10 border-t border-slate-200 dark:border-[rgba(120,160,100,0.14)] bg-white dark:bg-[#080D09] py-4 text-center text-xs text-slate-500 dark:text-[#758275]">
         Your real student details stay permanently isolated. Only your anonymous handle & avatar are visible.
       </footer>
     </div>

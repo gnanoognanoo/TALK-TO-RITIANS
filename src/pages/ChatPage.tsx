@@ -27,9 +27,9 @@ import {
   Clock,
   Pause,
   Play,
+  ArrowDown,
 } from 'lucide-react';
 import {
-  Button,
   Modal,
   Avatar,
 } from '../components';
@@ -70,9 +70,64 @@ export const ChatPage: React.FC = () => {
 
   const graceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const heartbeatTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const isNearBottomRef = useRef<boolean>(true);
+  const [showNewMessages, setShowNewMessages] = useState<boolean>(false);
+  const [viewportHeight, setViewportHeight] = useState<number | null>(() => {
+    if (typeof window !== 'undefined' && window.visualViewport) {
+      return window.visualViewport.height;
+    }
+    return null;
+  });
   const inputRef = useRef<HTMLInputElement>(null);
   const hasWarnedOneMinuteRef = useRef<boolean>(false);
+
+  // Lock document body and html to prevent outer page scrolling during chat
+  useEffect(() => {
+    window.scrollTo(0, 0);
+
+    const origBodyOverflow = document.body.style.overflow;
+    const origHtmlOverflow = document.documentElement.style.overflow;
+    const origBodyOverscroll = document.body.style.overscrollBehavior;
+    const origHtmlOverscroll = document.documentElement.style.overscrollBehavior;
+    const origBodyHeight = document.body.style.height;
+    const origHtmlHeight = document.documentElement.style.height;
+
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overscrollBehavior = 'none';
+    document.documentElement.style.overscrollBehavior = 'none';
+    document.body.style.height = '100%';
+    document.documentElement.style.height = '100%';
+
+    return () => {
+      document.body.style.overflow = origBodyOverflow;
+      document.documentElement.style.overflow = origHtmlOverflow;
+      document.body.style.overscrollBehavior = origBodyOverscroll;
+      document.documentElement.style.overscrollBehavior = origHtmlOverscroll;
+      document.body.style.height = origBodyHeight;
+      document.documentElement.style.height = origHtmlHeight;
+    };
+  }, []);
+
+  // Track dynamic visualViewport changes (virtual keyboard on Android / Safari)
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const handleResize = () => {
+      setViewportHeight(vv.height);
+      window.scrollTo(0, 0);
+    };
+
+    vv.addEventListener('resize', handleResize);
+    vv.addEventListener('scroll', handleResize);
+
+    return () => {
+      vv.removeEventListener('resize', handleResize);
+      vv.removeEventListener('scroll', handleResize);
+    };
+  }, []);
 
   // Reset 1-minute warning flag on room change
   useEffect(() => {
@@ -161,14 +216,37 @@ export const ChatPage: React.FC = () => {
   }, [expiresAt, roomStatus, roomId, isTimerFrozen]);
 
   /**
-   * Auto-scroll when messages update
+   * Direct Container Scroll to bottom (does NOT call scrollIntoView, never scrolls window or body)
    */
   const scrollToBottom = useCallback((smooth = true) => {
-    messagesEndRef.current?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' });
+    const el = messagesContainerRef.current;
+    if (!el) return;
+    if (smooth) {
+      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+    } else {
+      el.scrollTop = el.scrollHeight;
+    }
+    setShowNewMessages(false);
+  }, []);
+
+  const handleMessagesScroll = useCallback(() => {
+    const el = messagesContainerRef.current;
+    if (!el) return;
+    const threshold = 70; // px threshold from bottom
+    const isNear = el.scrollHeight - el.scrollTop - el.clientHeight <= threshold;
+    isNearBottomRef.current = isNear;
+    if (isNear) {
+      setShowNewMessages(false);
+    }
   }, []);
 
   useEffect(() => {
-    scrollToBottom();
+    if (messages.length === 0) return;
+    if (isNearBottomRef.current) {
+      scrollToBottom(true);
+    } else {
+      setShowNewMessages(true);
+    }
   }, [messages, scrollToBottom]);
 
   /**
@@ -221,7 +299,7 @@ export const ChatPage: React.FC = () => {
         setConnectionStatus('stranger disconnected');
       }
 
-      scrollToBottom(false);
+      setTimeout(() => scrollToBottom(false), 30);
     };
 
     hydrateRoom();
@@ -706,24 +784,27 @@ export const ChatPage: React.FC = () => {
   return (
     <div
       id="chat-page-root"
-      className="h-[100dvh] max-h-[100dvh] w-full flex flex-col overflow-hidden bg-[#050805]"
+      style={{
+        height: viewportHeight ? `${viewportHeight}px` : undefined,
+        maxHeight: viewportHeight ? `${viewportHeight}px` : undefined,
+      }}
+      className="fixed inset-0 h-[100dvh] max-h-[100dvh] w-full flex flex-col overflow-hidden select-none bg-[#050805] text-[#F4F6F1] dark"
     >
       <div
         id="chat-page-container"
-        className="flex-1 flex flex-col h-full max-w-4xl mx-auto w-full bg-[#050805] sm:border-x sm:border-[rgba(141,168,82,0.15)] overflow-hidden"
+        className="flex-1 min-h-0 flex flex-col h-full max-w-4xl mx-auto w-full bg-[#050805] sm:border-x sm:border-[rgba(155,185,115,0.16)] overflow-hidden"
       >
         {/* =========================================================================
-            TOP BAR (Fixed Header: flex-shrink: 0)
+            TOP BAR (Fixed Header: flex-shrink: 0, outside message scroll container)
             Left: Avatar, peer username, online / connected status.
-            Right: Timer and Leave button.
-            CRITICAL: Peer label prefix removed per Change 2.
-            CRITICAL: Header is shrink-0 and remains visible at all times.
+            Right: Timer and Leave button (+ Developer Freeze/Resume if authorized).
             ========================================================================= */}
         <header
           id="chat-header"
-          className="px-3.5 sm:px-6 py-2.5 sm:py-3 border-b border-[rgba(141,168,82,0.18)] bg-[#091009]/95 backdrop-blur-xl flex items-center justify-between gap-2.5 shrink-0"
+          className="px-3 sm:px-5 py-2 sm:py-2.5 border-b border-[rgba(155,185,115,0.16)] bg-[#091009]/95 backdrop-blur-xl flex items-center justify-between gap-2 shrink-0 z-20"
         >
-          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+          {/* Left: Avatar + Peer Persona Info */}
+          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
             <Avatar
               size="md"
               avatarConfig={peer.avatarConfig as any}
@@ -735,17 +816,19 @@ export const ChatPage: React.FC = () => {
                   ? 'offline'
                   : 'matching'
               }
+              className="shrink-0"
             />
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <h1
                 id="chat-peer-username"
-                className="font-bold text-sm sm:text-base text-[#F4F6F1] truncate"
+                className="font-bold text-xs sm:text-sm text-[#F4F6F1] truncate max-w-[120px] sm:max-w-[220px]"
+                title={peer.anonymousUsername}
               >
                 {peer.anonymousUsername}
               </h1>
-              <div className="flex items-center gap-1.5 text-xs">
+              <div className="flex items-center gap-1.5 text-[11px] leading-tight">
                 <span
-                  className={`h-2 w-2 rounded-full ${
+                  className={`h-2 w-2 rounded-full shrink-0 ${
                     connectionStatus === 'connected'
                       ? 'bg-[#8DA852] animate-pulse shadow-[0_0_8px_rgba(141,168,82,0.6)]'
                       : isDisconnected
@@ -753,7 +836,7 @@ export const ChatPage: React.FC = () => {
                       : 'bg-amber-400 animate-pulse'
                   }`}
                 />
-                <span className="text-[#9DA89A] text-[11px] font-medium">
+                <span className="text-[#B4C1AE] text-[11px] font-medium truncate">
                   {connectionStatus === 'connected'
                     ? 'Online'
                     : isDisconnected
@@ -766,37 +849,37 @@ export const ChatPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Header Action: Timer and Leave */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          {/* Right Header Action: Timer, Developer Controls, Leave Button */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             {roomStatus === 'active' && (
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
                 {isTimerFrozen ? (
                   /* FROZEN STATE: Distinct paused badge without pulsing warnings */
                   <div
                     id="chat-header-timer"
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold tabular-nums tracking-wide bg-sky-950/60 text-sky-300 border-sky-500/40 shadow-sm"
+                    className="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-full border text-[11px] sm:text-xs font-semibold tabular-nums tracking-wide bg-sky-950/60 text-sky-300 border-sky-500/40 shadow-sm shrink-0"
                     title={isDeveloper ? 'Timer frozen by developer' : 'Timer paused'}
                   >
-                    <Pause className="h-3.5 w-3.5 text-sky-400" />
+                    <Pause className="h-3 w-3 text-sky-400 shrink-0" />
                     <span>
-                      {formatTimer(remainingSeconds)}{' '}
-                      {isDeveloper ? '— FROZEN' : '(Timer paused)'}
+                      {formatTimer(remainingSeconds)}
+                      <span className="hidden sm:inline"> {isDeveloper ? '— FROZEN' : '(Paused)'}</span>
                     </span>
                   </div>
                 ) : (
                   /* RUNNING STATE: Standard 7-minute timer with warning colors */
                   <div
                     id="chat-header-timer"
-                    className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full border text-xs font-semibold tabular-nums tracking-wide transition-all ${
+                    className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-full border text-[11px] sm:text-xs font-semibold tabular-nums tracking-wide transition-all shrink-0 ${
                       getTimerThresholdState(remainingSeconds) === 'red'
-                        ? 'bg-red-950/70 text-red-300 border-red-500/70 font-bold ring-2 ring-red-500/30 animate-pulse shadow-[0_0_12px_rgba(239,68,68,0.3)]'
+                        ? 'bg-red-950/80 text-red-300 border-red-500/70 font-bold ring-2 ring-red-500/30 animate-pulse shadow-sm'
                         : getTimerThresholdState(remainingSeconds) === 'amber'
-                        ? 'bg-amber-950/70 text-amber-300 border-amber-500/60 font-bold ring-2 ring-amber-500/30 animate-pulse shadow-[0_0_12px_rgba(227,163,41,0.25)]'
-                        : 'bg-[#101A12] text-[#A2BD63] border-[rgba(141,168,82,0.3)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]'
+                        ? 'bg-amber-950/80 text-amber-300 border-amber-500/60 font-bold ring-2 ring-amber-500/30 animate-pulse shadow-sm'
+                        : 'bg-[#101A12] text-[#A2BD63] border-[rgba(155,185,115,0.3)] shadow-sm'
                     }`}
                     title="7-minute chat session timer"
                   >
-                    <Clock className="h-3.5 w-3.5 shrink-0" />
+                    <Clock className="h-3 w-3 shrink-0" />
                     <span>{formatTimer(remainingSeconds)}</span>
                   </div>
                 )}
@@ -804,63 +887,59 @@ export const ChatPage: React.FC = () => {
                 {/* Privileged Developer Only: Freeze / Resume Control */}
                 {isDeveloper && (
                   isTimerFrozen ? (
-                    <Button
+                    <button
                       id="developer-resume-timer-btn"
                       type="button"
-                      variant="primary"
-                      size="sm"
                       onClick={handleResumeTimer}
-                      isLoading={isTogglingFreeze}
                       disabled={isTogglingFreeze}
-                      leftIcon={<Play className="h-3.5 w-3.5" />}
-                      className="text-xs h-7 px-2.5 font-semibold bg-[#526C34] hover:bg-[#688a42] text-white border-0 shadow-sm rounded-full"
+                      className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-full text-[11px] font-bold text-[#10170B] bg-[#A2BD63] hover:bg-[#B2CE72] active:scale-95 transition-all shadow-sm shrink-0"
                       title="Resume countdown timer (Ctrl+Shift+P)"
                     >
-                      Resume
-                    </Button>
+                      <Play className="h-3 w-3 fill-current" />
+                      <span>Resume</span>
+                    </button>
                   ) : (
-                    <Button
+                    <button
                       id="developer-freeze-timer-btn"
                       type="button"
-                      variant="secondary"
-                      size="sm"
                       onClick={handleFreezeTimer}
-                      isLoading={isTogglingFreeze}
                       disabled={isTogglingFreeze}
-                      leftIcon={<Pause className="h-3.5 w-3.5 text-sky-400" />}
-                      className="text-xs h-7 px-2.5 font-semibold border-sky-500/40 text-sky-300 bg-sky-950/40 hover:bg-sky-950/60 shadow-sm rounded-full"
+                      className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-full text-[11px] font-semibold text-sky-300 bg-sky-950/50 border border-sky-500/40 hover:bg-sky-950/80 active:scale-95 transition-all shadow-sm shrink-0"
                       title="Freeze countdown timer (Ctrl+Shift+P)"
                     >
-                      Freeze
-                    </Button>
+                      <Pause className="h-3 w-3 text-sky-400" />
+                      <span>Freeze</span>
+                    </button>
                   )
                 )}
               </div>
             )}
 
+            {/* Leave Button */}
             <button
               type="button"
+              id="chat-leave-header-btn"
               onClick={() => setIsLeaveModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-rose-300 hover:text-rose-200 bg-rose-950/25 border border-rose-500/35 hover:bg-rose-950/50 active:scale-95 transition-all"
+              className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold text-rose-300 hover:text-rose-200 bg-rose-950/30 border border-rose-500/35 hover:bg-rose-950/60 active:scale-95 transition-all shrink-0"
             >
-              <LogOut className="h-3.5 w-3.5" />
+              <LogOut className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />
               <span>Leave</span>
             </button>
           </div>
         </header>
 
-        {/* 01:00 Remaining Warning Banner (Suppressed while timer is frozen) */}
+        {/* 01:00 Remaining Warning Banner */}
         {roomStatus === 'active' && !isTimerFrozen && remainingSeconds !== null && remainingSeconds <= 60 && remainingSeconds > 0 && (
           <div
             id="chat-time-warning-banner"
             role="alert"
             aria-live="polite"
-            className="px-4 py-2 bg-amber-950/70 border-b border-amber-500/40 text-amber-200 text-xs font-medium flex items-center justify-between gap-3 shrink-0"
+            className="px-4 py-2 bg-[#261B07] border-b border-amber-500/40 text-amber-200 text-xs font-medium flex items-center justify-between gap-3 shrink-0 z-10"
           >
             <div className="flex items-center gap-2 min-w-0">
               <Clock className="h-4 w-4 shrink-0 text-amber-400 animate-pulse" />
               <span className="truncate">
-                <strong className="font-semibold text-white">1 minute remaining</strong> — Wrap up your chat! Room ends at 00:00.
+                <strong className="font-semibold text-[#F4F6F1]">1 minute remaining</strong> — Wrap up your chat! Room ends at 00:00.
               </span>
             </div>
             <span className="shrink-0 tabular-nums font-bold text-amber-300 bg-amber-900/60 border border-amber-500/50 px-2.5 py-0.5 rounded-full text-xs">
@@ -871,21 +950,21 @@ export const ChatPage: React.FC = () => {
 
         {/* Duplicate Tab Warning */}
         {duplicateTabWarning && (
-          <div className="px-4 py-2 bg-amber-950/50 border-b border-amber-500/30 text-amber-200 text-xs flex items-center gap-2 shrink-0">
+          <div className="px-4 py-2 bg-[#261B07] border-b border-amber-500/30 text-amber-200 text-xs flex items-center gap-2 shrink-0 z-10">
             <AlertCircle className="h-4 w-4 shrink-0 text-amber-400" />
             <span>Active in multiple tabs. Messages sync automatically.</span>
           </div>
         )}
 
         {/* =========================================================================
-            MAIN CHAT BODY OR DISCONNECTED SCREEN (Phase 12)
+            MAIN CHAT BODY OR DISCONNECTED SCREEN
             ========================================================================= */}
         {isDisconnected ? (
           endReason === 'time_limit' ? (
             /* Time-Limit End Screen: "7-minute chat ended" */
             <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-[#050805]">
-              <div className="max-w-sm w-full bg-[#0D160E] border border-[rgba(141,168,82,0.22)] rounded-[28px] p-7 shadow-[0_8px_32px_rgba(0,0,0,0.5)] space-y-6">
-                <div className="h-16 w-16 mx-auto rounded-full bg-[#121E12] border border-[rgba(141,168,82,0.3)] flex items-center justify-center text-[#A2BD63]">
+              <div className="max-w-sm w-full bg-[#0D160E] border border-[rgba(155,185,115,0.22)] rounded-[28px] p-7 shadow-[0_8px_32px_rgba(0,0,0,0.6)] space-y-6">
+                <div className="h-16 w-16 mx-auto rounded-full bg-[#121E12] border border-[rgba(155,185,115,0.3)] flex items-center justify-center text-[#A2BD63]">
                   <Clock className="h-8 w-8 stroke-[1.75]" />
                 </div>
 
@@ -893,7 +972,7 @@ export const ChatPage: React.FC = () => {
                   <h2 className="text-xl sm:text-2xl font-bold text-[#F4F6F1]">
                     Time's up!
                   </h2>
-                  <p className="text-sm text-[#9DA89A]">
+                  <p className="text-sm text-[#B4C1AE]">
                     Your 7-minute conversation has ended.
                   </p>
                 </div>
@@ -904,7 +983,7 @@ export const ChatPage: React.FC = () => {
                     id="chat-find-another-button"
                     type="button"
                     onClick={() => navigate('/matching', { replace: true })}
-                    className="liquid-cta-btn w-full py-3 px-4 rounded-full font-bold text-sm text-white transition-all active:scale-95 shadow-[0_4px_16px_rgba(141,168,82,0.35)]"
+                    className="liquid-cta-btn w-full py-3 px-4 rounded-full font-bold text-sm text-[#10170B] transition-all active:scale-95 shadow-md"
                   >
                     Find Another RITian
                   </button>
@@ -915,7 +994,7 @@ export const ChatPage: React.FC = () => {
                       await matchmakingService.leaveMatchmaking();
                       navigate('/home', { replace: true });
                     }}
-                    className="w-full py-3 px-4 rounded-full font-semibold text-sm text-[#9DA89A] hover:text-[#F4F6F1] bg-[#101A12] border border-[rgba(141,168,82,0.2)] hover:bg-[#142314] transition-all active:scale-95"
+                    className="w-full py-3 px-4 rounded-full font-semibold text-sm text-[#B4C1AE] hover:text-[#F4F6F1] bg-[#101A12] border border-[rgba(155,185,115,0.2)] hover:bg-[#142314] transition-all active:scale-95"
                   >
                     Leave
                   </button>
@@ -923,11 +1002,11 @@ export const ChatPage: React.FC = () => {
               </div>
             </div>
           ) : (
-            /* Phase 12 - Disconnected Page / State */
+            /* Disconnected Page / State */
             <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-[#050805]">
-              <div className="max-w-sm w-full bg-[#0D160E] border border-[rgba(141,168,82,0.22)] rounded-[28px] p-7 shadow-[0_8px_32px_rgba(0,0,0,0.5)] space-y-6">
+              <div className="max-w-sm w-full bg-[#0D160E] border border-[rgba(155,185,115,0.22)] rounded-[28px] p-7 shadow-[0_8px_32px_rgba(0,0,0,0.6)] space-y-6">
                 {/* Broken Link Icon */}
-                <div className="h-16 w-16 mx-auto rounded-full bg-[#121E12] border border-[rgba(141,168,82,0.3)] flex items-center justify-center text-[#A2BD63]">
+                <div className="h-16 w-16 mx-auto rounded-full bg-[#121E12] border border-[rgba(155,185,115,0.3)] flex items-center justify-center text-[#A2BD63]">
                   <Unlink className="h-8 w-8 stroke-[1.75]" />
                 </div>
 
@@ -935,7 +1014,7 @@ export const ChatPage: React.FC = () => {
                   <h2 className="text-xl sm:text-2xl font-bold text-[#F4F6F1]">
                     Chat Ended
                   </h2>
-                  <p className="text-sm text-[#9DA89A]">
+                  <p className="text-sm text-[#B4C1AE]">
                     The other user has disconnected.
                   </p>
                 </div>
@@ -950,7 +1029,7 @@ export const ChatPage: React.FC = () => {
                       }
                       navigate('/matching', { replace: true });
                     }}
-                    className="liquid-cta-btn w-full py-3 px-4 rounded-full font-bold text-sm text-white transition-all active:scale-95 shadow-[0_4px_16px_rgba(141,168,82,0.35)]"
+                    className="liquid-cta-btn w-full py-3 px-4 rounded-full font-bold text-sm text-[#10170B] transition-all active:scale-95 shadow-md"
                   >
                     Find a New Chat
                   </button>
@@ -963,7 +1042,7 @@ export const ChatPage: React.FC = () => {
                       await matchmakingService.leaveMatchmaking();
                       navigate('/home', { replace: true });
                     }}
-                    className="w-full py-3 px-4 rounded-full font-semibold text-sm text-[#9DA89A] hover:text-[#F4F6F1] bg-[#101A12] border border-[rgba(141,168,82,0.2)] hover:bg-[#142314] transition-all active:scale-95"
+                    className="w-full py-3 px-4 rounded-full font-semibold text-sm text-[#B4C1AE] hover:text-[#F4F6F1] bg-[#101A12] border border-[rgba(155,185,115,0.2)] hover:bg-[#142314] transition-all active:scale-95"
                   >
                     Back to Home
                   </button>
@@ -972,21 +1051,24 @@ export const ChatPage: React.FC = () => {
             </div>
           )
         ) : (
-          /* Phase 10 - Message Stream (ONLY this area scrolls: flex: 1, min-height: 0, overflow-y: auto) */
+          /* Message Stream (ONLY this area scrolls: flex: 1, min-height: 0, overflow-y: auto) */
           <div
+            ref={messagesContainerRef}
             id="chat-messages-container"
-            className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-3 bg-[#050805]"
+            onScroll={handleMessagesScroll}
+            className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-3.5 sm:p-5 space-y-3 bg-[#050805] text-[#F4F6F1]"
+            style={{ WebkitOverflowScrolling: 'touch' }}
           >
             {messages.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-center py-16 text-[#6F796D] space-y-3">
-                <div className="h-12 w-12 rounded-full bg-[#101A12] border border-[rgba(141,168,82,0.22)] flex items-center justify-center text-[#8DA852] shadow-sm">
+              <div className="h-full flex flex-col items-center justify-center text-center py-12 text-[#6F796D] space-y-3">
+                <div className="h-12 w-12 rounded-full bg-[#101A12] border border-[rgba(155,185,115,0.22)] flex items-center justify-center text-[#8DA852] shadow-sm">
                   <ShieldCheck className="h-6 w-6" />
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm font-semibold text-[#F4F6F1]">
                     You're connected with a fellow RITian!
                   </p>
-                  <p className="text-xs text-[#9DA89A] max-w-xs leading-relaxed">
+                  <p className="text-xs text-[#B4C1AE] max-w-xs leading-relaxed">
                     Say hello to break the ice. Your real name, department, and roll number are completely confidential.
                   </p>
                 </div>
@@ -996,7 +1078,7 @@ export const ChatPage: React.FC = () => {
                 if (msg.isSystem) {
                   return (
                     <div key={msg.id} className="text-center py-1">
-                      <span className="inline-block px-3.5 py-1 rounded-full text-xs bg-[#101A12] text-[#9DA89A] border border-[rgba(141,168,82,0.18)] font-medium">
+                      <span className="inline-block px-3.5 py-1 rounded-full text-xs bg-[#101A12] text-[#B4C1AE] border border-[rgba(155,185,115,0.18)] font-medium">
                         {msg.content}
                       </span>
                     </div>
@@ -1016,11 +1098,11 @@ export const ChatPage: React.FC = () => {
                   >
                     <div
                       className={`
-                        max-w-[82%] sm:max-w-md px-4 py-2.5 text-sm transition-all
+                        max-w-[84%] sm:max-w-md px-4 py-2.5 text-sm transition-all
                         ${
                           isMe
-                            ? 'bg-[#293B18] text-[#F4F6F1] font-medium rounded-2xl rounded-br-sm border border-[rgba(162,189,99,0.3)] shadow-[0_2px_10px_rgba(0,0,0,0.3)]'
-                            : 'bg-[#0E170E] text-[#F4F6F1] rounded-2xl rounded-bl-sm border border-[rgba(141,168,82,0.2)] shadow-[0_2px_10px_rgba(0,0,0,0.3)]'
+                            ? 'bg-[#2A3C1C] text-[#F4F6F1] font-medium rounded-2xl rounded-br-sm border border-[rgba(162,189,99,0.3)] shadow-[0_2px_10px_rgba(0,0,0,0.3)]'
+                            : 'bg-[#142016] text-[#F4F6F1] rounded-2xl rounded-bl-sm border border-[rgba(155,185,115,0.18)] shadow-[0_2px_10px_rgba(0,0,0,0.3)]'
                         }
                       `}
                     >
@@ -1029,7 +1111,7 @@ export const ChatPage: React.FC = () => {
                       </p>
                       <span
                         className={`block text-[10px] mt-1 text-right ${
-                          isMe ? 'text-[#A2BD63]/80' : 'text-[#6F796D]'
+                          isMe ? 'text-[#A2BD63]' : 'text-[#B4C1AE]'
                         }`}
                       >
                         {timeFormatted}
@@ -1039,29 +1121,43 @@ export const ChatPage: React.FC = () => {
                 );
               })
             )}
-            <div ref={messagesEndRef} />
+
+            {/* Floating "↓ New messages" pill */}
+            {showNewMessages && (
+              <div className="sticky bottom-2 flex justify-center pointer-events-none z-10">
+                <button
+                  type="button"
+                  onClick={() => scrollToBottom(true)}
+                  className="pointer-events-auto inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#101A12] text-[#A2BD63] border border-[rgba(155,185,115,0.3)] shadow-[0_4px_16px_rgba(0,0,0,0.6)] hover:bg-[#142314] active:scale-95 transition-all"
+                >
+                  <ArrowDown className="h-3.5 w-3.5 animate-bounce" />
+                  <span>New messages</span>
+                </button>
+              </div>
+            )}
           </div>
         )}
 
         {/* =========================================================================
-            BOTTOM CONTROLS BAR (Fixed Composer: flex-shrink: 0 / shrink-0)
+            BOTTOM CONTROLS BAR (Fixed Composer: flex-shrink: 0, outside message scroll container)
             Skip (secondary action)
-            Rounded liquid inset input field
+            Rounded input field
             Send button (liquid CTA)
-            Zero visible Block or Report buttons
             ========================================================================= */}
         {!isDisconnected && (
           <div
             id="chat-composer-container"
-            className="p-2.5 sm:p-3.5 border-t border-[rgba(141,168,82,0.18)] bg-[#091009]/95 backdrop-blur-xl shrink-0 pb-safe"
+            className="p-2 sm:p-3 border-t border-[rgba(155,185,115,0.16)] bg-[#091009]/95 backdrop-blur-xl shrink-0 z-20 pb-[max(0.625rem,env(safe-area-inset-bottom,0px))]"
           >
-            <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+            <form onSubmit={handleSendMessage} className="flex items-center gap-2 max-w-4xl mx-auto w-full">
               {/* Skip Button */}
               <button
                 type="button"
+                id="chat-skip-btn"
                 onClick={handleSkip}
                 title="Skip to next RITian"
-                className="shrink-0 inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-full text-xs font-semibold bg-[#101A12] border border-[rgba(141,168,82,0.25)] text-[#A2BD63] hover:bg-[#142314] active:scale-95 transition-all"
+                disabled={isSkipping}
+                className="shrink-0 inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-full text-xs font-semibold bg-[#101A12] border border-[rgba(155,185,115,0.25)] text-[#A2BD63] hover:bg-[#142314] active:scale-95 transition-all disabled:opacity-50"
               >
                 <FastForward className="h-4 w-4 text-[#8DA852]" />
                 <span className="hidden sm:inline">Skip</span>
@@ -1076,16 +1172,20 @@ export const ChatPage: React.FC = () => {
                 maxLength={MAX_MESSAGE_LENGTH}
                 disabled={roomStatus !== 'active'}
                 onChange={(e) => setInputMessage(e.target.value)}
+                onFocus={() => {
+                  window.scrollTo(0, 0);
+                }}
                 placeholder="Type a message..."
-                className="liquid-inset flex-1 bg-[#060A06] text-[#F4F6F1] placeholder-[#6F796D] rounded-full border border-[rgba(141,168,82,0.22)] px-4 py-2 sm:py-2.5 text-sm focus:outline-none focus:border-[#8DA852] focus:ring-2 focus:ring-[#8DA852]/20 transition-all disabled:opacity-50"
+                className="flex-1 min-w-0 bg-[#060A06] text-[#F4F6F1] placeholder-[#6F796D] rounded-full border border-[rgba(155,185,115,0.22)] px-4 py-2 sm:py-2.5 text-sm focus:outline-none focus:border-[#8DA852] focus:ring-2 focus:ring-[#8DA852]/20 transition-all disabled:opacity-50 shadow-inner"
                 autoComplete="off"
               />
 
               {/* Send Button: Liquid CTA */}
               <button
                 type="submit"
+                id="chat-send-btn"
                 disabled={!inputMessage.trim() || isSending || roomStatus !== 'active'}
-                className="liquid-cta-btn shrink-0 rounded-full h-9 w-9 sm:h-10 sm:w-auto sm:px-4 flex items-center justify-center gap-1.5 text-white font-bold disabled:opacity-40 transition-all active:scale-95 shadow-[0_2px_12px_rgba(141,168,82,0.35)]"
+                className="liquid-cta-btn shrink-0 rounded-full h-9 w-9 sm:h-10 sm:w-auto sm:px-4 flex items-center justify-center gap-1.5 text-[#10170B] font-bold disabled:opacity-40 transition-all active:scale-95 shadow-md"
                 title="Send message"
               >
                 <Send className="h-4 w-4" />
@@ -1099,12 +1199,10 @@ export const ChatPage: React.FC = () => {
       </div>
 
       {/* =========================================================================
-          LEAVE CHAT CONFIRMATION MODAL (Phase 11)
-          Title: Leave chat?
-          Text: This will end your current conversation.
-          Buttons: Cancel, Leave
+          LEAVE CHAT CONFIRMATION MODAL (Scoped to Dark Mode via forceDark)
           ========================================================================= */}
       <Modal
+        forceDark
         isOpen={isLeaveModalOpen}
         onClose={() => setIsLeaveModalOpen(false)}
         title="Leave chat?"
@@ -1114,21 +1212,21 @@ export const ChatPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsLeaveModalOpen(false)}
-              className="px-4 py-2 rounded-full text-xs font-semibold text-[#9DA89A] hover:text-[#F4F6F1] bg-[#101A12] border border-[rgba(141,168,82,0.2)] hover:bg-[#142314] transition-all"
+              className="px-4 py-2 rounded-full text-xs font-semibold text-[#B4C1AE] hover:text-[#F4F6F1] bg-[#101A12] border border-[rgba(155,185,115,0.25)] hover:bg-[#142314] transition-all"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={confirmLeave}
-              className="px-4 py-2 rounded-full text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 active:scale-95 transition-all shadow-[0_2px_10px_rgba(225,29,72,0.3)]"
+              className="px-4 py-2 rounded-full text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 active:scale-95 transition-all shadow-md"
             >
               Leave
             </button>
           </>
         }
       >
-        <p className="text-xs text-[#9DA89A] leading-relaxed">
+        <p className="text-xs text-[#B4C1AE] leading-relaxed">
           Leaving will end the session for both students. You will return to your student dashboard.
         </p>
       </Modal>

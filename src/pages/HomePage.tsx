@@ -63,7 +63,7 @@ export const HomePage: React.FC = () => {
             <AlertCircle className="h-4 w-4 text-amber-500 dark:text-amber-400 shrink-0" />
             <div className="min-w-0">
               <span className="text-xs font-bold text-amber-900 dark:text-amber-300 block truncate">Verification Pending</span>
-              <span className="text-[11px] text-gray-500 dark:text-[#9DA89A] block truncate">Link your physical RIT ID to customize</span>
+              <span className="text-[11px] text-slate-600 dark:text-[#C0CCBC] block truncate">Link your physical RIT ID to customize</span>
             </div>
           </div>
           <button
@@ -89,10 +89,10 @@ export const HomePage: React.FC = () => {
       <Card className="p-6 sm:p-7 space-y-6 text-center">
         {/* Welcome Text */}
         <div className="space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-[#F4F6F1] tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-[#F4F6F1] tracking-tight">
             Welcome, {displayUsername} 👋
           </h1>
-          <p className="text-xs sm:text-sm text-gray-600 dark:text-[#9DA89A] max-w-sm mx-auto">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-[#C0CCBC] max-w-sm mx-auto">
             Ready for a 7-minute anonymous conversation with a fellow RITian?
           </p>
         </div>
@@ -108,7 +108,7 @@ export const HomePage: React.FC = () => {
           />
 
           <div className="space-y-0.5">
-            <h2 className="font-bold text-base text-gray-900 dark:text-[#F4F6F1] tracking-tight">
+            <h2 className="font-bold text-base text-slate-900 dark:text-[#F4F6F1] tracking-tight">
               {displayUsername}
             </h2>
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-brand-50 border border-brand-200 text-brand-700 dark:bg-[#121E12] dark:border-[rgba(141,168,82,0.2)] text-[11px] font-medium dark:text-[#A2BD63]">
@@ -141,10 +141,10 @@ export const HomePage: React.FC = () => {
           </button>
 
           {/* Quick secondary action */}
-          <div className="flex items-center justify-center gap-4 text-xs text-gray-600 dark:text-[#9DA89A]">
+          <div className="flex items-center justify-center gap-4 text-xs text-slate-600 dark:text-[#C0CCBC]">
             <Link
               to="/settings"
-              className="inline-flex items-center gap-1.5 hover:text-gray-900 dark:hover:text-[#F4F6F1] transition-colors py-1 px-3 rounded-full hover:bg-slate-100 dark:hover:bg-[#121E12]"
+              className="inline-flex items-center gap-1.5 hover:text-slate-900 dark:hover:text-[#F4F6F1] transition-colors py-1 px-3 rounded-full hover:bg-slate-100 dark:hover:bg-[#121E12]"
             >
               <Settings className="h-3.5 w-3.5" />
               <span>Settings &amp; Preferences</span>
@@ -156,11 +156,11 @@ export const HomePage: React.FC = () => {
       {/* =========================================================================
           CAMPUS ATMOSPHERE NOTE (Subtle, Minimal)
           ========================================================================= */}
-      <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 dark:bg-[#091009]/50 dark:border-[rgba(141,168,82,0.12)] text-center text-xs text-gray-600 dark:text-[#9DA89A] space-y-1">
-        <p className="font-medium text-gray-900 dark:text-[#F4F6F1]">
+      <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 dark:bg-[#091009]/50 dark:border-[rgba(141,168,82,0.12)] text-center text-xs text-slate-600 dark:text-[#C0CCBC] space-y-1">
+        <p className="font-medium text-slate-900 dark:text-[#F4F6F1]">
           &ldquo;Different departments. Same campus. Infinite conversations.&rdquo;
         </p>
-        <p className="text-[11px] text-gray-500 dark:text-[#6F796D]">
+        <p className="text-[11px] text-slate-500 dark:text-[#A2B09D]">
           7-minute server-authoritative timer &bull; Cryptographic identity isolation
         </p>
       </div>

@@ -101,24 +101,24 @@ export const UsernameSelectionPage: React.FC = () => {
         <Badge variant="brand" size="sm" withDot>
           Profile Customization &bull; Anonymous Username
         </Badge>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-[#F4F6F1] tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-[#F4F6F1] tracking-tight">
           Choose Your Anonymous Username
         </h1>
-        <p className="text-xs sm:text-sm text-gray-500 dark:text-[#9DA89A] max-w-md mx-auto leading-relaxed">
+        <p className="text-xs sm:text-sm text-slate-600 dark:text-[#C0CCBC] max-w-md mx-auto leading-relaxed">
           Short random alias for 7-minute chats. Your real identity is never exposed.
         </p>
       </div>
 
       {/* LOCKED STATE: If college ID is not yet linked */}
       {!isVerified ? (
-        <Card className="border border-gray-200/80 dark:border-[rgba(140,170,110,0.22)] bg-white/95 dark:bg-[#091009]/90 backdrop-blur-md shadow-card dark:shadow-liquid-outer rounded-[28px] text-center p-8 space-y-5 animate-in fade-in">
+        <Card className="border border-slate-200/80 dark:border-[rgba(140,170,110,0.22)] bg-white/95 dark:bg-[#091009]/90 backdrop-blur-md shadow-card dark:shadow-liquid-outer rounded-[28px] text-center p-8 space-y-5 animate-in fade-in">
           <div className="h-16 w-16 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800 mx-auto flex items-center justify-center shadow-sm">
             <Lock className="h-8 w-8" />
           </div>
 
           <div className="space-y-2 max-w-sm mx-auto">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-[#F4F6F1]">College Verification Required</h3>
-            <p className="text-xs text-gray-600 dark:text-[#9DA89A] leading-relaxed">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-[#F4F6F1]">College Verification Required</h3>
+            <p className="text-xs text-slate-600 dark:text-[#C0CCBC] leading-relaxed">
               Your account currently displays as{' '}
               <span className="font-semibold text-brand-600 dark:text-[#8DA852]">
                 {effectivePersona.displayUsername}
@@ -141,12 +141,12 @@ export const UsernameSelectionPage: React.FC = () => {
         </Card>
       ) : (
         /* UNLOCKED SELECTION: Verified Student Identity Active */
-        <Card className="border border-gray-200/80 dark:border-[rgba(140,170,110,0.22)] bg-white/95 dark:bg-[#091009]/90 backdrop-blur-md shadow-card dark:shadow-liquid-outer rounded-[28px]">
-          <CardHeader className="pb-3 border-b border-gray-100 dark:border-[rgba(140,170,110,0.14)]">
+        <Card className="border border-slate-200/80 dark:border-[rgba(140,170,110,0.22)] bg-white/95 dark:bg-[#091009]/90 backdrop-blur-md shadow-card dark:shadow-liquid-outer rounded-[28px]">
+          <CardHeader className="pb-3 border-b border-slate-200 dark:border-[rgba(140,170,110,0.14)]">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-base sm:text-lg text-gray-900 dark:text-[#F4F6F1]">Anonymous Username</CardTitle>
-                <CardDescription className="text-xs text-gray-500 dark:text-[#9DA89A]">
+                <CardTitle className="text-base sm:text-lg text-slate-900 dark:text-[#F4F6F1]">Anonymous Username</CardTitle>
+                <CardDescription className="text-xs text-slate-600 dark:text-[#C0CCBC]">
                   Click refresh to roll a new short alias. No manual typing required.
                 </CardDescription>
               </div>
@@ -157,7 +157,7 @@ export const UsernameSelectionPage: React.FC = () => {
                 id="alias-reroll-btn"
                 onClick={handleReroll}
                 disabled={isSaving}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-[#0D160E] hover:bg-gray-50 dark:hover:bg-[#122013] text-brand-600 dark:text-[#8DA852] hover:text-brand-700 border border-gray-200 dark:border-[rgba(140,170,110,0.25)] shadow-sm active:scale-[0.98] transition-all"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-[#0D160E] hover:bg-slate-50 dark:hover:bg-[#122013] text-brand-600 dark:text-[#8DA852] hover:text-brand-700 border border-slate-200 dark:border-[rgba(140,170,110,0.25)] shadow-sm active:scale-[0.98] transition-all"
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${isSaving ? 'animate-spin' : ''}`} />
                 <span>Refresh Alias</span>
@@ -174,7 +174,7 @@ export const UsernameSelectionPage: React.FC = () => {
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center justify-center gap-2">
-                    <span id="candidate-alias-display" className="text-3xl font-extrabold text-gray-900 dark:text-[#F4F6F1] tracking-tight">
+                    <span id="candidate-alias-display" className="text-3xl font-extrabold text-slate-900 dark:text-[#F4F6F1] tracking-tight">
                       {candidateAlias}
                     </span>
                     <button
@@ -186,7 +186,7 @@ export const UsernameSelectionPage: React.FC = () => {
                       <RefreshCw className="h-5 w-5" />
                     </button>
                   </div>
-                  <span className="text-xs text-gray-500 dark:text-[#9DA89A]">Curated short anonymous alias (3–8 chars)</span>
+                  <span className="text-xs text-slate-600 dark:text-[#C0CCBC]">Curated short anonymous alias (3–8 chars)</span>
                 </div>
               </div>
 
@@ -200,18 +200,18 @@ export const UsernameSelectionPage: React.FC = () => {
               )}
 
               {/* Anti-Leakage Shield Notice */}
-              <div className="p-3.5 rounded-2xl bg-gray-50/80 dark:bg-[#0D160E]/70 border border-gray-200 dark:border-[rgba(140,170,110,0.18)] text-xs text-gray-600 dark:text-[#9DA89A] space-y-1">
+              <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-[#0D160E]/70 border border-slate-200 dark:border-[rgba(140,170,110,0.18)] text-xs text-slate-600 dark:text-[#C0CCBC] space-y-1">
                 <div className="flex items-center gap-1.5 font-semibold text-brand-700 dark:text-[#A2BD63]">
                   <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-600 dark:text-[#8DA852]" />
                   <span>Curated Anti-Leakage Shield</span>
                 </div>
-                <p className="text-[11px] leading-relaxed text-gray-500 dark:text-[#9DA89A]">
+                <p className="text-[11px] leading-relaxed text-slate-500 dark:text-[#A2B09D]">
                   Curated short aliases prevent accidental exposure of student roll numbers, departments, or real names.
                 </p>
               </div>
             </CardContent>
 
-            <CardFooter className="flex items-center justify-between border-t border-gray-100 dark:border-[rgba(140,170,110,0.14)] pt-4">
+            <CardFooter className="flex items-center justify-between border-t border-slate-200 dark:border-[rgba(140,170,110,0.14)] pt-4">
               <Button
                 type="button"
                 variant="secondary"

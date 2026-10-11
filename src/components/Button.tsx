@@ -17,15 +17,15 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    'bg-brand-600 hover:bg-brand-700 text-white shadow-sm border border-transparent active:scale-[0.98] dark:bg-gradient-to-r dark:from-[#8DA852] dark:to-[#A2BD63] dark:hover:from-[#96B25A] dark:hover:to-[#ACCA6E] dark:text-[#050805] dark:font-bold dark:shadow-[0_8px_20px_-4px_rgba(141,168,82,0.35),inset_0_1px_1px_rgba(255,255,255,0.35)] dark:border-t dark:border-white/25',
+    'bg-[#6D42E8] hover:bg-[#5B34CF] text-white shadow-sm border border-transparent active:scale-[0.98] dark:bg-gradient-to-r dark:from-[#8DA852] dark:to-[#A2BD63] dark:hover:from-[#96B25A] dark:hover:to-[#ACCA6E] dark:text-[#10170B] dark:font-bold dark:shadow-[0_8px_20px_-4px_rgba(141,168,82,0.35),inset_0_1px_1px_rgba(255,255,255,0.35)] dark:border-t dark:border-white/25',
   secondary:
-    'bg-white hover:bg-slate-50 text-gray-700 border border-gray-200 hover:border-gray-300 shadow-sm active:scale-[0.98] dark:bg-[#0D160E]/80 dark:hover:bg-[#101A12] dark:text-[#F4F6F1] dark:border-[rgba(141,168,82,0.18)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.06)]',
+    'bg-white hover:bg-slate-50 text-slate-800 border border-[#DCE3EC] hover:border-slate-300 shadow-sm active:scale-[0.98] dark:bg-[#0D160E] dark:hover:bg-[#152117] dark:text-[#F4F6F1] dark:border-[rgba(150,175,120,0.24)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.06)]',
   danger:
-    'bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 hover:border-rose-300 active:scale-[0.98] dark:bg-[#140C0E] dark:hover:bg-rose-950/40 dark:text-rose-400 dark:border-rose-900/40 dark:shadow-[0_4px_12px_rgba(0,0,0,0.3)]',
+    'bg-white hover:bg-rose-50 text-rose-700 border border-rose-200 hover:border-rose-300 active:scale-[0.98] dark:bg-[#140C0E] dark:hover:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/40 dark:shadow-[0_4px_12px_rgba(0,0,0,0.3)]',
   outline:
-    'bg-transparent hover:bg-slate-100 text-gray-700 border border-gray-300 hover:border-gray-400 active:scale-[0.98] dark:text-[#9DA89A] dark:border-[rgba(141,168,82,0.22)] dark:hover:bg-[#101A12] dark:hover:text-[#F4F6F1]',
+    'bg-transparent hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-300 hover:border-slate-400 active:scale-[0.98] dark:text-[#C0CCBC] dark:border-[rgba(150,175,120,0.24)] dark:hover:bg-[#101A12] dark:hover:text-[#F4F6F1]',
   ghost:
-    'bg-transparent hover:bg-slate-100 text-gray-600 hover:text-gray-900 active:scale-[0.98] dark:text-[#9DA89A] dark:hover:text-[#F4F6F1] dark:hover:bg-[#101A12]',
+    'bg-transparent hover:bg-slate-100 text-slate-700 hover:text-slate-900 active:scale-[0.98] dark:text-[#C0CCBC] dark:hover:text-[#F4F6F1] dark:hover:bg-[#101A12]',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {

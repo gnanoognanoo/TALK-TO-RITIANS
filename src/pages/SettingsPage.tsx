@@ -253,18 +253,18 @@ export const SettingsPage: React.FC = () => {
   return (
     <div className="max-w-2xl mx-auto w-full px-3.5 sm:px-6 py-6 sm:py-10 space-y-6 animate-in fade-in pb-16">
       {/* Top Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-[rgba(141,168,82,0.15)]">
+      <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-[rgba(141,168,82,0.15)]">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-[#F4F6F1] tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-[#F4F6F1] tracking-tight">
             Settings
           </h1>
-          <p className="text-xs text-gray-600 dark:text-[#9DA89A] mt-0.5">
+          <p className="text-xs text-slate-600 dark:text-[#C0CCBC] mt-0.5">
             Anonymous persona, campus verification &amp; preferences
           </p>
         </div>
         <Link
           to="/home"
-          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold text-gray-700 hover:text-gray-900 dark:text-[#9DA89A] dark:hover:text-[#F4F6F1] bg-white dark:bg-[#101A12] border border-gray-200 dark:border-[rgba(141,168,82,0.2)] hover:bg-slate-50 dark:hover:bg-[#142314] active:scale-95 transition-all shadow-sm"
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-700 hover:text-slate-900 dark:text-[#C0CCBC] dark:hover:text-[#F4F6F1] bg-white dark:bg-[#101A12] border border-slate-200 dark:border-[rgba(141,168,82,0.2)] hover:bg-slate-50 dark:hover:bg-[#142314] active:scale-95 transition-all shadow-sm"
         >
           <span>← Home</span>
         </Link>
@@ -313,10 +313,10 @@ export const SettingsPage: React.FC = () => {
             <div className="space-y-4 pt-1">
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label htmlFor="dev-username-input" className="text-xs font-semibold text-gray-700 dark:text-[#9DA89A] uppercase tracking-wider block">
+                  <label htmlFor="dev-username-input" className="text-xs font-semibold text-slate-700 dark:text-[#9DA89A] uppercase tracking-wider block">
                     Developer Username
                   </label>
-                  <span className="text-[11px] font-mono text-gray-500 dark:text-[#6F796D]">
+                  <span className="text-[11px] font-mono text-slate-500 dark:text-[#6F796D]">
                     {devUsername.length}/20 chars
                   </span>
                 </div>
@@ -327,7 +327,7 @@ export const SettingsPage: React.FC = () => {
                   onChange={(e) => setDevUsername(e.target.value)}
                   maxLength={20}
                   placeholder="e.g. Heisenberg"
-                  className="liquid-inset w-full px-3.5 py-2 text-sm rounded-xl border border-amber-300/80 bg-white text-gray-900 dark:border-[rgba(141,168,82,0.2)] dark:bg-[#060A06] dark:text-[#F4F6F1] focus:outline-none focus:border-amber-500 font-medium"
+                  className="liquid-inset w-full px-3.5 py-2 text-sm rounded-xl border border-amber-300/80 bg-white text-slate-900 dark:border-[rgba(141,168,82,0.2)] dark:bg-[#060A06] dark:text-[#F4F6F1] focus:outline-none focus:border-amber-500 font-medium"
                 />
               </div>
 
@@ -341,7 +341,7 @@ export const SettingsPage: React.FC = () => {
                   shape="circle"
                 />
                 <div className="space-y-1.5 flex-1">
-                  <span className="text-xs font-bold text-gray-900 dark:text-[#F4F6F1] block">
+                  <span className="text-xs font-bold text-slate-900 dark:text-[#F4F6F1] block">
                     Developer Gallery Avatar
                   </span>
                   <div className="flex items-center gap-2">
@@ -402,7 +402,7 @@ export const SettingsPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-brand-600 dark:text-[#8DA852]" />
-                  <CardTitle className="text-base sm:text-lg text-gray-900 dark:text-[#F4F6F1]">
+                  <CardTitle className="text-base sm:text-lg text-slate-900 dark:text-[#F4F6F1]">
                     Persona
                   </CardTitle>
                 </div>
@@ -416,7 +416,7 @@ export const SettingsPage: React.FC = () => {
                   </span>
                 )}
               </div>
-              <CardDescription className="text-xs text-gray-600 dark:text-[#9DA89A]">
+              <CardDescription className="text-xs text-slate-600 dark:text-[#C0CCBC]">
                 {isVerified
                   ? 'Customize your anonymous identity and avatar for 7-minute chats.'
                   : 'Link your physical RIT ID to unlock anonymous handle & avatar customization.'}
@@ -427,15 +427,15 @@ export const SettingsPage: React.FC = () => {
               {!isVerified ? (
                 /* Locked State */
                 <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 dark:bg-[#091009]/80 dark:border-[rgba(141,168,82,0.18)] text-center space-y-3">
-                  <div className="h-10 w-10 rounded-full bg-white text-gray-600 dark:bg-[#121E12] dark:text-[#8DA852] flex items-center justify-center mx-auto border border-gray-200 dark:border-[rgba(141,168,82,0.2)] shadow-sm">
+                  <div className="h-10 w-10 rounded-full bg-white text-slate-600 dark:bg-[#121E12] dark:text-[#8DA852] flex items-center justify-center mx-auto border border-slate-200 dark:border-[rgba(141,168,82,0.2)] shadow-sm">
                     <Lock className="h-5 w-5" />
                   </div>
                   <div className="space-y-1">
-                    <h4 className="text-sm font-bold text-gray-900 dark:text-[#F4F6F1]">
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-[#F4F6F1]">
                       Profile Customization Locked
                     </h4>
-                    <p className="text-xs text-gray-600 dark:text-[#9DA89A] max-w-sm mx-auto leading-relaxed">
-                      You are currently chatting as <span className="font-mono text-brand-600 dark:text-[#A2BD63]">{displayUsername}</span>. Scan your physical RIT student ID to unlock custom alias rerolling and modular avatars.
+                    <p className="text-xs text-slate-600 dark:text-[#C0CCBC] max-w-sm mx-auto leading-relaxed">
+                      You are currently chatting as <span className="font-mono font-bold text-brand-600 dark:text-[#A2BD63]">{displayUsername}</span>. Scan your physical RIT student ID to unlock custom alias rerolling and modular avatars.
                     </p>
                   </div>
                   <button
@@ -453,7 +453,7 @@ export const SettingsPage: React.FC = () => {
                   {/* Alias Reroll UI */}
                   <div className="space-y-2.5">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-gray-700 dark:text-[#9DA89A] uppercase tracking-wider block">
+                      <span className="text-xs font-semibold text-slate-700 dark:text-[#9DA89A] uppercase tracking-wider block">
                         Anonymous Handle
                       </span>
                       {aliasSuccessMessage && (
@@ -470,7 +470,7 @@ export const SettingsPage: React.FC = () => {
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <span id="alias-candidate-display" className="text-lg sm:text-xl font-extrabold text-gray-900 dark:text-[#F4F6F1] tracking-tight">
+                            <span id="alias-candidate-display" className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-[#F4F6F1] tracking-tight">
                               {aliasCandidate}
                             </span>
                             <button
@@ -478,12 +478,12 @@ export const SettingsPage: React.FC = () => {
                               id="alias-refresh-button"
                               onClick={handleRefreshAlias}
                               title="Generate another alias"
-                              className="p-1.5 rounded-full text-gray-500 hover:text-gray-900 hover:bg-slate-200 dark:text-[#9DA89A] dark:hover:text-[#F4F6F1] dark:hover:bg-[#121E12] active:scale-95 transition-all"
+                              className="p-1.5 rounded-full text-slate-500 hover:text-slate-900 hover:bg-slate-200 dark:text-[#9DA89A] dark:hover:text-[#F4F6F1] dark:hover:bg-[#121E12] active:scale-95 transition-all"
                             >
                               <RefreshCw className="h-4 w-4" />
                             </button>
                           </div>
-                          <span className="text-[11px] text-gray-500 dark:text-[#6F796D]">
+                          <span className="text-[11px] text-slate-500 dark:text-[#A2B09D]">
                             {aliasCandidate === displayUsername ? 'Active handle' : 'Candidate preview — tap Use to apply'}
                           </span>
                         </div>
@@ -514,14 +514,14 @@ export const SettingsPage: React.FC = () => {
                         shape="circle"
                       />
                       <div>
-                        <span className="text-xs font-bold text-gray-900 dark:text-[#F4F6F1] block">Modular Avatar</span>
-                        <span className="text-[11px] text-gray-500 dark:text-[#9DA89A]">Face, hairstyles, expressions &amp; clothing</span>
+                        <span className="text-xs font-bold text-slate-900 dark:text-[#F4F6F1] block">Modular Avatar</span>
+                        <span className="text-[11px] text-slate-500 dark:text-[#C0CCBC]">Face, hairstyles, expressions &amp; clothing</span>
                       </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => navigate('/avatar')}
-                      className="px-3.5 py-2 rounded-full text-xs font-semibold text-brand-700 bg-white border border-gray-200 hover:bg-slate-50 dark:text-[#A2BD63] dark:bg-[#121E12] dark:border-[rgba(141,168,82,0.25)] dark:hover:bg-[#182B18] active:scale-95 transition-all shrink-0 inline-flex items-center gap-1.5 shadow-sm"
+                      className="px-3.5 py-2 rounded-full text-xs font-semibold text-brand-700 bg-white border border-slate-200 hover:bg-slate-50 dark:text-[#A2BD63] dark:bg-[#121E12] dark:border-[rgba(141,168,82,0.25)] dark:hover:bg-[#182B18] active:scale-95 transition-all shrink-0 inline-flex items-center gap-1.5 shadow-sm"
                     >
                       <Edit2 className="h-3.5 w-3.5" />
                       <span>Customize</span>
@@ -531,7 +531,7 @@ export const SettingsPage: React.FC = () => {
                   {/* Private Gender Selection & Freeze */}
                   <div className="space-y-2 pt-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-gray-700 dark:text-[#9DA89A] uppercase tracking-wider block">
+                      <span className="text-xs font-semibold text-slate-700 dark:text-[#9DA89A] uppercase tracking-wider block">
                         Private Gender
                       </span>
                       {genderSuccessMessage && (
@@ -543,8 +543,8 @@ export const SettingsPage: React.FC = () => {
 
                     {isGenderLocked ? (
                       <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 dark:bg-[#091009]/80 dark:border-[rgba(141,168,82,0.18)] flex items-center justify-between text-xs">
-                        <span className="text-gray-600 dark:text-[#9DA89A]">
-                          Gender: <strong className="text-gray-900 dark:text-[#F4F6F1] ml-1">{profile?.gender || selectedGender}</strong>
+                        <span className="text-slate-600 dark:text-[#C0CCBC]">
+                          Gender: <strong className="text-slate-900 dark:text-[#F4F6F1] ml-1">{profile?.gender || selectedGender}</strong>
                         </span>
                         <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 dark:text-[#A2BD63] dark:bg-[#121E12] px-2 py-0.5 rounded-full">
                           ✓ Locked
@@ -557,7 +557,7 @@ export const SettingsPage: React.FC = () => {
                             key={gOption}
                             type="button"
                             onClick={() => setGenderToConfirm(gOption)}
-                            className="py-2 px-3 rounded-xl border border-gray-200 bg-white text-xs font-medium text-gray-800 hover:border-brand-500 hover:bg-slate-50 dark:border-[rgba(141,168,82,0.2)] dark:bg-[#091009] dark:text-[#F4F6F1] dark:hover:border-[#8DA852] dark:hover:bg-[#121E12] active:scale-95 transition-all shadow-sm"
+                            className="py-2 px-3 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-800 hover:border-brand-500 hover:bg-slate-50 dark:border-[rgba(141,168,82,0.2)] dark:bg-[#091009] dark:text-[#F4F6F1] dark:hover:border-[#8DA852] dark:hover:bg-[#121E12] active:scale-95 transition-all shadow-sm"
                           >
                             {gOption}
                           </button>
@@ -569,21 +569,21 @@ export const SettingsPage: React.FC = () => {
 
                   {/* Verified Student Credentials (Immutable) */}
                   <div className="space-y-1.5 pt-1">
-                    <span className="text-xs font-semibold text-gray-700 dark:text-[#9DA89A] uppercase tracking-wider block">
+                    <span className="text-xs font-semibold text-slate-700 dark:text-[#9DA89A] uppercase tracking-wider block">
                       Student Verification Details
                     </span>
                     <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 dark:bg-[#091009]/80 dark:border-[rgba(141,168,82,0.15)] text-xs space-y-1.5">
-                      <div className="flex justify-between py-0.5 border-b border-gray-200 dark:border-[rgba(141,168,82,0.1)]">
-                        <span className="text-gray-600 dark:text-[#9DA89A]">Name</span>
-                        <span className="font-bold text-gray-900 dark:text-[#F4F6F1]">{profile?.name || profile?.full_name || 'Verified Student'}</span>
+                      <div className="flex justify-between py-0.5 border-b border-slate-200 dark:border-[rgba(141,168,82,0.1)]">
+                        <span className="text-slate-600 dark:text-[#C0CCBC]">Name</span>
+                        <span className="font-bold text-slate-900 dark:text-[#F4F6F1]">{profile?.name || profile?.full_name || 'Verified Student'}</span>
                       </div>
-                      <div className="flex justify-between py-0.5 border-b border-gray-200 dark:border-[rgba(141,168,82,0.1)]">
-                        <span className="text-gray-600 dark:text-[#9DA89A]">Department</span>
+                      <div className="flex justify-between py-0.5 border-b border-slate-200 dark:border-[rgba(141,168,82,0.1)]">
+                        <span className="text-slate-600 dark:text-[#C0CCBC]">Department</span>
                         <span className="font-semibold text-brand-700 dark:text-[#A2BD63]">{profile?.department || 'RIT'}</span>
                       </div>
                       <div className="flex justify-between py-0.5">
-                        <span className="text-gray-600 dark:text-[#9DA89A]">Batch</span>
-                        <span className="font-mono text-gray-900 dark:text-[#F4F6F1]">{profile?.batch || '—'}</span>
+                        <span className="text-slate-600 dark:text-[#C0CCBC]">Batch</span>
+                        <span className="font-mono text-slate-900 dark:text-[#F4F6F1]">{profile?.batch || '—'}</span>
                       </div>
                     </div>
                   </div>
@@ -598,7 +598,7 @@ export const SettingsPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="h-5 w-5 text-brand-600 dark:text-[#8DA852]" />
-                  <CardTitle className="text-base sm:text-lg text-gray-900 dark:text-[#F4F6F1]">
+                  <CardTitle className="text-base sm:text-lg text-slate-900 dark:text-[#F4F6F1]">
                     Verification
                   </CardTitle>
                 </div>
@@ -612,7 +612,7 @@ export const SettingsPage: React.FC = () => {
                   </span>
                 )}
               </div>
-              <CardDescription className="text-xs text-gray-600 dark:text-[#9DA89A]">
+              <CardDescription className="text-xs text-slate-600 dark:text-[#C0CCBC]">
                 {isVerified
                   ? 'Your RIT identity is cryptographically linked.'
                   : 'Scan your physical RIT student ID to link your campus status.'}
@@ -623,10 +623,10 @@ export const SettingsPage: React.FC = () => {
               {!isVerified ? (
                 <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 dark:bg-[#091009]/80 dark:border-[rgba(141,168,82,0.18)] space-y-3">
                   <div className="space-y-1">
-                    <span className="text-xs font-bold text-gray-900 dark:text-[#F4F6F1] block">
+                    <span className="text-xs font-bold text-slate-900 dark:text-[#F4F6F1] block">
                       Verify your RIT identity
                     </span>
-                    <p className="text-xs text-gray-600 dark:text-[#9DA89A] leading-relaxed">
+                    <p className="text-xs text-slate-600 dark:text-[#C0CCBC] leading-relaxed">
                       Scan the QR code on your card to link your student status and unlock your custom persona.
                     </p>
                   </div>
@@ -647,8 +647,8 @@ export const SettingsPage: React.FC = () => {
                       <CheckCircle2 className="h-5 w-5" />
                     </div>
                     <div className="text-xs">
-                      <span className="font-bold text-gray-900 dark:text-[#F4F6F1] block">Physical RIT ID Verified</span>
-                      <span className="text-gray-600 dark:text-[#9DA89A]">{profile?.department ? `${profile.department} • Batch ${profile.batch || ''}` : 'Active enrollment linked'}</span>
+                      <span className="font-bold text-slate-900 dark:text-[#F4F6F1] block">Physical RIT ID Verified</span>
+                      <span className="text-slate-600 dark:text-[#C0CCBC]">{profile?.department ? `${profile.department} • Batch ${profile.batch || ''}` : 'Active enrollment linked'}</span>
                     </div>
                   </div>
                   <button
@@ -677,11 +677,11 @@ export const SettingsPage: React.FC = () => {
             ) : (
               <Sun className="h-5 w-5 text-amber-500" />
             )}
-            <CardTitle className="text-base sm:text-lg text-gray-900 dark:text-[#F4F6F1]">
+            <CardTitle className="text-base sm:text-lg text-slate-900 dark:text-[#F4F6F1]">
               Appearance
             </CardTitle>
           </div>
-          <CardDescription className="text-xs text-gray-600 dark:text-[#9DA89A]">
+          <CardDescription className="text-xs text-slate-600 dark:text-[#C0CCBC]">
             Select your visual aesthetic. Dark mode is optimized with Heisenberg chemistry depth.
           </CardDescription>
         </CardHeader>
@@ -695,13 +695,13 @@ export const SettingsPage: React.FC = () => {
               className={`p-3.5 rounded-2xl border text-left flex items-center gap-2.5 transition-all active:scale-95 ${
                 theme === 'light'
                   ? 'border-brand-500 bg-brand-50 text-brand-900 shadow-sm dark:border-[#8DA852] dark:bg-[#121E12] dark:text-[#F4F6F1]'
-                  : 'border-gray-200 bg-white hover:border-gray-300 dark:border-[rgba(141,168,82,0.18)] dark:bg-[#091009] dark:hover:border-[rgba(141,168,82,0.3)]'
+                  : 'border-slate-200 bg-white hover:border-slate-300 dark:border-[rgba(141,168,82,0.18)] dark:bg-[#091009] dark:hover:border-[rgba(141,168,82,0.3)]'
               }`}
             >
               <Sun className="h-4 w-4 text-amber-500 dark:text-amber-400 shrink-0" />
               <div>
-                <span className="text-xs font-bold text-gray-900 dark:text-[#F4F6F1] block">Light</span>
-                <span className="text-[10px] text-gray-500 dark:text-[#9DA89A]">Clean</span>
+                <span className="text-xs font-bold text-slate-900 dark:text-[#F4F6F1] block">Light</span>
+                <span className="text-[10px] text-slate-500 dark:text-[#C0CCBC]">Clean</span>
               </div>
             </button>
 
@@ -712,13 +712,13 @@ export const SettingsPage: React.FC = () => {
               className={`p-3.5 rounded-2xl border text-left flex items-center gap-2.5 transition-all active:scale-95 ${
                 theme === 'dark'
                   ? 'border-[#8DA852] bg-[#121E12] shadow-[0_0_12px_rgba(141,168,82,0.2)]'
-                  : 'border-gray-200 bg-white hover:border-gray-300 dark:border-[rgba(141,168,82,0.18)] dark:bg-[#091009] dark:hover:border-[rgba(141,168,82,0.3)]'
+                  : 'border-slate-200 bg-white hover:border-slate-300 dark:border-[rgba(141,168,82,0.18)] dark:bg-[#091009] dark:hover:border-[rgba(141,168,82,0.3)]'
               }`}
             >
               <Moon className="h-4 w-4 text-[#A2BD63] shrink-0" />
               <div>
-                <span className="text-xs font-bold text-gray-900 dark:text-[#F4F6F1] block">Dark</span>
-                <span className="text-[10px] text-gray-500 dark:text-[#9DA89A]">Chemical</span>
+                <span className="text-xs font-bold text-slate-900 dark:text-[#F4F6F1] block">Dark</span>
+                <span className="text-[10px] text-slate-500 dark:text-[#C0CCBC]">Chemical</span>
               </div>
             </button>
           </div>
@@ -732,11 +732,11 @@ export const SettingsPage: React.FC = () => {
         <CardHeader>
           <div className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5 text-brand-600 dark:text-[#8DA852]" />
-            <CardTitle className="text-base sm:text-lg text-gray-900 dark:text-[#F4F6F1]">
+            <CardTitle className="text-base sm:text-lg text-slate-900 dark:text-[#F4F6F1]">
               Chat Preferences
             </CardTitle>
           </div>
-          <CardDescription className="text-xs text-gray-600 dark:text-[#9DA89A]">
+          <CardDescription className="text-xs text-slate-600 dark:text-[#C0CCBC]">
             Control incoming random chat requests while idle online.
           </CardDescription>
         </CardHeader>
@@ -744,10 +744,10 @@ export const SettingsPage: React.FC = () => {
         <CardContent className="pt-1">
           <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 dark:bg-[#091009]/80 dark:border-[rgba(141,168,82,0.18)] flex items-center justify-between gap-3 shadow-sm">
             <div className="space-y-0.5">
-              <span className="text-xs font-bold text-gray-900 dark:text-[#F4F6F1] block">
+              <span className="text-xs font-bold text-slate-900 dark:text-[#F4F6F1] block">
                 Random Chat Requests
               </span>
-              <p className="text-[11px] text-gray-500 dark:text-[#9DA89A]">
+              <p className="text-[11px] text-slate-500 dark:text-[#C0CCBC]">
                 Allow online students to invite you to chats while idle
               </p>
             </div>
@@ -757,7 +757,7 @@ export const SettingsPage: React.FC = () => {
               className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95 ${
                 chatRequestsEnabled
                   ? 'bg-brand-50 border border-brand-400 text-brand-700 dark:bg-[#182B18] dark:border-[#8DA852] dark:text-[#A2BD63]'
-                  : 'bg-slate-100 border border-slate-200 text-slate-500 dark:bg-[#101A12] dark:border-[rgba(141,168,82,0.2)] dark:text-[#6F796D]'
+                  : 'bg-slate-100 border border-slate-200 text-slate-600 dark:bg-[#101A12] dark:border-[rgba(141,168,82,0.2)] dark:text-[#A2B09D]'
               }`}
             >
               {chatRequestsEnabled ? 'ON' : 'OFF'}
@@ -773,11 +773,11 @@ export const SettingsPage: React.FC = () => {
         <CardHeader>
           <div className="flex items-center gap-2">
             <User className="h-5 w-5 text-brand-600 dark:text-[#8DA852]" />
-            <CardTitle className="text-base sm:text-lg text-gray-900 dark:text-[#F4F6F1]">
+            <CardTitle className="text-base sm:text-lg text-slate-900 dark:text-[#F4F6F1]">
               Account
             </CardTitle>
           </div>
-          <CardDescription className="text-xs text-gray-600 dark:text-[#9DA89A]">
+          <CardDescription className="text-xs text-slate-600 dark:text-[#C0CCBC]">
             Signed-in email identity &amp; session termination.
           </CardDescription>
         </CardHeader>
@@ -785,8 +785,8 @@ export const SettingsPage: React.FC = () => {
         <CardContent className="pt-1">
           <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 dark:bg-[#091009]/80 dark:border-[rgba(141,168,82,0.18)] flex items-center justify-between gap-3 shadow-sm">
             <div className="min-w-0">
-              <span className="text-[11px] text-gray-500 dark:text-[#6F796D] uppercase font-semibold block">Signed In As</span>
-              <span className="text-xs font-semibold text-gray-900 dark:text-[#F4F6F1] truncate block">
+              <span className="text-[11px] text-slate-500 dark:text-[#A2B09D] uppercase font-semibold block">Signed In As</span>
+              <span className="text-xs font-semibold text-slate-900 dark:text-[#F4F6F1] truncate block">
                 {user?.email || `User: ${user?.id.slice(0, 8)}...`}
               </span>
             </div>
@@ -814,8 +814,8 @@ export const SettingsPage: React.FC = () => {
         title="Unlink RIT ID?"
       >
         <div className="space-y-4">
-          <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-amber-950/30 border border-amber-500/30 text-amber-200 text-xs leading-relaxed">
-            <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
+          <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 dark:bg-amber-950/30 dark:border-amber-500/30 dark:text-amber-200 text-xs leading-relaxed">
+            <AlertTriangle className="h-5 w-5 text-amber-500 dark:text-amber-400 shrink-0 mt-0.5" />
             <div>
               <p>
                 This will remove your verified student information, gender selection, anonymous student persona and ID link. You can verify again later as a fresh verification.
@@ -836,7 +836,7 @@ export const SettingsPage: React.FC = () => {
               type="button"
               disabled={isUnlinking}
               onClick={() => setShowUnlinkModal(false)}
-              className="px-4 py-2 rounded-full text-xs font-semibold text-[#9DA89A] hover:text-[#F4F6F1] bg-[#101A12] border border-[rgba(141,168,82,0.2)] hover:bg-[#142314] transition-all"
+              className="px-4 py-2 rounded-full text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-300 dark:text-[#9DA89A] dark:hover:text-[#F4F6F1] dark:bg-[#101A12] dark:border-[rgba(141,168,82,0.2)] dark:hover:bg-[#142314] transition-all"
             >
               Cancel
             </button>
@@ -860,14 +860,14 @@ export const SettingsPage: React.FC = () => {
         maxWidth="sm"
       >
         <div className="space-y-4">
-          <div className="p-3.5 rounded-2xl bg-[#091009] border border-[rgba(141,168,82,0.2)] space-y-1">
-            <span className="text-xs text-[#9DA89A] block">Selected:</span>
-            <span className="text-base font-bold text-[#F4F6F1] block">
+          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 dark:bg-[#091009] dark:border-[rgba(141,168,82,0.2)] space-y-1">
+            <span className="text-xs text-slate-600 dark:text-[#9DA89A] block">Selected:</span>
+            <span className="text-base font-bold text-slate-900 dark:text-[#F4F6F1] block">
               {genderToConfirm}
             </span>
           </div>
 
-          <p className="text-xs text-[#9DA89A] leading-relaxed">
+          <p className="text-xs text-slate-600 dark:text-[#9DA89A] leading-relaxed">
             You won't be able to change this after confirming.
           </p>
 
@@ -884,7 +884,7 @@ export const SettingsPage: React.FC = () => {
               type="button"
               disabled={isSavingGender}
               onClick={() => setGenderToConfirm(null)}
-              className="px-4 py-2 rounded-full text-xs font-semibold text-[#9DA89A] hover:text-[#F4F6F1] bg-[#101A12] border border-[rgba(141,168,82,0.2)] hover:bg-[#142314] transition-all"
+              className="px-4 py-2 rounded-full text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-300 dark:text-[#9DA89A] dark:hover:text-[#F4F6F1] dark:bg-[#101A12] dark:border-[rgba(141,168,82,0.2)] dark:hover:bg-[#142314] transition-all"
             >
               Back
             </button>

@@ -40,7 +40,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           <div className="flex items-center justify-between">
             <label
               htmlFor={id}
-              className="block text-xs font-semibold text-gray-700 dark:text-[#F2F5F2]"
+              className="block text-xs font-semibold text-slate-800 dark:text-[#F4F6F1]"
             >
               {label}
               {required && <span className="text-rose-500 ml-1" aria-hidden="true">*</span>}
@@ -53,7 +53,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
         <div className="relative rounded-xl">
           {leftIcon && (
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400 dark:text-[#758275]">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-[#A2B09D]">
               {leftIcon}
             </div>
           )}
@@ -66,17 +66,17 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             aria-invalid={hasError}
             aria-describedby={describedBy}
             className={`
-              w-full bg-white dark:bg-[#0C120D] text-gray-900 dark:text-[#F2F5F2] placeholder-gray-400 dark:placeholder-[#758275] rounded-xl
+              w-full bg-white dark:bg-[#070D08] text-slate-900 dark:text-[#F4F6F1] placeholder-slate-400 dark:placeholder-[#A2B09D] rounded-xl
               border text-sm transition-all duration-150 min-h-[44px] shadow-sm
-              focus-visible:outline-none focus-visible:border-brand-600 dark:focus-visible:border-[#8FAF56] focus-visible:ring-4 focus-visible:ring-brand-500/10 dark:focus-visible:ring-[#8FAF56]/15
-              disabled:opacity-50 disabled:bg-gray-50 dark:disabled:bg-[#101A12] disabled:cursor-not-allowed
+              focus-visible:outline-none focus-visible:border-[#6D42E8] dark:focus-visible:border-[#A2BD63] focus-visible:ring-4 focus-visible:ring-[#6D42E8]/10 dark:focus-visible:ring-[#A2BD63]/15
+              disabled:opacity-50 disabled:bg-slate-50 dark:disabled:bg-[#101A12] disabled:cursor-not-allowed
               ${leftIcon ? 'pl-10' : 'pl-3.5'}
               ${rightIcon ? 'pr-10' : 'pr-3.5'}
               py-2.5
               ${
                 hasError
                   ? 'border-rose-300 text-rose-900 focus-visible:border-rose-500 focus-visible:ring-rose-500/15'
-                  : 'border-gray-200 dark:border-[rgba(140,170,110,0.18)] hover:border-gray-300 dark:hover:border-[rgba(140,170,110,0.3)]'
+                  : 'border-[#DCE3EC] dark:border-[rgba(150,175,120,0.24)] hover:border-slate-300 dark:hover:border-[rgba(150,175,120,0.35)]'
               }
               ${className}
             `.trim()}
@@ -84,18 +84,18 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           />
 
           {rightIcon && (
-            <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 dark:text-[#758275]">
+            <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 dark:text-[#A2B09D]">
               {rightIcon}
             </div>
           )}
         </div>
 
         {hasError ? (
-          <p id={errorId} className="text-xs text-rose-600 flex items-center gap-1 mt-1" role="alert">
+          <p id={errorId} className="text-xs text-rose-600 dark:text-rose-400 flex items-center gap-1 mt-1" role="alert">
             <span aria-hidden="true">&bull;</span> {error}
           </p>
         ) : helperText ? (
-          <p id={helperId} className="text-xs text-gray-500 dark:text-[#AEB9AE] mt-1">
+          <p id={helperId} className="text-xs text-slate-600 dark:text-[#A2B09D] mt-1">
             {helperText}
           </p>
         ) : null}

@@ -44,10 +44,10 @@ export const LandingPage: React.FC = () => {
             {/* Hero Typography */}
             <div className="space-y-2">
               <h1 className="tracking-tight text-left">
-                <span className="block text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 dark:text-[#F4F6F1] leading-[1.1]">
+                <span className="block text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 dark:text-[#F4F6F1] leading-[1.1]">
                   Talk to RITians
                 </span>
-                <span className="block text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-[#F4F6F1] mt-2 sm:mt-3 leading-tight">
+                <span className="block text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 dark:text-[#F4F6F1] mt-2 sm:mt-3 leading-tight">
                   Cooked by{' '}
                   <span className="font-signature font-bold text-5xl sm:text-6xl lg:text-7xl text-[#6D42E8] dark:text-[#A2BD63] [text-shadow:0_0_20px_rgba(109,66,232,0.2)] dark:[text-shadow:0_0_20px_rgba(162,189,99,0.25)] inline-block align-baseline ml-1">
                     Heisenberg
@@ -58,7 +58,7 @@ export const LandingPage: React.FC = () => {
 
             {/* Mobile-only Atmospheric Emblem (Sophisticated & Compact Branding) */}
             <div className="flex lg:hidden items-center gap-4 py-1">
-              <div className="relative w-16 h-16 sm:w-20 sm:h-20 shrink-0 flex items-center justify-center p-2 rounded-2xl bg-white border border-gray-200 shadow-sm dark:bg-[#0E170E]/80 dark:border-[rgba(141,168,82,0.2)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.06),0_4px_16px_rgba(0,0,0,0.4)]">
+              <div className="relative w-16 h-16 sm:w-20 sm:h-20 shrink-0 flex items-center justify-center p-2 rounded-2xl bg-white border border-slate-200 shadow-sm dark:bg-[#0E170E]/80 dark:border-[rgba(141,168,82,0.2)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.06),0_4px_16px_rgba(0,0,0,0.4)]">
                 <picture className="w-full h-full flex items-center justify-center">
                   <source srcSet="/heisenberg-emblem.webp" type="image/webp" />
                   <img
@@ -71,11 +71,11 @@ export const LandingPage: React.FC = () => {
               </div>
               <div className="text-left">
                 <span className="font-mono text-xs text-brand-600 dark:text-[#8DA852] tracking-wider block">C₁₀H₁₅N • 149.24</span>
-                <span className="text-xs text-gray-600 dark:text-[#9DA89A]">Campus Identity Isolation</span>
+                <span className="text-xs text-slate-600 dark:text-[#9DA89A]">Campus Identity Isolation</span>
               </div>
             </div>
 
-            <p className="text-base sm:text-lg text-gray-600 dark:text-[#9DA89A] font-normal leading-relaxed max-w-xl">
+            <p className="text-base sm:text-lg text-slate-600 dark:text-[#9DA89A] font-normal leading-relaxed max-w-xl">
               A safe space for RITians to meet, talk and connect anonymously.
             </p>
 
@@ -84,7 +84,7 @@ export const LandingPage: React.FC = () => {
               <Link to="/login" className="w-full sm:w-auto">
                 <button
                   type="button"
-                  className="liquid-cta-btn w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-full text-base font-semibold text-white transition-all active:scale-95 shadow-[0_4px_20px_rgba(141,168,82,0.35)]"
+                  className="liquid-cta-btn w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-full text-base font-semibold text-white transition-all active:scale-95 shadow-md"
                 >
                   <span>Enter Talk to RITians</span>
                   <ArrowRight className="h-4 w-4" />
@@ -93,7 +93,7 @@ export const LandingPage: React.FC = () => {
 
               <a
                 href="#how-it-works"
-                className="text-xs sm:text-sm text-gray-600 hover:text-gray-900 dark:text-[#9DA89A] dark:hover:text-[#F4F6F1] font-medium transition-colors text-center sm:text-left py-1"
+                className="text-xs sm:text-sm text-slate-600 hover:text-slate-900 dark:text-[#9DA89A] dark:hover:text-[#F4F6F1] font-medium transition-colors text-center sm:text-left py-1"
               >
                 Learn More ↓
               </a>
@@ -101,15 +101,15 @@ export const LandingPage: React.FC = () => {
 
             {/* Subtle Mini Liquid Pills (Authentic Community Signals) */}
             <div className="pt-2 flex flex-wrap items-center gap-2 sm:gap-3 text-xs font-semibold">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-gray-200 text-gray-700 shadow-sm dark:bg-[#101A12]/80 dark:border-[rgba(141,168,82,0.18)] dark:text-[#9DA89A]">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-slate-200 text-slate-700 shadow-sm dark:bg-[#101A12]/80 dark:border-[rgba(141,168,82,0.18)] dark:text-[#9DA89A]">
                 <Users className="h-3.5 w-3.5 text-brand-600 dark:text-[#8DA852]" />
                 <span>RIT Community</span>
               </div>
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-gray-200 text-gray-700 shadow-sm dark:bg-[#101A12]/80 dark:border-[rgba(141,168,82,0.18)] dark:text-[#9DA89A]">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-slate-200 text-slate-700 shadow-sm dark:bg-[#101A12]/80 dark:border-[rgba(141,168,82,0.18)] dark:text-[#9DA89A]">
                 <MessageSquare className="h-3.5 w-3.5 text-brand-600 dark:text-[#8DA852]" />
                 <span>Anonymous Chats</span>
               </div>
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-gray-200 text-gray-700 shadow-sm dark:bg-[#101A12]/80 dark:border-[rgba(141,168,82,0.18)] dark:text-[#9DA89A]">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-slate-200 text-slate-700 shadow-sm dark:bg-[#101A12]/80 dark:border-[rgba(141,168,82,0.18)] dark:text-[#9DA89A]">
                 <ShieldCheck className="h-3.5 w-3.5 text-brand-600 dark:text-[#8DA852]" />
                 <span>Built for Students</span>
               </div>
@@ -161,16 +161,16 @@ export const LandingPage: React.FC = () => {
       {/* =========================================================================
           BUILT FOR A SAFER COMMUNITY (Liquid Surfaces)
           ========================================================================= */}
-      <section id="features" className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 border-y border-gray-200 bg-slate-50/70 dark:border-[rgba(141,168,82,0.12)] dark:bg-[#091009]/60 backdrop-blur-sm">
+      <section id="features" className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 border-y border-slate-200 bg-slate-50/70 dark:border-[rgba(141,168,82,0.12)] dark:bg-[#091009]/60 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto space-y-8">
           <div className="text-center space-y-2">
             <Badge variant="brand" size="sm">
               Campus Security
             </Badge>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-[#F4F6F1] tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-[#F4F6F1] tracking-tight">
               Built for a Safer Community
             </h2>
-            <p className="text-xs sm:text-sm text-gray-600 dark:text-[#9DA89A] max-w-md mx-auto">
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-[#9DA89A] max-w-md mx-auto">
               Engineered exclusively for RIT students with complete identity isolation.
             </p>
           </div>
@@ -188,12 +188,12 @@ export const LandingPage: React.FC = () => {
             ].map((item) => (
               <div
                 key={item.text}
-                className="flex items-start gap-3 p-4 rounded-2xl border border-gray-200 bg-white hover:bg-slate-50 hover:border-gray-300 shadow-sm dark:border-[rgba(141,168,82,0.16)] dark:bg-[#0D160E]/80 dark:hover:bg-[#121E12]/90 dark:hover:border-[rgba(141,168,82,0.3)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.04),0_4px_16px_rgba(0,0,0,0.3)] transition-all"
+                className="flex items-start gap-3 p-4 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 shadow-sm dark:border-[rgba(141,168,82,0.16)] dark:bg-[#0D160E]/80 dark:hover:bg-[#121E12]/90 dark:hover:border-[rgba(141,168,82,0.3)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.04),0_4px_16px_rgba(0,0,0,0.3)] transition-all"
               >
                 <CheckCircle2 className="h-5 w-5 text-brand-600 dark:text-[#8DA852] shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-[#F4F6F1]">{item.text}</h3>
-                  <p className="text-xs text-gray-600 dark:text-[#9DA89A] mt-0.5">{item.desc}</p>
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-[#F4F6F1]">{item.text}</h3>
+                  <p className="text-xs text-slate-600 dark:text-[#9DA89A] mt-0.5">{item.desc}</p>
                 </div>
               </div>
             ))}
@@ -209,10 +209,10 @@ export const LandingPage: React.FC = () => {
           <Badge variant="neutral" size="sm">
             Simple 3-Step Process
           </Badge>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-[#F4F6F1] tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-[#F4F6F1] tracking-tight">
             How It Works
           </h2>
-          <p className="text-xs sm:text-sm text-gray-600 dark:text-[#9DA89A]">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-[#9DA89A]">
             Start talking with fellow RITians in less than 2 minutes
           </p>
         </div>
@@ -222,8 +222,8 @@ export const LandingPage: React.FC = () => {
             <div className="h-9 w-9 rounded-xl bg-brand-50 text-brand-700 border border-brand-200 dark:bg-[#121E12] dark:text-[#A2BD63] dark:border-[rgba(141,168,82,0.25)] flex items-center justify-center text-sm font-bold shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
               1
             </div>
-            <h3 className="text-base font-bold text-gray-900 dark:text-[#F4F6F1]">Sign In with Email</h3>
-            <p className="text-xs text-gray-600 dark:text-[#9DA89A] leading-relaxed">
+            <h3 className="text-base font-bold text-slate-900 dark:text-[#F4F6F1]">Sign In with Email</h3>
+            <p className="text-xs text-slate-600 dark:text-[#9DA89A] leading-relaxed">
               Use your personal email address. Your identity remains private and isolated.
             </p>
           </Card>
@@ -232,8 +232,8 @@ export const LandingPage: React.FC = () => {
             <div className="h-9 w-9 rounded-xl bg-brand-50 text-brand-700 border border-brand-200 dark:bg-[#121E12] dark:text-[#A2BD63] dark:border-[rgba(141,168,82,0.25)] flex items-center justify-center text-sm font-bold shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
               2
             </div>
-            <h3 className="text-base font-bold text-gray-900 dark:text-[#F4F6F1]">Scan Student ID Card</h3>
-            <p className="text-xs text-gray-600 dark:text-[#9DA89A] leading-relaxed">
+            <h3 className="text-base font-bold text-slate-900 dark:text-[#F4F6F1]">Scan Student ID Card</h3>
+            <p className="text-xs text-slate-600 dark:text-[#9DA89A] leading-relaxed">
               Scan the QR code on the back of your physical card to link your campus status.
             </p>
           </Card>
@@ -242,8 +242,8 @@ export const LandingPage: React.FC = () => {
             <div className="h-9 w-9 rounded-xl bg-brand-50 text-brand-700 border border-brand-200 dark:bg-[#121E12] dark:text-[#A2BD63] dark:border-[rgba(141,168,82,0.25)] flex items-center justify-center text-sm font-bold shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
               3
             </div>
-            <h3 className="text-base font-bold text-gray-900 dark:text-[#F4F6F1]">Create Persona &amp; Chat</h3>
-            <p className="text-xs text-gray-600 dark:text-[#9DA89A] leading-relaxed">
+            <h3 className="text-base font-bold text-slate-900 dark:text-[#F4F6F1]">Create Persona &amp; Chat</h3>
+            <p className="text-xs text-slate-600 dark:text-[#9DA89A] leading-relaxed">
               Choose an anonymous handle, build your avatar, and meet new students anytime.
             </p>
           </Card>

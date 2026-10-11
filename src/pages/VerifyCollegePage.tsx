@@ -302,7 +302,7 @@ export const VerifyCollegePage: React.FC = () => {
 
   return (
     <>
-      <Card className="border border-gray-200/80 dark:border-[rgba(140,170,110,0.22)] bg-white/95 dark:bg-[#091009]/90 backdrop-blur-md shadow-card dark:shadow-liquid-outer rounded-[28px]">
+      <Card className="border border-slate-200/80 dark:border-[rgba(140,170,110,0.22)] bg-white/95 dark:bg-[#091009]/90 backdrop-blur-md shadow-card dark:shadow-liquid-outer rounded-[28px]">
         <CardHeader className="text-center pb-3">
           <div className="mx-auto mb-2">
             <Badge variant="brand" size="sm" withDot>
@@ -310,7 +310,7 @@ export const VerifyCollegePage: React.FC = () => {
             </Badge>
           </div>
 
-          <CardTitle className="text-2xl font-bold text-gray-900 dark:text-[#F4F6F1]">
+          <CardTitle className="text-2xl font-bold text-slate-900 dark:text-[#F4F6F1]">
             {step === 'idle' && 'Verify your RIT identity'}
             {step === 'physical_qr' && 'Scan Physical RIT ID'}
             {step === 'legacy_prompt' && 'Older RIT ID Detected'}
@@ -319,7 +319,7 @@ export const VerifyCollegePage: React.FC = () => {
             {step === 'success' && 'College Identity Verified'}
           </CardTitle>
 
-          <CardDescription className="text-xs sm:text-sm text-gray-500 dark:text-[#9DA89A] max-w-md mx-auto">
+          <CardDescription className="text-xs sm:text-sm text-slate-600 dark:text-[#C0CCBC] max-w-md mx-auto">
             {step === 'idle' &&
               'Verification unlocks your anonymous profile customization. You can still chat without verification.'}
             {step === 'physical_qr' &&
@@ -342,10 +342,10 @@ export const VerifyCollegePage: React.FC = () => {
               <div className="flex items-center gap-2.5">
                 <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-[#8DA852] shrink-0" />
                 <div>
-                  <h4 className="text-xs font-bold text-gray-900 dark:text-[#F4F6F1]">
+                  <h4 className="text-xs font-bold text-slate-900 dark:text-[#F4F6F1]">
                     College Identity Currently Verified
                   </h4>
-                  <p className="text-[11px] text-gray-600 dark:text-[#9DA89A]">
+                  <p className="text-[11px] text-slate-600 dark:text-[#C0CCBC]">
                     Method:{' '}
                     <span className="font-semibold text-emerald-700 dark:text-[#A2BD63]">
                       Physical RIT ID
@@ -371,16 +371,16 @@ export const VerifyCollegePage: React.FC = () => {
           {/* VIEW 1: IDLE / ENTRY SCREEN */}
           {step === 'idle' && (
             <div className="space-y-6">
-              <div className="p-6 rounded-[24px] border border-gray-200 dark:border-[rgba(140,170,110,0.22)] bg-gray-50/60 dark:bg-[#0D160E] text-center space-y-4 shadow-sm">
+              <div className="p-6 rounded-[24px] border border-slate-200 dark:border-[rgba(140,170,110,0.22)] bg-slate-50/80 dark:bg-[#0D160E] text-center space-y-4 shadow-sm">
                 <div className="h-16 w-16 rounded-2xl bg-brand-50 dark:bg-[#122214] border border-brand-200 dark:border-[rgba(140,170,110,0.3)] text-brand-600 dark:text-[#8DA852] flex items-center justify-center mx-auto shadow-sm">
                   <CreditCard className="h-8 w-8" />
                 </div>
 
                 <div className="space-y-1.5 max-w-sm mx-auto">
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-[#F4F6F1]">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-[#F4F6F1]">
                     Scan your student ID card
                   </h3>
-                  <p className="text-xs text-gray-500 dark:text-[#9DA89A] leading-relaxed">
+                  <p className="text-xs text-slate-600 dark:text-[#C0CCBC] leading-relaxed">
                     Supports newer IMS QR cards and older numeric ID cards with instant on-device cross-checking.
                   </p>
                 </div>
@@ -406,7 +406,7 @@ export const VerifyCollegePage: React.FC = () => {
                 </div>
 
                 {/* Privacy & Encryption Disclosure */}
-                <div className="p-3.5 rounded-2xl bg-brand-50/60 dark:bg-[#101D11] border border-brand-100 dark:border-[rgba(140,170,110,0.22)] text-left text-xs text-gray-600 dark:text-[#9DA89A] space-y-1.5 mt-2">
+                <div className="p-3.5 rounded-2xl bg-brand-50/60 dark:bg-[#101D11] border border-brand-100 dark:border-[rgba(140,170,110,0.22)] text-left text-xs text-slate-600 dark:text-[#C0CCBC] space-y-1.5 mt-2">
                   <div className="flex items-center gap-1.5 text-brand-700 dark:text-[#A2BD63] font-semibold">
                     <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-[#8DA852]" />
                     <span>Security &amp; Encryption Disclosure</span>
@@ -418,11 +418,11 @@ export const VerifyCollegePage: React.FC = () => {
               </div>
 
               {/* Supporting Text */}
-              <div className="p-4 rounded-2xl bg-gray-50/80 dark:bg-[#0D160E]/70 border border-gray-200 dark:border-[rgba(140,170,110,0.18)] text-center space-y-1">
-                <p className="text-xs text-gray-700 dark:text-[#D1D8CE] font-medium">
+              <div className="p-4 rounded-2xl bg-slate-50/80 dark:bg-[#0D160E]/70 border border-slate-200 dark:border-[rgba(140,170,110,0.18)] text-center space-y-1">
+                <p className="text-xs text-slate-700 dark:text-[#D1D8CE] font-medium">
                   &ldquo;Verification unlocks your anonymous profile customization. You can still chat without verification.&rdquo;
                 </p>
-                <p className="text-[11px] text-gray-500 dark:text-[#9DA89A]">
+                <p className="text-[11px] text-slate-500 dark:text-[#A2B09D]">
                   Unverified students chat with an assigned anonymous handle. Verification is optional and enables choosing a custom alias &amp; avatar.
                 </p>
               </div>
@@ -436,7 +436,7 @@ export const VerifyCollegePage: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleResetToIdle}
-                  className="text-xs font-semibold text-gray-500 hover:text-brand-600 flex items-center gap-1"
+                  className="text-xs font-semibold text-slate-500 hover:text-brand-600 dark:text-[#C0CCBC] flex items-center gap-1"
                 >
                   <ChevronLeft className="h-4 w-4" />
                   <span>Back</span>
@@ -449,10 +449,10 @@ export const VerifyCollegePage: React.FC = () => {
               {isVerifyingPhysical && (
                 <div className="p-4 rounded-xl bg-brand-50 dark:bg-brand-950/40 border border-brand-200 dark:border-brand-800 text-center space-y-2 animate-in fade-in">
                   <RefreshCw className="h-6 w-6 text-brand-600 animate-spin mx-auto" />
-                  <h4 className="text-xs font-bold text-gray-900 dark:text-white">
+                  <h4 className="text-xs font-bold text-slate-900 dark:text-white">
                     Verifying Student Credentials
                   </h4>
-                  <p className="text-[11px] text-gray-600 dark:text-slate-300">
+                  <p className="text-[11px] text-slate-600 dark:text-slate-300">
                     Validating card format with cryptographic uniqueness...
                   </p>
                 </div>
@@ -472,13 +472,13 @@ export const VerifyCollegePage: React.FC = () => {
                 />
               )}
 
-              <div className="p-4 rounded-2xl bg-gray-50/80 dark:bg-[#0D160E]/70 border border-gray-200 dark:border-[rgba(140,170,110,0.18)] flex items-start gap-3">
+              <div className="p-4 rounded-2xl bg-slate-50/80 dark:bg-[#0D160E]/70 border border-slate-200 dark:border-[rgba(140,170,110,0.18)] flex items-start gap-3">
                 <div className="h-9 w-9 rounded-xl bg-brand-50 dark:bg-[#122214] border border-brand-100 dark:border-[rgba(140,170,110,0.3)] text-brand-600 dark:text-[#8DA852] flex items-center justify-center shrink-0">
                   <CreditCard className="h-5 w-5" />
                 </div>
                 <div className="text-xs space-y-0.5">
-                  <span className="font-bold text-gray-900 dark:text-[#F4F6F1]">Where is the QR code?</span>
-                  <p className="text-gray-500 dark:text-[#9DA89A] leading-relaxed">
+                  <span className="font-bold text-slate-900 dark:text-[#F4F6F1]">Where is the QR code?</span>
+                  <p className="text-slate-600 dark:text-[#C0CCBC] leading-relaxed">
                     The QR code is printed on the back of your ID card. Newer cards connect to the IMS portal; older cards contain a numeric register number.
                   </p>
                 </div>
@@ -494,22 +494,22 @@ export const VerifyCollegePage: React.FC = () => {
               </div>
 
               <div className="space-y-1.5 max-w-sm mx-auto">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-[#F4F6F1]">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-[#F4F6F1]">
                   Older RIT ID detected
                 </h3>
-                <p className="text-xs text-gray-600 dark:text-[#9DA89A] leading-relaxed">
+                <p className="text-xs text-slate-600 dark:text-[#C0CCBC] leading-relaxed">
                   Now scan the front of the same physical ID card to cross-check your printed student number.
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-gray-50/80 dark:bg-[#0D160E]/70 border border-gray-200 dark:border-[rgba(140,170,110,0.18)] text-left text-xs space-y-1.5 shadow-sm">
+              <div className="p-4 rounded-2xl bg-slate-50/80 dark:bg-[#0D160E]/70 border border-slate-200 dark:border-[rgba(140,170,110,0.18)] text-left text-xs space-y-1.5 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-500 dark:text-[#9DA89A]">Detected QR Number:</span>
-                  <span className="font-mono font-bold text-gray-900 dark:text-[#F4F6F1]">
+                  <span className="text-slate-600 dark:text-[#C0CCBC]">Detected QR Number:</span>
+                  <span className="font-mono font-bold text-slate-900 dark:text-[#F4F6F1]">
                     {legacyQrValue.replace(/^(\d{4})\d+(\d{4})$/, '$1••••$2')}
                   </span>
                 </div>
-                <p className="text-[11px] text-gray-500 dark:text-[#9DA89A] leading-relaxed">
+                <p className="text-[11px] text-slate-500 dark:text-[#A2B09D] leading-relaxed">
                   The numeric QR alone is not sufficient proof. We will match this against the printed Register Number on the front using on-device OCR.
                 </p>
               </div>
@@ -544,7 +544,7 @@ export const VerifyCollegePage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setStep('legacy_prompt')}
-                  className="text-xs font-semibold text-gray-500 hover:text-brand-600 flex items-center gap-1"
+                  className="text-xs font-semibold text-slate-500 hover:text-brand-600 dark:text-[#C0CCBC] flex items-center gap-1"
                 >
                   <ChevronLeft className="h-4 w-4" />
                   <span>Back</span>
@@ -574,9 +574,9 @@ export const VerifyCollegePage: React.FC = () => {
           {/* VIEW 5: LEGACY CARD CONFIRMATION REVIEW */}
           {step === 'legacy_review' && legacyExtractedFields && (
             <div className="space-y-5 animate-in fade-in">
-              <div className="rounded-2xl bg-gray-50/80 dark:bg-[#0D160E]/70 border border-gray-200 dark:border-[rgba(140,170,110,0.18)] p-4 space-y-3 shadow-sm">
-                <div className="flex items-center justify-between border-b border-gray-200 dark:border-[rgba(140,170,110,0.18)] pb-2.5">
-                  <span className="text-xs font-semibold text-gray-500 dark:text-[#9DA89A] uppercase tracking-wider">
+              <div className="rounded-2xl bg-slate-50/80 dark:bg-[#0D160E]/70 border border-slate-200 dark:border-[rgba(140,170,110,0.18)] p-4 space-y-3 shadow-sm">
+                <div className="flex items-center justify-between border-b border-slate-200 dark:border-[rgba(140,170,110,0.18)] pb-2.5">
+                  <span className="text-xs font-semibold text-slate-600 dark:text-[#C0CCBC] uppercase tracking-wider">
                     Cross-Checked Student Attributes
                   </span>
                   <Badge variant="success" size="sm" withDot>
@@ -587,11 +587,11 @@ export const VerifyCollegePage: React.FC = () => {
                 <div className="space-y-2.5 pt-1 text-xs">
                   {legacyExtractedFields.name && (
                     <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-1.5 text-gray-500 dark:text-[#9DA89A] font-medium">
-                        <User className="h-3.5 w-3.5 text-gray-400" />
+                      <span className="flex items-center gap-1.5 text-slate-600 dark:text-[#C0CCBC] font-medium">
+                        <User className="h-3.5 w-3.5 text-slate-400" />
                         Student Name:
                       </span>
-                      <span className="font-semibold text-gray-900 dark:text-[#F4F6F1]">
+                      <span className="font-semibold text-slate-900 dark:text-[#F4F6F1]">
                         {legacyExtractedFields.name}
                       </span>
                     </div>
@@ -599,8 +599,8 @@ export const VerifyCollegePage: React.FC = () => {
 
                   {legacyExtractedFields.department && (
                     <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-1.5 text-gray-500 dark:text-[#9DA89A] font-medium">
-                        <GraduationCap className="h-3.5 w-3.5 text-gray-400" />
+                      <span className="flex items-center gap-1.5 text-slate-600 dark:text-[#C0CCBC] font-medium">
+                        <GraduationCap className="h-3.5 w-3.5 text-slate-400" />
                         Department:
                       </span>
                       <span className="font-semibold text-brand-600 dark:text-[#8DA852]">
@@ -611,18 +611,18 @@ export const VerifyCollegePage: React.FC = () => {
 
                   {legacyExtractedFields.batch && (
                     <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-1.5 text-gray-500 dark:text-[#9DA89A] font-medium">
-                        <Calendar className="h-3.5 w-3.5 text-gray-400" />
+                      <span className="flex items-center gap-1.5 text-slate-600 dark:text-[#C0CCBC] font-medium">
+                        <Calendar className="h-3.5 w-3.5 text-slate-400" />
                         Batch:
                       </span>
-                      <span className="font-mono font-semibold text-gray-800 dark:text-[#D1D8CE]">
+                      <span className="font-mono font-semibold text-slate-800 dark:text-[#D1D8CE]">
                         {legacyExtractedFields.batch}
                       </span>
                     </div>
                   )}
 
                   <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-1.5 text-gray-500 dark:text-[#9DA89A] font-medium">
+                    <span className="flex items-center gap-1.5 text-slate-600 dark:text-[#C0CCBC] font-medium">
                       <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-[#8DA852]" />
                       Register Number:
                     </span>
@@ -633,7 +633,7 @@ export const VerifyCollegePage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="p-3 rounded-xl bg-gray-50 dark:bg-[#091009] border border-gray-200 dark:border-[rgba(140,170,110,0.18)] text-[11px] text-gray-500 dark:text-[#9DA89A] flex items-start gap-2">
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#091009] border border-slate-200 dark:border-[rgba(140,170,110,0.18)] text-[11px] text-slate-600 dark:text-[#C0CCBC] flex items-start gap-2">
                 <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-[#8DA852] shrink-0 mt-0.5" />
                 <p>
                   Your register number is encrypted server-side with AES-256 for duplicate-card prevention and audited inspection. It is permanently deleted if you unlink.
@@ -684,18 +684,18 @@ export const VerifyCollegePage: React.FC = () => {
               </div>
 
               <div className="space-y-1.5">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white">
                   College Identity Verified
                 </h3>
-                <p className="text-xs text-gray-500 dark:text-slate-400 max-w-xs mx-auto leading-relaxed">
+                <p className="text-xs text-slate-600 dark:text-[#C0CCBC] max-w-xs mx-auto leading-relaxed">
                   Your student identity has been verified successfully. Your academic credentials remain sealed and private.
                 </p>
               </div>
 
               {/* Verified Student Information (Permanently Immutable) */}
-              <div className="rounded-2xl bg-gray-50/80 dark:bg-[#0D160E]/70 border border-gray-200 dark:border-[rgba(140,170,110,0.18)] p-4 text-left text-xs space-y-2.5 shadow-sm">
-                <div className="flex items-center justify-between pb-2 border-b border-gray-200 dark:border-[rgba(140,170,110,0.18)]">
-                  <span className="font-semibold text-gray-500 dark:text-[#9DA89A] uppercase tracking-wider text-[11px]">
+              <div className="rounded-2xl bg-slate-50/80 dark:bg-[#0D160E]/70 border border-slate-200 dark:border-[rgba(140,170,110,0.18)] p-4 text-left text-xs space-y-2.5 shadow-sm">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-[rgba(140,170,110,0.18)]">
+                  <span className="font-semibold text-slate-600 dark:text-[#C0CCBC] uppercase tracking-wider text-[11px]">
                     Verified Student Information
                   </span>
                   <Badge variant="success" size="sm" withDot>
@@ -705,11 +705,11 @@ export const VerifyCollegePage: React.FC = () => {
 
                 {Boolean(verifiedData?.name || parsedResult?.fields?.name || legacyExtractedFields?.name) && (
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-500 dark:text-[#9DA89A] flex items-center gap-1.5">
-                      <User className="h-3.5 w-3.5 text-gray-400" />
+                    <span className="text-slate-600 dark:text-[#C0CCBC] flex items-center gap-1.5">
+                      <User className="h-3.5 w-3.5 text-slate-400" />
                       Name:
                     </span>
-                    <span className="font-bold text-gray-900 dark:text-[#F4F6F1]">
+                    <span className="font-bold text-slate-900 dark:text-[#F4F6F1]">
                       {String(verifiedData?.name || parsedResult?.fields?.name || legacyExtractedFields?.name)}
                     </span>
                   </div>
@@ -717,8 +717,8 @@ export const VerifyCollegePage: React.FC = () => {
 
                 {Boolean(verifiedData?.department || parsedResult?.fields?.department || legacyExtractedFields?.department) && (
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-500 dark:text-[#9DA89A] flex items-center gap-1.5">
-                      <GraduationCap className="h-3.5 w-3.5 text-gray-400" />
+                    <span className="text-slate-600 dark:text-[#C0CCBC] flex items-center gap-1.5">
+                      <GraduationCap className="h-3.5 w-3.5 text-slate-400" />
                       Department:
                     </span>
                     <span className="font-semibold text-brand-600 dark:text-[#8DA852]">
@@ -729,11 +729,11 @@ export const VerifyCollegePage: React.FC = () => {
 
                 {Boolean(verifiedData?.batch || parsedResult?.fields?.batch || legacyExtractedFields?.batch) && (
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-500 dark:text-[#9DA89A] flex items-center gap-1.5">
-                      <Calendar className="h-3.5 w-3.5 text-gray-400" />
+                    <span className="text-slate-600 dark:text-[#C0CCBC] flex items-center gap-1.5">
+                      <Calendar className="h-3.5 w-3.5 text-slate-400" />
                       Batch:
                     </span>
-                    <span className="font-mono font-semibold text-gray-800 dark:text-[#D1D8CE]">
+                    <span className="font-mono font-semibold text-slate-800 dark:text-[#D1D8CE]">
                       {String(verifiedData?.batch || parsedResult?.fields?.batch || legacyExtractedFields?.batch)}
                     </span>
                   </div>
@@ -749,9 +749,9 @@ export const VerifyCollegePage: React.FC = () => {
               </div>
 
               {/* Gender Selection & Freeze (Choose Once & Frozen) */}
-              <div className="rounded-2xl bg-gray-50/80 dark:bg-[#0D160E]/70 border border-gray-200 dark:border-[rgba(140,170,110,0.18)] p-4 text-left text-xs space-y-3 shadow-sm">
-                <div className="flex items-center justify-between pb-1.5 border-b border-gray-200 dark:border-[rgba(140,170,110,0.18)]">
-                  <span className="font-semibold text-gray-700 dark:text-[#D1D8CE] uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+              <div className="rounded-2xl bg-slate-50/80 dark:bg-[#0D160E]/70 border border-slate-200 dark:border-[rgba(140,170,110,0.18)] p-4 text-left text-xs space-y-3 shadow-sm">
+                <div className="flex items-center justify-between pb-1.5 border-b border-slate-200 dark:border-[rgba(140,170,110,0.18)]">
+                  <span className="font-semibold text-slate-700 dark:text-[#D1D8CE] uppercase tracking-wider text-[11px] flex items-center gap-1.5">
                     <Users className="h-3.5 w-3.5 text-brand-600 dark:text-[#8DA852]" />
                     Private Gender
                   </span>
@@ -767,15 +767,15 @@ export const VerifyCollegePage: React.FC = () => {
                 </div>
 
                 {isGenderLocked ? (
-                  <div className="p-3 rounded-xl bg-white dark:bg-[#091009] border border-gray-200 dark:border-[rgba(140,170,110,0.22)] flex items-center justify-between">
-                    <span className="text-xs text-gray-600 dark:text-[#9DA89A]">
-                      Gender: <strong className="text-gray-900 dark:text-[#F4F6F1] font-bold">{profile?.gender || selectedGender}</strong>
+                  <div className="p-3 rounded-xl bg-white dark:bg-[#091009] border border-slate-200 dark:border-[rgba(140,170,110,0.22)] flex items-center justify-between">
+                    <span className="text-xs text-slate-600 dark:text-[#C0CCBC]">
+                      Gender: <strong className="text-slate-900 dark:text-[#F4F6F1] font-bold">{profile?.gender || selectedGender}</strong>
                     </span>
-                    <span className="text-[11px] text-gray-400 dark:text-[#6F796D]">Read-only</span>
+                    <span className="text-[11px] text-slate-400 dark:text-[#6F796D]">Read-only</span>
                   </div>
                 ) : (
                   <>
-                    <p className="text-[11px] text-gray-500 dark:text-[#9DA89A] leading-relaxed">
+                    <p className="text-[11px] text-slate-600 dark:text-[#C0CCBC] leading-relaxed">
                       Please select your gender manually. We never infer or guess this from your card credentials. Once confirmed, this cannot be modified.
                     </p>
                     <div className="grid grid-cols-2 gap-2 pt-1">
@@ -787,7 +787,7 @@ export const VerifyCollegePage: React.FC = () => {
                             setGenderToConfirm(gOption);
                             setGenderError(null);
                           }}
-                          className="p-2.5 rounded-xl border text-xs font-semibold text-center transition-all bg-white dark:bg-[#091009] border-gray-200 dark:border-[rgba(140,170,110,0.22)] text-gray-700 dark:text-[#F4F6F1] hover:border-brand-500 dark:hover:border-[#8DA852] hover:bg-gray-50 dark:hover:bg-[#122013] active:scale-[0.98]"
+                          className="p-2.5 rounded-xl border text-xs font-semibold text-center transition-all bg-white dark:bg-[#091009] border-slate-200 dark:border-[rgba(140,170,110,0.22)] text-slate-800 dark:text-[#F4F6F1] hover:border-brand-500 dark:hover:border-[#8DA852] hover:bg-slate-50 dark:hover:bg-[#122013] active:scale-[0.98]"
                         >
                           {gOption}
                         </button>
@@ -801,12 +801,12 @@ export const VerifyCollegePage: React.FC = () => {
               </div>
 
               {/* Private Shield Note */}
-              <div className="p-3.5 rounded-2xl bg-brand-50/60 dark:bg-[#101D11] border border-brand-100 dark:border-[rgba(140,170,110,0.22)] text-left text-xs text-gray-600 dark:text-[#9DA89A] space-y-1">
+              <div className="p-3.5 rounded-2xl bg-brand-50/60 dark:bg-[#101D11] border border-brand-100 dark:border-[rgba(140,170,110,0.22)] text-left text-xs text-slate-600 dark:text-[#C0CCBC] space-y-1">
                 <div className="flex items-center gap-1.5 text-brand-700 dark:text-[#A2BD63] font-semibold">
                   <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-[#8DA852]" />
                   <span>Private Identity Shield Active</span>
                 </div>
-                <p className="text-[11px] text-gray-500 dark:text-[#9DA89A]">
+                <p className="text-[11px] text-slate-600 dark:text-[#C0CCBC]">
                   Your real name and academic credentials will NEVER be shown to other students in chats.
                 </p>
               </div>
@@ -860,11 +860,11 @@ export const VerifyCollegePage: React.FC = () => {
           )}
         </CardContent>
 
-        <CardFooter className="justify-center border-t border-gray-100 dark:border-[rgba(140,170,110,0.14)] pt-4">
+        <CardFooter className="justify-center border-t border-slate-100 dark:border-[rgba(140,170,110,0.14)] pt-4">
           <button
             type="button"
             onClick={() => navigate('/settings')}
-            className="text-xs text-gray-400 dark:text-[#6F796D] hover:text-brand-600 dark:hover:text-[#8DA852] underline underline-offset-4"
+            className="text-xs text-slate-500 dark:text-[#A2B09D] hover:text-brand-600 dark:hover:text-[#8DA852] underline underline-offset-4"
           >
             &larr; Back to Settings
           </button>
@@ -903,7 +903,7 @@ export const VerifyCollegePage: React.FC = () => {
         }
       >
         <div className="space-y-4">
-          <div className="flex items-start gap-3 p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-xs leading-relaxed">
+          <div className="flex items-start gap-3 p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs leading-relaxed">
             <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
             <p>
               This will remove your verified student information, gender selection, anonymous student persona, ID link, and permanently delete your encrypted register number. You can verify again later as a fresh verification.
@@ -953,14 +953,14 @@ export const VerifyCollegePage: React.FC = () => {
         }
       >
         <div className="space-y-4">
-          <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700 space-y-1">
-            <span className="text-xs text-gray-500 dark:text-slate-400 block">Selected:</span>
-            <span className="text-base font-bold text-gray-900 dark:text-white block">
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#091009] border border-slate-200 dark:border-[rgba(140,170,110,0.22)] space-y-1">
+            <span className="text-xs text-slate-600 dark:text-[#9DA89A] block">Selected:</span>
+            <span className="text-base font-bold text-slate-900 dark:text-[#F4F6F1] block">
               {genderToConfirm}
             </span>
           </div>
 
-          <p className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed">
+          <p className="text-xs text-slate-600 dark:text-[#9DA89A] leading-relaxed">
             You won't be able to change this after confirming.
           </p>
 

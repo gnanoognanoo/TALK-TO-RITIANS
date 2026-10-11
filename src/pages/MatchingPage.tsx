@@ -254,12 +254,12 @@ export const MatchingPage: React.FC = () => {
       <div className="w-full max-w-md text-center space-y-8">
         {/* Header Titles */}
         <div className="space-y-2">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#F4F6F1] tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-[#F4F6F1] tracking-tight">
             {hasPendingRequest
               ? statusMessage || 'Waiting for a RITian to respond...'
               : 'Finding a RITian...'}
           </h1>
-          <p className="text-xs sm:text-sm text-[#9DA89A]">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-[#9DA89A]">
             {hasPendingRequest
               ? 'Request sent to an active online student'
               : 'Connecting you with a fellow student from campus'}
@@ -269,25 +269,25 @@ export const MatchingPage: React.FC = () => {
         {/* Liquid Concentric Blobs / Soft Pulses */}
         <div className="relative flex items-center justify-center h-60 w-60 sm:h-64 sm:w-64 mx-auto my-6">
           {/* Outermost subtle pulse ring */}
-          <div className="absolute inset-0 rounded-full bg-[#8DA852]/10 animate-ping opacity-25" />
+          <div className="absolute inset-0 rounded-full bg-brand-500/10 dark:bg-[#8DA852]/10 animate-ping opacity-25" />
           {/* Concentric liquid rings */}
-          <div className="absolute inset-3 rounded-full border border-[rgba(141,168,82,0.2)] animate-pulse" />
-          <div className="absolute inset-8 rounded-full bg-[#0D160E]/70 border border-[rgba(141,168,82,0.25)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]" />
-          <div className="absolute inset-16 rounded-full bg-[#121E12]/80 border border-[rgba(141,168,82,0.35)] shadow-[0_4px_20px_rgba(0,0,0,0.5)]" />
+          <div className="absolute inset-3 rounded-full border border-brand-200 dark:border-[rgba(141,168,82,0.2)] animate-pulse" />
+          <div className="absolute inset-8 rounded-full bg-brand-50/60 dark:bg-[#0D160E]/70 border border-brand-200 dark:border-[rgba(141,168,82,0.25)] shadow-inner" />
+          <div className="absolute inset-16 rounded-full bg-brand-100/60 dark:bg-[#121E12]/80 border border-brand-300 dark:border-[rgba(141,168,82,0.35)] shadow-md dark:shadow-[0_4px_20px_rgba(0,0,0,0.5)]" />
 
           {/* Center Avatar Badge */}
-          <div className="relative z-10 h-16 w-16 rounded-full bg-[#1A2E1A] border border-[rgba(141,168,82,0.5)] flex items-center justify-center text-[#A2BD63] shadow-[0_0_28px_rgba(141,168,82,0.35),inset_0_1px_1px_rgba(255,255,255,0.15)]">
-            <User className="h-8 w-8 text-[#A2BD63]" />
+          <div className="relative z-10 h-16 w-16 rounded-full bg-brand-600 dark:bg-[#1A2E1A] border-2 border-brand-300 dark:border-[rgba(141,168,82,0.5)] flex items-center justify-center text-white dark:text-[#A2BD63] shadow-lg dark:shadow-[0_0_28px_rgba(141,168,82,0.35)]">
+            <User className="h-8 w-8 text-white dark:text-[#A2BD63]" />
           </div>
         </div>
 
         {/* Friendly Message / Icebreaker Card */}
         <Card className="p-4 text-left max-w-sm mx-auto">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-[#121E12] text-[#A2BD63] shrink-0 border border-[rgba(141,168,82,0.2)]">
+            <div className="p-2 rounded-xl bg-brand-50 dark:bg-[#121E12] text-brand-600 dark:text-[#A2BD63] shrink-0 border border-brand-200 dark:border-[rgba(141,168,82,0.2)]">
               <Lightbulb className="h-4 w-4" />
             </div>
-            <p className="text-xs sm:text-sm text-[#9DA89A] font-medium leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-700 dark:text-[#9DA89A] font-medium leading-relaxed">
               &ldquo;Good conversations start with open minds.&rdquo;
             </p>
           </div>
@@ -308,7 +308,7 @@ export const MatchingPage: React.FC = () => {
             type="button"
             onClick={handleCancel}
             disabled={isLeaving || isMatchingResolved || isForceLeaving}
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-semibold text-[#9DA89A] hover:text-[#F4F6F1] bg-[#0E170E]/80 border border-[rgba(141,168,82,0.2)] hover:border-[rgba(141,168,82,0.35)] hover:bg-[#132213] active:scale-95 transition-all disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-semibold text-slate-700 dark:text-[#9DA89A] hover:text-slate-900 dark:hover:text-[#F4F6F1] bg-white dark:bg-[#0E170E]/80 border border-slate-300 dark:border-[rgba(141,168,82,0.2)] hover:border-slate-400 dark:hover:border-[rgba(141,168,82,0.35)] hover:bg-slate-50 dark:hover:bg-[#132213] active:scale-95 transition-all disabled:opacity-50 shadow-sm"
           >
             <X className="h-3.5 w-3.5" />
             <span>{isLeaving ? 'Exiting...' : 'Cancel Search'}</span>
@@ -316,7 +316,7 @@ export const MatchingPage: React.FC = () => {
         </div>
 
         {/* Subtitle / elapsed timer counter */}
-        <p className="text-[11px] text-[#6F796D]">
+        <p className="text-[11px] text-slate-500 dark:text-[#6F796D]">
           Searching for {secondsElapsed}s &bull; Safe &amp; Anonymous
         </p>
       </div>
@@ -332,7 +332,7 @@ export const MatchingPage: React.FC = () => {
         title="You have an active conversation"
       >
         <div className="space-y-4">
-          <p className="text-sm text-[#9DA89A]">
+          <p className="text-sm text-slate-700 dark:text-[#9DA89A]">
             You're already connected to a chat room that is still active. Would you like to return to
             it, or leave it and find a new match?
           </p>
@@ -340,7 +340,7 @@ export const MatchingPage: React.FC = () => {
             <button
               type="button"
               onClick={handleResumeExistingRoom}
-              className="liquid-cta-btn flex-1 py-3 px-4 rounded-full text-sm font-semibold text-white transition-all active:scale-95"
+              className="liquid-cta-btn flex-1 py-3 px-4 rounded-full text-sm font-semibold text-white transition-all active:scale-95 shadow-md"
             >
               Resume Conversation
             </button>
@@ -348,7 +348,7 @@ export const MatchingPage: React.FC = () => {
               type="button"
               onClick={handleForceLeaveAndRematch}
               disabled={isForceLeaving}
-              className="flex-1 inline-flex items-center justify-center gap-2 py-3 px-4 rounded-full text-sm font-semibold text-[#9DA89A] hover:text-[#F4F6F1] bg-[#0E170E] border border-[rgba(141,168,82,0.2)] hover:bg-[#132213] transition-all active:scale-95 disabled:opacity-50"
+              className="flex-1 inline-flex items-center justify-center gap-2 py-3 px-4 rounded-full text-sm font-semibold text-slate-700 dark:text-[#9DA89A] hover:text-slate-900 dark:hover:text-[#F4F6F1] bg-slate-100 dark:bg-[#0E170E] border border-slate-200 dark:border-[rgba(141,168,82,0.2)] hover:bg-slate-200 dark:hover:bg-[#132213] transition-all active:scale-95 disabled:opacity-50"
             >
               <RefreshCw className="h-4 w-4" />
               <span>{isForceLeaving ? 'Leaving...' : 'Leave & Rematch'}</span>
