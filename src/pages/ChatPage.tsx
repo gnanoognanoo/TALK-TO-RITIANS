@@ -649,6 +649,9 @@ export const ChatPage: React.FC = () => {
     if (isSkipping || !roomId) return;
     setIsSkipping(true);
     try {
+      if (roomId) {
+        sessionStorage.setItem(`left_room_${roomId}`, 'true');
+      }
       if (roomStatus === 'active') {
         const res = await chatService.endRoom(roomId, 'skip');
         if (!res.success && res.error?.code === 'RATE_LIMITED') {
@@ -673,6 +676,9 @@ export const ChatPage: React.FC = () => {
     if (isLeavingRoom) return;
     setIsLeavingRoom(true);
     try {
+      if (roomId) {
+        sessionStorage.setItem(`left_room_${roomId}`, 'true');
+      }
       if (roomId && roomStatus === 'active') {
         await chatService.endRoom(roomId, 'leave');
       }
@@ -938,7 +944,12 @@ export const ChatPage: React.FC = () => {
                 <div className="space-y-2.5 pt-2">
                   <button
                     type="button"
-                    onClick={() => navigate('/matching', { replace: true })}
+                    onClick={() => {
+                      if (roomId) {
+                        sessionStorage.setItem(`left_room_${roomId}`, 'true');
+                      }
+                      navigate('/matching', { replace: true });
+                    }}
                     className="liquid-cta-btn w-full py-3 px-4 rounded-full font-bold text-sm text-white transition-all active:scale-95 shadow-[0_4px_16px_rgba(141,168,82,0.35)]"
                   >
                     Find a New Chat
@@ -946,6 +957,9 @@ export const ChatPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={async () => {
+                      if (roomId) {
+                        sessionStorage.setItem(`left_room_${roomId}`, 'true');
+                      }
                       await matchmakingService.leaveMatchmaking();
                       navigate('/home', { replace: true });
                     }}

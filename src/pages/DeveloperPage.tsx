@@ -129,8 +129,7 @@ export const DeveloperPage: React.FC = () => {
 
   // Action pending states
   const [invitingUserId, setInvitingUserId] = useState<string | null>(null);
-  const [forceChatTarget, setForceChatTarget] = useState<AdminOnlineUser | null>(null);
-  const [isForcingChat, setIsForcingChat] = useState<boolean>(false);
+  const [forcingUserId, setForcingUserId] = useState<string | null>(null);
   const [revealedRegisterNumber, setRevealedRegisterNumber] = useState<string | null>(null);
   const [isRevealingRegNo, setIsRevealingRegNo] = useState<boolean>(false);
   const [revealError, setRevealError] = useState<string | null>(null);
@@ -260,24 +259,17 @@ export const DeveloperPage: React.FC = () => {
     fetchAuditLogs();
   };
 
-  const handleConfirmForceChat = async () => {
-    if (!forceChatTarget) return;
-    setIsForcingChat(true);
-    const res = await staffService.forceDeveloperChat(forceChatTarget.user_id);
-    setIsForcingChat(false);
+  const handleForceChat = async (targetUser: AdminOnlineUser) => {
+    setForcingUserId(targetUser.user_id);
+    const res = await staffService.forceDeveloperChat(targetUser.user_id);
+    setForcingUserId(null);
 
     if (!res.success || !res.data) {
       showNotification('error', res.error?.message || 'Failed to start direct Developer chat.');
-      setForceChatTarget(null);
       return;
     }
 
-    showNotification('success', 'Direct Developer chat started! Redirecting to chat room...');
-    const roomId = res.data.roomId;
-    setForceChatTarget(null);
-    setTimeout(() => {
-      navigate(`/chat/${roomId}`);
-    }, 600);
+    navigate(`/chat/${res.data.roomId}`);
   };
 
   const handleRevealRegisterNumber = async () => {
@@ -955,8 +947,8 @@ export const DeveloperPage: React.FC = () => {
                           {!isSelf && (
                             <button
                               type="button"
-                              disabled={u.state === 'in_chat' || !isUserOnline(u)}
-                              onClick={() => setForceChatTarget(u)}
+                              disabled={u.state === 'in_chat' || !isUserOnline(u) || forcingUserId === u.user_id}
+                              onClick={() => handleForceChat(u)}
                               title={
                                 u.state === 'in_chat'
                                   ? 'User is already chatting'
@@ -967,7 +959,7 @@ export const DeveloperPage: React.FC = () => {
                               className="flex-1 min-h-[44px] inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-full text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 disabled:opacity-40 active:scale-95 transition-all"
                             >
                               <Zap className="h-4 w-4 text-amber-500" />
-                              <span>Force</span>
+                              <span>{forcingUserId === u.user_id ? 'Starting...' : 'Force'}</span>
                             </button>
                           )}
                         </div>
@@ -1119,8 +1111,9 @@ export const DeveloperPage: React.FC = () => {
                                   <Button
                                     variant="secondary"
                                     size="sm"
-                                    disabled={u.state === 'in_chat' || !isUserOnline(u)}
-                                    onClick={() => setForceChatTarget(u)}
+                                    disabled={u.state === 'in_chat' || !isUserOnline(u) || forcingUserId === u.user_id}
+                                    isLoading={forcingUserId === u.user_id}
+                                    onClick={() => handleForceChat(u)}
                                     title={
                                       u.state === 'in_chat'
                                         ? 'User is already chatting'
@@ -1774,53 +1767,7 @@ export const DeveloperPage: React.FC = () => {
         </div>
       </Modal>
 
-      {/* =====================================================================
-          MODAL 1B: DEVELOPER FORCE CHAT CONFIRMATION
-          ===================================================================== */}
-      <Modal
-        isOpen={Boolean(forceChatTarget)}
-        onClose={() => !isForcingChat && setForceChatTarget(null)}
-        title="Force Chat"
-        maxWidth="sm"
-        footer={
-          <div className="flex items-center justify-end gap-2.5 w-full">
-            <Button
-              variant="secondary"
-              size="sm"
-              disabled={isForcingChat}
-              onClick={() => setForceChatTarget(null)}
-              className="min-h-[44px] min-w-[90px]"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              isLoading={isForcingChat}
-              onClick={handleConfirmForceChat}
-              className="min-h-[44px] min-w-[120px] bg-amber-600 hover:bg-amber-700 text-white font-bold"
-            >
-              Start Chat
-            </Button>
-          </div>
-        }
-      >
-        <div className="space-y-3 text-xs">
-          <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 text-amber-800 dark:text-amber-300 flex items-start gap-2.5">
-            <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-            <p className="leading-relaxed">
-              Start a direct Developer-initiated chat with{' '}
-              <strong className="text-amber-900 dark:text-amber-200 font-bold">
-                {forceChatTarget?.anonymous_username}
-              </strong>
-              ? This bypasses the normal invitation acceptance step.
-            </p>
-          </div>
-          <p className="text-[#9DA89A] leading-relaxed">
-            The recipient will be transparently notified that a developer-initiated chat has started and can leave at any time.
-          </p>
-        </div>
-      </Modal>
+
 
       {/* =====================================================================
           MODAL 2: ACTIVE ROOM DETAILS
