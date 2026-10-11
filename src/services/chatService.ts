@@ -28,6 +28,16 @@ import {
   ResumeTimerResult,
 } from '../types';
 
+export interface CurrentActiveRoomResult {
+  hasActiveRoom: boolean;
+  roomId?: string;
+  createdAt?: string;
+  expiresAt?: string;
+  timerPausedAt?: string | null;
+  timerRemainingSeconds?: number | null;
+  peer?: MatchedPeerPersona;
+}
+
 // In-memory simulation registry for offline local development
 interface LocalRoomState {
   roomId: string;
@@ -235,6 +245,96 @@ export class ChatService {
       };
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to resolve peer';
+      return {
+        success: false,
+        data: null,
+        error: { code: 'CLIENT_ERROR', message },
+      };
+    }
+  }
+
+  /**
+   * Authoritatively checks if the current authenticated user has an active, unexpired chat room.
+   * Used for global auto-navigation recovery across the application.
+   */
+  async getCurrentActiveRoom(): Promise<ApiResponse<CurrentActiveRoomResult>> {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const currentUserId = sessionData?.session?.user?.id;
+
+      if (!currentUserId) {
+        return {
+          success: false,
+          data: null,
+          error: { code: 'UNAUTHENTICATED', message: 'Not authenticated.' },
+        };
+      }
+
+      if (!isSupabaseConfigured) {
+        const local = Array.from(localDevRooms.values()).find(
+          (r) => (r.user1 === currentUserId || r.user2 === currentUserId) && r.status === 'active'
+        );
+        if (!local) {
+          return { success: true, data: { hasActiveRoom: false }, error: null };
+        }
+        return {
+          success: true,
+          data: {
+            hasActiveRoom: true,
+            roomId: local.roomId,
+            createdAt: local.createdAt,
+            expiresAt: local.expiresAt,
+            peer: local.peerPersonas.get(currentUserId),
+          },
+          error: null,
+        };
+      }
+
+      const { data, error } = await supabase.rpc('get_current_active_room');
+      if (error) {
+        console.warn('[ChatService] get_current_active_room error:', error);
+        return {
+          success: false,
+          data: null,
+          error: {
+            code: error.code || 'ACTIVE_ROOM_FETCH_FAILED',
+            message: error.message || 'Failed to check active room status.',
+          },
+        };
+      }
+
+      const res = data as any;
+      if (!res || !res.has_active_room || !res.room_id) {
+        return {
+          success: true,
+          data: { hasActiveRoom: false },
+          error: null,
+        };
+      }
+
+      const avatar =
+        res.peer?.avatar_config && Object.keys(res.peer.avatar_config).length > 0
+          ? res.peer.avatar_config
+          : DEFAULT_AVATAR_CONFIG;
+
+      return {
+        success: true,
+        data: {
+          hasActiveRoom: true,
+          roomId: res.room_id,
+          createdAt: res.created_at,
+          expiresAt: res.expires_at,
+          timerPausedAt: res.timer_paused_at || null,
+          timerRemainingSeconds: res.timer_remaining_seconds ?? null,
+          peer: {
+            anonymousUsername: res.peer?.anonymous_username || 'Anonymous RITian',
+            avatarConfig: avatar,
+          },
+        },
+        error: null,
+      };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Active room check failed';
       return {
         success: false,
         data: null,

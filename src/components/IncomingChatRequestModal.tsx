@@ -66,7 +66,12 @@ export const IncomingChatRequestModal: React.FC<IncomingChatRequestModalProps> =
     setIsAccepting(false);
 
     if (!res.success || !res.data) {
-      setActionError(res.error?.message || 'Unable to join conversation.');
+      const msg =
+        res.error?.code === 'REQUESTER_CANCELLED_SEARCH' ||
+        res.error?.message?.toLowerCase().includes('no longer available')
+          ? 'This chat invitation is no longer available.'
+          : res.error?.message || 'Unable to join conversation.';
+      setActionError(msg);
       setTimeout(() => onDismiss(), 1800);
       return;
     }

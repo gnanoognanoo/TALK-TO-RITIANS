@@ -491,6 +491,10 @@ export interface Database {
         Args: Record<PropertyKey, never>;
         Returns: Json;
       };
+      get_current_active_room: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
       check_staff_status: {
         Args: Record<PropertyKey, never>;
         Returns: Json;

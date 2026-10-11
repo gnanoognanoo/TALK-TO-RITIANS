@@ -33,6 +33,14 @@ interface LocalDevQueueItem {
 const localDevQueue: LocalDevQueueItem[] = [];
 const localDevMatchedRooms = new Map<string, { roomId: string; peer: MatchedPeerPersona; expiresAt?: string }>();
 
+export interface LeaveMatchmakingResult {
+  status: 'cancelled' | 'matched';
+  roomId?: string;
+  peer?: MatchedPeerPersona;
+  expiresAt?: string;
+  createdAt?: string;
+}
+
 export class MatchmakingService {
   private lastJoinTime: number = 0;
 
@@ -285,27 +293,85 @@ export class MatchmakingService {
 
   /**
    * Reliably cancels active queue presence when exiting the matching screen.
+   * If a match already committed before or during cancellation, detects and returns
+   * the committed room so the user enters chat automatically instead of ghosting.
    */
-  async leaveMatchmaking(): Promise<ApiResponse<void>> {
+  async leaveMatchmaking(): Promise<ApiResponse<LeaveMatchmakingResult>> {
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const currentUserId = sessionData?.session?.user?.id;
 
       if (!currentUserId) {
-        return { success: true, data: undefined, error: null };
+        return { success: true, data: { status: 'cancelled' }, error: null };
       }
 
       // Local dev cleanup only if offline
       if (!isSupabaseConfigured) {
         this.handleLocalDevLeave(currentUserId);
-        return { success: true, data: undefined, error: null };
+        return { success: true, data: { status: 'cancelled' }, error: null };
       }
 
-      await supabase.rpc('leave_matchmaking');
-      return { success: true, data: undefined, error: null };
+      const { data, error } = await supabase.rpc('leave_matchmaking');
+      if (error) {
+        console.warn('[MatchmakingService] leaveMatchmaking error:', error);
+        return {
+          success: false,
+          data: null,
+          error: {
+            code: error.code || 'CANCEL_ERROR',
+            message: error.message || 'Failed to cancel search on server.',
+          },
+        };
+      }
+
+      const res = data as {
+        success?: boolean;
+        status?: 'cancelled' | 'matched';
+        room_id?: string;
+        created_at?: string;
+        expires_at?: string;
+        peer?: {
+          anonymous_username?: string;
+          avatar_config?: AvatarConfig;
+        };
+      } | null;
+
+      if (res?.status === 'matched' && res.room_id) {
+        const avatar =
+          res.peer?.avatar_config && Object.keys(res.peer.avatar_config).length > 0
+            ? res.peer.avatar_config
+            : DEFAULT_AVATAR_CONFIG;
+
+        return {
+          success: true,
+          data: {
+            status: 'matched',
+            roomId: res.room_id,
+            createdAt: res.created_at,
+            expiresAt: res.expires_at,
+            peer: {
+              anonymousUsername: res.peer?.anonymous_username || 'Anonymous RITian',
+              avatarConfig: avatar,
+            },
+          },
+          error: null,
+        };
+      }
+
+      return {
+        success: true,
+        data: {
+          status: 'cancelled',
+        },
+        error: null,
+      };
     } catch (err: unknown) {
-      console.warn('[MatchmakingService] leaveMatchmaking error:', err);
-      return { success: true, data: undefined, error: null };
+      console.warn('[MatchmakingService] leaveMatchmaking exception:', err);
+      return {
+        success: true,
+        data: { status: 'cancelled' },
+        error: null,
+      };
     }
   }
 

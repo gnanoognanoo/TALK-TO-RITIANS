@@ -19,6 +19,7 @@ import { User, X, Lightbulb, RefreshCw } from 'lucide-react';
 import { Card, ErrorMessage, Modal } from '../components';
 import { useAuth } from '../context';
 import { matchmakingService } from '../services/matchmakingService';
+import { chatService } from '../services/chatService';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { MatchedPeerPersona } from '../types';
 
@@ -29,7 +30,7 @@ export const MatchingPage: React.FC = () => {
   const [secondsElapsed, setSecondsElapsed] = useState<number>(0);
   const [matchingError, setMatchingError] = useState<string | null>(null);
   const [isMatchingResolved, setIsMatchingResolved] = useState<boolean>(false);
-  const [isLeaving, setIsLeaving] = useState<boolean>(false);
+  const [isCancelling, setIsCancelling] = useState<boolean>(false);
   const [hasPendingRequest, setHasPendingRequest] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
@@ -70,22 +71,50 @@ export const MatchingPage: React.FC = () => {
 
   /**
    * Leave matchmaking and return home.
+   * If a match was committed right before/during cancellation, enters the room.
    */
   const handleCancel = useCallback(async () => {
-    setIsLeaving(true);
-    isResolvedRef.current = true;
+    if (isCancelling || isResolvedRef.current) return;
+    setIsCancelling(true);
+    setStatusMessage('Cancelling search...');
 
+    // Stop polling timers immediately to prevent conflicting updates
     if (heartbeatTimerRef.current) clearInterval(heartbeatTimerRef.current);
     if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
 
     try {
-      await matchmakingService.leaveMatchmaking();
+      const res = await matchmakingService.leaveMatchmaking();
+
+      if (res.success && res.data?.status === 'matched' && res.data.roomId) {
+        // Match won the race! The room was committed on the server.
+        setStatusMessage('Match found!');
+        handleMatchSuccess(res.data.roomId, res.data.peer, res.data.expiresAt);
+        return;
+      }
+
+      // Authoritative cancellation succeeded
+      isResolvedRef.current = true;
+      setIsMatchingResolved(true);
+      setStatusMessage('Search cancelled.');
+      navigate('/home', { replace: true });
     } catch (err) {
       console.warn('[MatchingPage] Cancel error:', err);
-    } finally {
+      // Double check if user has an active room before giving up
+      try {
+        const roomCheck = await chatService.getCurrentActiveRoom();
+        if (roomCheck.success && roomCheck.data?.hasActiveRoom && roomCheck.data.roomId) {
+          handleMatchSuccess(roomCheck.data.roomId, roomCheck.data.peer, roomCheck.data.expiresAt);
+          return;
+        }
+      } catch (checkErr) {
+        console.warn('[MatchingPage] Active room check fallback error:', checkErr);
+      }
+      isResolvedRef.current = true;
       navigate('/home', { replace: true });
+    } finally {
+      setIsCancelling(false);
     }
-  }, [navigate]);
+  }, [isCancelling, navigate, handleMatchSuccess]);
 
   /**
    * Resume existing active room (user chose to go back).
@@ -307,11 +336,11 @@ export const MatchingPage: React.FC = () => {
           <button
             type="button"
             onClick={handleCancel}
-            disabled={isLeaving || isMatchingResolved || isForceLeaving}
+            disabled={isCancelling || isMatchingResolved || isForceLeaving}
             className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-semibold text-slate-700 dark:text-[#9DA89A] hover:text-slate-900 dark:hover:text-[#F4F6F1] bg-white dark:bg-[#0E170E]/80 border border-slate-300 dark:border-[rgba(141,168,82,0.2)] hover:border-slate-400 dark:hover:border-[rgba(141,168,82,0.35)] hover:bg-slate-50 dark:hover:bg-[#132213] active:scale-95 transition-all disabled:opacity-50 shadow-sm"
           >
             <X className="h-3.5 w-3.5" />
-            <span>{isLeaving ? 'Exiting...' : 'Cancel Search'}</span>
+            <span>{isCancelling ? 'Cancelling search...' : 'Cancel Search'}</span>
           </button>
         </div>
 
