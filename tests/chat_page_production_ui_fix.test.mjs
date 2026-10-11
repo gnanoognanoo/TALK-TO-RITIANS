@@ -159,27 +159,40 @@ describe('TALK TO RITIANS - Production Chat Page UI Fix Suite', () => {
   });
 
   // ==========================================================================
-  // 5. Dark Theme Only Requirement & Heisenberg Palette
+  // 5. Dual Theme Support: Light Mode & Dark Mode
   // ==========================================================================
-  describe('5. Dark Theme Only Isolation & Heisenberg Palette', () => {
-    test('chat page root is strictly styled with dark class and #050805 background', () => {
-      assert.ok(chatPageContent.includes('bg-[#050805] text-[#F4F6F1] dark'));
+  describe('5. Dual Theme Support: Light Mode & Dark Mode', () => {
+    test('chat page root supports both Light and Dark mode via theme classes', () => {
+      assert.ok(chatPageContent.includes('bg-[#F8FAFC] text-[#0F172A] dark:bg-[#050805] dark:text-[#F4F6F1]'));
+      assert.equal(
+        chatPageContent.includes('bg-[#050805] text-[#F4F6F1] dark"'),
+        false,
+        'Root must not hardcode unconditional dark-only class'
+      );
     });
 
-    test('header and composer use #091009 background with Heisenberg border', () => {
-      assert.ok(chatPageContent.includes("bg-[#091009]/95"));
-      assert.ok(chatPageContent.includes("border-[rgba(155,185,115,0.16)]"));
+    test('header and composer support both Light and Dark mode backgrounds and borders', () => {
+      assert.ok(chatPageContent.includes("bg-white/95 dark:bg-[#091009]/95"));
+      assert.ok(chatPageContent.includes("border-[#DCE3EC] dark:border-[rgba(155,185,115,0.16)]"));
     });
 
-    test('outgoing bubbles use #2A3C1C and incoming bubbles use #142016', () => {
-      assert.ok(chatPageContent.includes('bg-[#2A3C1C] text-[#F4F6F1]'));
-      assert.ok(chatPageContent.includes('bg-[#142016] text-[#F4F6F1]'));
+    test('outgoing bubbles use purple in light mode and #2A3C1C in dark mode', () => {
+      assert.ok(chatPageContent.includes('bg-[#6D42E8]'));
+      assert.ok(chatPageContent.includes('dark:bg-[#2A3C1C]'));
+      assert.ok(chatPageContent.includes('dark:text-[#F4F6F1]'));
     });
 
-    test('modal component supports forceDark for theme-isolated modals', () => {
-      assert.ok(modalContent.includes('forceDark?: boolean'));
-      assert.ok(modalContent.includes("forceDark ? 'dark' : ''"));
-      assert.ok(chatPageContent.includes('<Modal\n        forceDark'));
+    test('incoming bubbles use soft gray in light mode and #142016 in dark mode', () => {
+      assert.ok(chatPageContent.includes('bg-[#E9EEF5] text-[#172033]'));
+      assert.ok(chatPageContent.includes('dark:bg-[#142016] dark:text-[#F4F6F1]'));
+    });
+
+    test('leave modal conforms to user theme without unconditional forceDark', () => {
+      assert.equal(
+        chatPageContent.includes('<Modal\n        forceDark'),
+        false,
+        'Modal must not unconditionally force dark mode in chat'
+      );
     });
   });
 });

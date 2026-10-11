@@ -51,7 +51,7 @@ import {
 } from '../components';
 import { useAuth } from '../context';
 import { staffService } from '../services/staffService';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import {
   AdminDashboardStats,
   AdminOnlineUser,
@@ -97,7 +97,7 @@ export const DeveloperPage: React.FC = () => {
   // State: Global refresh & toast messages
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [autoRefresh, setAutoRefresh] = useState<boolean>(true);
-  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
 
   // Modals state
   // 1. Privileged Profile Inspection
@@ -129,16 +129,66 @@ export const DeveloperPage: React.FC = () => {
 
   // Action pending states
   const [invitingUserId, setInvitingUserId] = useState<string | null>(null);
+  const [sentInvite, setSentInvite] = useState<{
+    requestId: string;
+    targetUserId: string;
+    expiresAt: string;
+  } | null>(null);
   const [forcingUserId, setForcingUserId] = useState<string | null>(null);
   const [revealedRegisterNumber, setRevealedRegisterNumber] = useState<string | null>(null);
   const [isRevealingRegNo, setIsRevealingRegNo] = useState<boolean>(false);
   const [revealError, setRevealError] = useState<string | null>(null);
   const [copiedText, setCopiedText] = useState<string | null>(null);
 
-  const showNotification = (type: 'success' | 'error', message: string) => {
+  const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
     setNotification({ type, message });
     setTimeout(() => setNotification(null), 4000);
   };
+
+  // Realtime subscription for active developer chat invite
+  useEffect(() => {
+    if (!sentInvite || !isSupabaseConfigured) return;
+
+    const channelName = `developer-invite-watch-${sentInvite.requestId}`;
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'chat_requests',
+          filter: `id=eq.${sentInvite.requestId}`,
+        },
+        (payload) => {
+          const row = payload.new as any;
+          if (row?.status === 'rejected') {
+            showNotification('info', 'Invitation declined.');
+            setSentInvite(null);
+          } else if (row?.status === 'expired') {
+            showNotification('info', 'Chat invitation expired.');
+            setSentInvite(null);
+          } else if (row?.status === 'cancelled') {
+            setSentInvite(null);
+          } else if (row?.status === 'accepted' && row?.room_id) {
+            setSentInvite(null);
+            navigate(`/chat/${row.room_id}`);
+          }
+        }
+      )
+      .subscribe();
+
+    const msUntilExpiry = new Date(sentInvite.expiresAt).getTime() - Date.now();
+    const timer = setTimeout(() => {
+      showNotification('info', 'Chat invitation expired.');
+      setSentInvite(null);
+    }, Math.max(1000, msUntilExpiry));
+
+    return () => {
+      clearTimeout(timer);
+      supabase.removeChannel(channel);
+    };
+  }, [sentInvite, navigate]);
 
   const handleCopy = (text: string, label: string) => {
     if (navigator?.clipboard) {
@@ -243,17 +293,32 @@ export const DeveloperPage: React.FC = () => {
     fetchAuditLogs();
   };
 
-  const handleSendInvite = async (targetUserId: string) => {
-    setInvitingUserId(targetUserId);
-    const res = await staffService.sendAdminChatInvite(targetUserId);
+  const handleSendInvite = async (targetUser: AdminOnlineUser) => {
+    if (!isUserEligibleForInvite(targetUser)) {
+      const reason = !isUserOnline(targetUser)
+        ? 'This user is currently offline.'
+        : targetUser.state === 'in_chat'
+        ? 'User is currently in an active chat room.'
+        : 'This user is currently unavailable.';
+      showNotification('error', reason);
+      return;
+    }
+
+    setInvitingUserId(targetUser.user_id);
+    const res = await staffService.sendAdminChatInvite(targetUser.user_id);
     setInvitingUserId(null);
 
-    if (!res.success) {
+    if (!res.success || !res.data) {
       showNotification('error', res.error?.message || 'Failed to send chat invite.');
       return;
     }
 
-    showNotification('success', 'Developer chat invite sent! Target received prompt with 30s expiration.');
+    showNotification('info', 'Invitation sent — waiting for response.');
+    setSentInvite({
+      requestId: res.data.requestId,
+      targetUserId: targetUser.user_id,
+      expiresAt: res.data.expiresAt,
+    });
     fetchStats();
     fetchUsers();
     fetchAuditLogs();
@@ -484,6 +549,14 @@ export const DeveloperPage: React.FC = () => {
     return diffMs <= 30000;
   };
 
+  const isUserEligibleForInvite = (u: AdminOnlineUser) => {
+    if (!isUserOnline(u)) return false;
+    if (u.state === 'in_chat') return false;
+    if (u.available_for_chat_requests === false) return false;
+    if (u.current_page === 'chat' || u.current_page === 'verify') return false;
+    return true;
+  };
+
   const formatSeconds = (sec: number) => {
     const mins = Math.floor(sec / 60);
     const remainder = sec % 60;
@@ -523,11 +596,15 @@ export const DeveloperPage: React.FC = () => {
           className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-xl border shadow-xl flex items-center gap-3 text-sm animate-in slide-in-from-top-4 ${
             notification.type === 'success'
               ? 'bg-emerald-950/90 border-emerald-700 text-emerald-100'
+              : notification.type === 'info'
+              ? 'bg-slate-900/95 border-brand-500/50 text-slate-100 dark:bg-[#101A12] dark:border-[rgba(155,185,115,0.4)] dark:text-[#F4F6F1]'
               : 'bg-rose-950/90 border-rose-700 text-rose-100'
           }`}
         >
           {notification.type === 'success' ? (
             <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+          ) : notification.type === 'info' ? (
+            <Send className="h-4 w-4 text-brand-400 dark:text-[#A2BD63] shrink-0" />
           ) : (
             <AlertTriangle className="h-4 w-4 text-rose-400 shrink-0" />
           )}
@@ -935,12 +1012,29 @@ export const DeveloperPage: React.FC = () => {
                           {!isSelf && (
                             <button
                               type="button"
-                              disabled={u.state === 'in_chat' || invitingUserId === u.user_id}
-                              onClick={() => handleSendInvite(u.user_id)}
+                              disabled={!isUserEligibleForInvite(u) || invitingUserId === u.user_id || sentInvite?.targetUserId === u.user_id}
+                              onClick={() => handleSendInvite(u)}
+                              title={
+                                !isUserOnline(u)
+                                  ? 'User is offline'
+                                  : u.state === 'in_chat'
+                                  ? 'User is already chatting'
+                                  : u.available_for_chat_requests === false
+                                  ? 'User is unavailable for chat requests'
+                                  : sentInvite?.targetUserId === u.user_id
+                                  ? 'Waiting for response...'
+                                  : 'Send direct chat invite'
+                              }
                               className="flex-1 min-h-[44px] liquid-cta-btn inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-full text-xs font-bold text-white disabled:opacity-40 active:scale-95 transition-all shadow-sm"
                             >
                               <Send className="h-4 w-4" />
-                              <span>{invitingUserId === u.user_id ? 'Inviting...' : 'Invite'}</span>
+                              <span>
+                                {invitingUserId === u.user_id
+                                  ? 'Inviting...'
+                                  : sentInvite?.targetUserId === u.user_id
+                                  ? 'Waiting...'
+                                  : 'Invite'}
+                              </span>
                             </button>
                           )}
 
@@ -1096,14 +1190,24 @@ export const DeveloperPage: React.FC = () => {
                                   <Button
                                     variant="primary"
                                     size="sm"
-                                    disabled={u.state === 'in_chat' || invitingUserId === u.user_id}
+                                    disabled={!isUserEligibleForInvite(u) || invitingUserId === u.user_id || sentInvite?.targetUserId === u.user_id}
                                     isLoading={invitingUserId === u.user_id}
-                                    onClick={() => handleSendInvite(u.user_id)}
-                                    title={u.state === 'in_chat' ? 'User is already chatting' : 'Send direct chat invite'}
+                                    onClick={() => handleSendInvite(u)}
+                                    title={
+                                      !isUserOnline(u)
+                                        ? 'User is offline'
+                                        : u.state === 'in_chat'
+                                        ? 'User is already chatting'
+                                        : u.available_for_chat_requests === false
+                                        ? 'User is unavailable for chat requests'
+                                        : sentInvite?.targetUserId === u.user_id
+                                        ? 'Waiting for response...'
+                                        : 'Send direct chat invite'
+                                    }
                                     className="text-xs h-7 px-2.5"
                                   >
                                     <Send className="h-3.5 w-3.5 mr-1" />
-                                    Invite
+                                    {sentInvite?.targetUserId === u.user_id ? 'Waiting...' : 'Invite'}
                                   </Button>
                                 )}
 

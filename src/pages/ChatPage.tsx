@@ -788,11 +788,11 @@ export const ChatPage: React.FC = () => {
         height: viewportHeight ? `${viewportHeight}px` : undefined,
         maxHeight: viewportHeight ? `${viewportHeight}px` : undefined,
       }}
-      className="fixed inset-0 h-[100dvh] max-h-[100dvh] w-full flex flex-col overflow-hidden select-none bg-[#050805] text-[#F4F6F1] dark"
+      className="fixed inset-0 h-[100dvh] max-h-[100dvh] w-full flex flex-col overflow-hidden select-none bg-[#F8FAFC] text-[#0F172A] dark:bg-[#050805] dark:text-[#F4F6F1]"
     >
       <div
         id="chat-page-container"
-        className="flex-1 min-h-0 flex flex-col h-full max-w-4xl mx-auto w-full bg-[#050805] sm:border-x sm:border-[rgba(155,185,115,0.16)] overflow-hidden"
+        className="flex-1 min-h-0 flex flex-col h-full max-w-4xl mx-auto w-full bg-[#F8FAFC] dark:bg-[#050805] sm:border-x sm:border-[#DCE3EC] dark:sm:border-[rgba(155,185,115,0.16)] overflow-hidden"
       >
         {/* =========================================================================
             TOP BAR (Fixed Header: flex-shrink: 0, outside message scroll container)
@@ -801,7 +801,7 @@ export const ChatPage: React.FC = () => {
             ========================================================================= */}
         <header
           id="chat-header"
-          className="px-3 sm:px-5 py-2 sm:py-2.5 border-b border-[rgba(155,185,115,0.16)] bg-[#091009]/95 backdrop-blur-xl flex items-center justify-between gap-2 shrink-0 z-20"
+          className="px-3 sm:px-5 py-2 sm:py-2.5 border-b border-[#DCE3EC] dark:border-[rgba(155,185,115,0.16)] bg-white/95 dark:bg-[#091009]/95 backdrop-blur-xl flex items-center justify-between gap-2 shrink-0 z-20"
         >
           {/* Left: Avatar + Peer Persona Info */}
           <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
@@ -821,7 +821,7 @@ export const ChatPage: React.FC = () => {
             <div className="min-w-0 flex-1">
               <h1
                 id="chat-peer-username"
-                className="font-bold text-xs sm:text-sm text-[#F4F6F1] truncate max-w-[120px] sm:max-w-[220px]"
+                className="font-bold text-xs sm:text-sm text-[#0F172A] dark:text-[#F4F6F1] truncate max-w-[120px] sm:max-w-[220px]"
                 title={peer.anonymousUsername}
               >
                 {peer.anonymousUsername}
@@ -830,13 +830,13 @@ export const ChatPage: React.FC = () => {
                 <span
                   className={`h-2 w-2 rounded-full shrink-0 ${
                     connectionStatus === 'connected'
-                      ? 'bg-[#8DA852] animate-pulse shadow-[0_0_8px_rgba(141,168,82,0.6)]'
+                      ? 'bg-emerald-600 dark:bg-[#8DA852] animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)] dark:shadow-[0_0_8px_rgba(141,168,82,0.6)]'
                       : isDisconnected
-                      ? 'bg-[#6F796D]'
-                      : 'bg-amber-400 animate-pulse'
+                      ? 'bg-slate-400 dark:bg-[#6F796D]'
+                      : 'bg-amber-500 dark:bg-amber-400 animate-pulse'
                   }`}
                 />
-                <span className="text-[#B4C1AE] text-[11px] font-medium truncate">
+                <span className="text-[#475569] dark:text-[#B4C1AE] text-[11px] font-medium truncate">
                   {connectionStatus === 'connected'
                     ? 'Online'
                     : isDisconnected
@@ -857,10 +857,10 @@ export const ChatPage: React.FC = () => {
                   /* FROZEN STATE: Distinct paused badge without pulsing warnings */
                   <div
                     id="chat-header-timer"
-                    className="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-full border text-[11px] sm:text-xs font-semibold tabular-nums tracking-wide bg-sky-950/60 text-sky-300 border-sky-500/40 shadow-sm shrink-0"
+                    className="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-full border text-[11px] sm:text-xs font-semibold tabular-nums tracking-wide bg-sky-50 text-sky-700 border-sky-300 dark:bg-sky-950/60 dark:text-sky-300 dark:border-sky-500/40 shadow-sm shrink-0"
                     title={isDeveloper ? 'Timer frozen by developer' : 'Timer paused'}
                   >
-                    <Pause className="h-3 w-3 text-sky-400 shrink-0" />
+                    <Pause className="h-3 w-3 text-sky-600 dark:text-sky-400 shrink-0" />
                     <span>
                       {formatTimer(remainingSeconds)}
                       <span className="hidden sm:inline"> {isDeveloper ? '— FROZEN' : '(Paused)'}</span>
@@ -872,10 +872,10 @@ export const ChatPage: React.FC = () => {
                     id="chat-header-timer"
                     className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-full border text-[11px] sm:text-xs font-semibold tabular-nums tracking-wide transition-all shrink-0 ${
                       getTimerThresholdState(remainingSeconds) === 'red'
-                        ? 'bg-red-950/80 text-red-300 border-red-500/70 font-bold ring-2 ring-red-500/30 animate-pulse shadow-sm'
+                        ? 'bg-red-50 text-red-700 border-red-300 dark:bg-red-950/80 dark:text-red-300 dark:border-red-500/70 font-bold ring-2 ring-red-400/30 dark:ring-red-500/30 animate-pulse shadow-sm'
                         : getTimerThresholdState(remainingSeconds) === 'amber'
-                        ? 'bg-amber-950/80 text-amber-300 border-amber-500/60 font-bold ring-2 ring-amber-500/30 animate-pulse shadow-sm'
-                        : 'bg-[#101A12] text-[#A2BD63] border-[rgba(155,185,115,0.3)] shadow-sm'
+                        ? 'bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/80 dark:text-amber-300 dark:border-amber-500/60 font-bold ring-2 ring-amber-400/30 dark:ring-amber-500/30 animate-pulse shadow-sm'
+                        : 'bg-slate-100 text-brand-700 border-slate-300 dark:bg-[#101A12] dark:text-[#A2BD63] dark:border-[rgba(155,185,115,0.3)] shadow-sm'
                     }`}
                     title="7-minute chat session timer"
                   >
@@ -892,7 +892,7 @@ export const ChatPage: React.FC = () => {
                       type="button"
                       onClick={handleResumeTimer}
                       disabled={isTogglingFreeze}
-                      className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-full text-[11px] font-bold text-[#10170B] bg-[#A2BD63] hover:bg-[#B2CE72] active:scale-95 transition-all shadow-sm shrink-0"
+                      className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-full text-[11px] font-bold text-white bg-brand-600 hover:bg-brand-700 dark:text-[#10170B] dark:bg-[#A2BD63] dark:hover:bg-[#B2CE72] active:scale-95 transition-all shadow-sm shrink-0"
                       title="Resume countdown timer (Ctrl+Shift+P)"
                     >
                       <Play className="h-3 w-3 fill-current" />
@@ -904,10 +904,10 @@ export const ChatPage: React.FC = () => {
                       type="button"
                       onClick={handleFreezeTimer}
                       disabled={isTogglingFreeze}
-                      className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-full text-[11px] font-semibold text-sky-300 bg-sky-950/50 border border-sky-500/40 hover:bg-sky-950/80 active:scale-95 transition-all shadow-sm shrink-0"
+                      className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-full text-[11px] font-semibold text-sky-700 bg-sky-50 border border-sky-300 hover:bg-sky-100 dark:text-sky-300 dark:bg-sky-950/50 dark:border-sky-500/40 dark:hover:bg-sky-950/80 active:scale-95 transition-all shadow-sm shrink-0"
                       title="Freeze countdown timer (Ctrl+Shift+P)"
                     >
-                      <Pause className="h-3 w-3 text-sky-400" />
+                      <Pause className="h-3 w-3 text-sky-600 dark:text-sky-400" />
                       <span>Freeze</span>
                     </button>
                   )
@@ -920,7 +920,7 @@ export const ChatPage: React.FC = () => {
               type="button"
               id="chat-leave-header-btn"
               onClick={() => setIsLeaveModalOpen(true)}
-              className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold text-rose-300 hover:text-rose-200 bg-rose-950/30 border border-rose-500/35 hover:bg-rose-950/60 active:scale-95 transition-all shrink-0"
+              className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold text-rose-700 hover:text-rose-800 bg-rose-50 border border-rose-200 hover:bg-rose-100 dark:text-rose-300 dark:hover:text-rose-200 dark:bg-rose-950/30 dark:border-rose-500/35 dark:hover:bg-rose-950/60 active:scale-95 transition-all shrink-0"
             >
               <LogOut className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />
               <span>Leave</span>
@@ -934,15 +934,15 @@ export const ChatPage: React.FC = () => {
             id="chat-time-warning-banner"
             role="alert"
             aria-live="polite"
-            className="px-4 py-2 bg-[#261B07] border-b border-amber-500/40 text-amber-200 text-xs font-medium flex items-center justify-between gap-3 shrink-0 z-10"
+            className="px-4 py-2 bg-amber-50 border-b border-amber-200 text-amber-900 dark:bg-[#261B07] dark:border-amber-500/40 dark:text-amber-200 text-xs font-medium flex items-center justify-between gap-3 shrink-0 z-10"
           >
             <div className="flex items-center gap-2 min-w-0">
-              <Clock className="h-4 w-4 shrink-0 text-amber-400 animate-pulse" />
+              <Clock className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400 animate-pulse" />
               <span className="truncate">
-                <strong className="font-semibold text-[#F4F6F1]">1 minute remaining</strong> — Wrap up your chat! Room ends at 00:00.
+                <strong className="font-semibold text-slate-900 dark:text-[#F4F6F1]">1 minute remaining</strong> — Wrap up your chat! Room ends at 00:00.
               </span>
             </div>
-            <span className="shrink-0 tabular-nums font-bold text-amber-300 bg-amber-900/60 border border-amber-500/50 px-2.5 py-0.5 rounded-full text-xs">
+            <span className="shrink-0 tabular-nums font-bold text-amber-900 bg-amber-100 border border-amber-300 dark:text-amber-300 dark:bg-amber-900/60 dark:border-amber-500/50 px-2.5 py-0.5 rounded-full text-xs">
               {formatTimer(remainingSeconds)}
             </span>
           </div>
@@ -950,8 +950,8 @@ export const ChatPage: React.FC = () => {
 
         {/* Duplicate Tab Warning */}
         {duplicateTabWarning && (
-          <div className="px-4 py-2 bg-[#261B07] border-b border-amber-500/30 text-amber-200 text-xs flex items-center gap-2 shrink-0 z-10">
-            <AlertCircle className="h-4 w-4 shrink-0 text-amber-400" />
+          <div className="px-4 py-2 bg-amber-50 border-b border-amber-200 text-amber-900 dark:bg-[#261B07] dark:border-amber-500/30 dark:text-amber-200 text-xs flex items-center gap-2 shrink-0 z-10">
+            <AlertCircle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
             <span>Active in multiple tabs. Messages sync automatically.</span>
           </div>
         )}
@@ -962,17 +962,17 @@ export const ChatPage: React.FC = () => {
         {isDisconnected ? (
           endReason === 'time_limit' ? (
             /* Time-Limit End Screen: "7-minute chat ended" */
-            <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-[#050805]">
-              <div className="max-w-sm w-full bg-[#0D160E] border border-[rgba(155,185,115,0.22)] rounded-[28px] p-7 shadow-[0_8px_32px_rgba(0,0,0,0.6)] space-y-6">
-                <div className="h-16 w-16 mx-auto rounded-full bg-[#121E12] border border-[rgba(155,185,115,0.3)] flex items-center justify-center text-[#A2BD63]">
+            <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-[#F8FAFC] dark:bg-[#050805]">
+              <div className="max-w-sm w-full bg-white dark:bg-[#0D160E] border border-[#DCE3EC] dark:border-[rgba(155,185,115,0.22)] rounded-[28px] p-7 shadow-xl dark:shadow-[0_8px_32px_rgba(0,0,0,0.6)] space-y-6">
+                <div className="h-16 w-16 mx-auto rounded-full bg-brand-50 border border-brand-200 text-brand-600 dark:bg-[#121E12] dark:border-[rgba(155,185,115,0.3)] dark:text-[#A2BD63] flex items-center justify-center">
                   <Clock className="h-8 w-8 stroke-[1.75]" />
                 </div>
 
                 <div className="space-y-1">
-                  <h2 className="text-xl sm:text-2xl font-bold text-[#F4F6F1]">
+                  <h2 className="text-xl sm:text-2xl font-bold text-[#0F172A] dark:text-[#F4F6F1]">
                     Time's up!
                   </h2>
-                  <p className="text-sm text-[#B4C1AE]">
+                  <p className="text-sm text-[#475569] dark:text-[#B4C1AE]">
                     Your 7-minute conversation has ended.
                   </p>
                 </div>
@@ -983,7 +983,7 @@ export const ChatPage: React.FC = () => {
                     id="chat-find-another-button"
                     type="button"
                     onClick={() => navigate('/matching', { replace: true })}
-                    className="liquid-cta-btn w-full py-3 px-4 rounded-full font-bold text-sm text-[#10170B] transition-all active:scale-95 shadow-md"
+                    className="liquid-cta-btn w-full py-3 px-4 rounded-full font-bold text-sm text-white dark:text-[#10170B] transition-all active:scale-95 shadow-md"
                   >
                     Find Another RITian
                   </button>
@@ -994,7 +994,7 @@ export const ChatPage: React.FC = () => {
                       await matchmakingService.leaveMatchmaking();
                       navigate('/home', { replace: true });
                     }}
-                    className="w-full py-3 px-4 rounded-full font-semibold text-sm text-[#B4C1AE] hover:text-[#F4F6F1] bg-[#101A12] border border-[rgba(155,185,115,0.2)] hover:bg-[#142314] transition-all active:scale-95"
+                    className="w-full py-3 px-4 rounded-full font-semibold text-sm text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-300 dark:text-[#B4C1AE] dark:hover:text-[#F4F6F1] dark:bg-[#101A12] dark:border-[rgba(155,185,115,0.2)] dark:hover:bg-[#142314] transition-all active:scale-95"
                   >
                     Leave
                   </button>
@@ -1003,18 +1003,18 @@ export const ChatPage: React.FC = () => {
             </div>
           ) : (
             /* Disconnected Page / State */
-            <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-[#050805]">
-              <div className="max-w-sm w-full bg-[#0D160E] border border-[rgba(155,185,115,0.22)] rounded-[28px] p-7 shadow-[0_8px_32px_rgba(0,0,0,0.6)] space-y-6">
+            <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-[#F8FAFC] dark:bg-[#050805]">
+              <div className="max-w-sm w-full bg-white dark:bg-[#0D160E] border border-[#DCE3EC] dark:border-[rgba(155,185,115,0.22)] rounded-[28px] p-7 shadow-xl dark:shadow-[0_8px_32px_rgba(0,0,0,0.6)] space-y-6">
                 {/* Broken Link Icon */}
-                <div className="h-16 w-16 mx-auto rounded-full bg-[#121E12] border border-[rgba(155,185,115,0.3)] flex items-center justify-center text-[#A2BD63]">
+                <div className="h-16 w-16 mx-auto rounded-full bg-brand-50 border border-brand-200 text-brand-600 dark:bg-[#121E12] dark:border-[rgba(155,185,115,0.3)] dark:text-[#A2BD63] flex items-center justify-center">
                   <Unlink className="h-8 w-8 stroke-[1.75]" />
                 </div>
 
                 <div className="space-y-1">
-                  <h2 className="text-xl sm:text-2xl font-bold text-[#F4F6F1]">
+                  <h2 className="text-xl sm:text-2xl font-bold text-[#0F172A] dark:text-[#F4F6F1]">
                     Chat Ended
                   </h2>
-                  <p className="text-sm text-[#B4C1AE]">
+                  <p className="text-sm text-[#475569] dark:text-[#B4C1AE]">
                     The other user has disconnected.
                   </p>
                 </div>
@@ -1029,7 +1029,7 @@ export const ChatPage: React.FC = () => {
                       }
                       navigate('/matching', { replace: true });
                     }}
-                    className="liquid-cta-btn w-full py-3 px-4 rounded-full font-bold text-sm text-[#10170B] transition-all active:scale-95 shadow-md"
+                    className="liquid-cta-btn w-full py-3 px-4 rounded-full font-bold text-sm text-white dark:text-[#10170B] transition-all active:scale-95 shadow-md"
                   >
                     Find a New Chat
                   </button>
@@ -1042,7 +1042,7 @@ export const ChatPage: React.FC = () => {
                       await matchmakingService.leaveMatchmaking();
                       navigate('/home', { replace: true });
                     }}
-                    className="w-full py-3 px-4 rounded-full font-semibold text-sm text-[#B4C1AE] hover:text-[#F4F6F1] bg-[#101A12] border border-[rgba(155,185,115,0.2)] hover:bg-[#142314] transition-all active:scale-95"
+                    className="w-full py-3 px-4 rounded-full font-semibold text-sm text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-300 dark:text-[#B4C1AE] dark:hover:text-[#F4F6F1] dark:bg-[#101A12] dark:border-[rgba(155,185,115,0.2)] dark:hover:bg-[#142314] transition-all active:scale-95"
                   >
                     Back to Home
                   </button>
@@ -1056,19 +1056,19 @@ export const ChatPage: React.FC = () => {
             ref={messagesContainerRef}
             id="chat-messages-container"
             onScroll={handleMessagesScroll}
-            className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-3.5 sm:p-5 space-y-3 bg-[#050805] text-[#F4F6F1]"
+            className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-3.5 sm:p-5 space-y-3 bg-[#F8FAFC] text-[#0F172A] dark:bg-[#050805] dark:text-[#F4F6F1]"
             style={{ WebkitOverflowScrolling: 'touch' }}
           >
             {messages.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-center py-12 text-[#6F796D] space-y-3">
-                <div className="h-12 w-12 rounded-full bg-[#101A12] border border-[rgba(155,185,115,0.22)] flex items-center justify-center text-[#8DA852] shadow-sm">
+              <div className="h-full flex flex-col items-center justify-center text-center py-12 text-[#475569] dark:text-[#6F796D] space-y-3">
+                <div className="h-12 w-12 rounded-full bg-slate-100 border border-slate-200 text-brand-600 dark:bg-[#101A12] dark:border-[rgba(155,185,115,0.22)] dark:text-[#8DA852] flex items-center justify-center shadow-sm">
                   <ShieldCheck className="h-6 w-6" />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm font-semibold text-[#F4F6F1]">
+                  <p className="text-sm font-semibold text-[#0F172A] dark:text-[#F4F6F1]">
                     You're connected with a fellow RITian!
                   </p>
-                  <p className="text-xs text-[#B4C1AE] max-w-xs leading-relaxed">
+                  <p className="text-xs text-[#475569] dark:text-[#B4C1AE] max-w-xs leading-relaxed">
                     Say hello to break the ice. Your real name, department, and roll number are completely confidential.
                   </p>
                 </div>
@@ -1078,7 +1078,7 @@ export const ChatPage: React.FC = () => {
                 if (msg.isSystem) {
                   return (
                     <div key={msg.id} className="text-center py-1">
-                      <span className="inline-block px-3.5 py-1 rounded-full text-xs bg-[#101A12] text-[#B4C1AE] border border-[rgba(155,185,115,0.18)] font-medium">
+                      <span className="inline-block px-3.5 py-1 rounded-full text-xs bg-slate-200/80 text-slate-700 border border-slate-300 dark:bg-[#101A12] dark:text-[#B4C1AE] dark:border-[rgba(155,185,115,0.18)] font-medium">
                         {msg.content}
                       </span>
                     </div>
@@ -1101,8 +1101,8 @@ export const ChatPage: React.FC = () => {
                         max-w-[84%] sm:max-w-md px-4 py-2.5 text-sm transition-all
                         ${
                           isMe
-                            ? 'bg-[#2A3C1C] text-[#F4F6F1] font-medium rounded-2xl rounded-br-sm border border-[rgba(162,189,99,0.3)] shadow-[0_2px_10px_rgba(0,0,0,0.3)]'
-                            : 'bg-[#142016] text-[#F4F6F1] rounded-2xl rounded-bl-sm border border-[rgba(155,185,115,0.18)] shadow-[0_2px_10px_rgba(0,0,0,0.3)]'
+                            ? 'bg-[#6D42E8] text-white font-medium rounded-2xl rounded-br-sm border border-[#6D42E8] shadow-sm dark:bg-[#2A3C1C] dark:text-[#F4F6F1] dark:border-[rgba(162,189,99,0.3)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.3)]'
+                            : 'bg-[#E9EEF5] text-[#172033] rounded-2xl rounded-bl-sm border border-[#DCE3EC] shadow-sm dark:bg-[#142016] dark:text-[#F4F6F1] dark:border-[rgba(155,185,115,0.18)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.3)]'
                         }
                       `}
                     >
@@ -1111,7 +1111,7 @@ export const ChatPage: React.FC = () => {
                       </p>
                       <span
                         className={`block text-[10px] mt-1 text-right ${
-                          isMe ? 'text-[#A2BD63]' : 'text-[#B4C1AE]'
+                          isMe ? 'text-white/80 dark:text-[#A2BD63]' : 'text-slate-500 dark:text-[#B4C1AE]'
                         }`}
                       >
                         {timeFormatted}
@@ -1128,7 +1128,7 @@ export const ChatPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => scrollToBottom(true)}
-                  className="pointer-events-auto inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#101A12] text-[#A2BD63] border border-[rgba(155,185,115,0.3)] shadow-[0_4px_16px_rgba(0,0,0,0.6)] hover:bg-[#142314] active:scale-95 transition-all"
+                  className="pointer-events-auto inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white text-brand-600 border border-slate-300 shadow-md hover:bg-slate-50 dark:bg-[#101A12] dark:text-[#A2BD63] dark:border-[rgba(155,185,115,0.3)] dark:shadow-[0_4px_16px_rgba(0,0,0,0.6)] dark:hover:bg-[#142314] active:scale-95 transition-all"
                 >
                   <ArrowDown className="h-3.5 w-3.5 animate-bounce" />
                   <span>New messages</span>
@@ -1147,7 +1147,7 @@ export const ChatPage: React.FC = () => {
         {!isDisconnected && (
           <div
             id="chat-composer-container"
-            className="p-2 sm:p-3 border-t border-[rgba(155,185,115,0.16)] bg-[#091009]/95 backdrop-blur-xl shrink-0 z-20 pb-[max(0.625rem,env(safe-area-inset-bottom,0px))]"
+            className="p-2 sm:p-3 border-t border-[#DCE3EC] dark:border-[rgba(155,185,115,0.16)] bg-white/95 dark:bg-[#091009]/95 backdrop-blur-xl shrink-0 z-20 pb-[max(0.625rem,env(safe-area-inset-bottom,0px))]"
           >
             <form onSubmit={handleSendMessage} className="flex items-center gap-2 max-w-4xl mx-auto w-full">
               {/* Skip Button */}
@@ -1157,9 +1157,9 @@ export const ChatPage: React.FC = () => {
                 onClick={handleSkip}
                 title="Skip to next RITian"
                 disabled={isSkipping}
-                className="shrink-0 inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-full text-xs font-semibold bg-[#101A12] border border-[rgba(155,185,115,0.25)] text-[#A2BD63] hover:bg-[#142314] active:scale-95 transition-all disabled:opacity-50"
+                className="shrink-0 inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-full text-xs font-semibold bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 dark:bg-[#101A12] dark:border-[rgba(155,185,115,0.25)] dark:text-[#A2BD63] dark:hover:bg-[#142314] active:scale-95 transition-all disabled:opacity-50"
               >
-                <FastForward className="h-4 w-4 text-[#8DA852]" />
+                <FastForward className="h-4 w-4 text-slate-600 dark:text-[#8DA852]" />
                 <span className="hidden sm:inline">Skip</span>
               </button>
 
@@ -1176,7 +1176,7 @@ export const ChatPage: React.FC = () => {
                   window.scrollTo(0, 0);
                 }}
                 placeholder="Type a message..."
-                className="flex-1 min-w-0 bg-[#060A06] text-[#F4F6F1] placeholder-[#6F796D] rounded-full border border-[rgba(155,185,115,0.22)] px-4 py-2 sm:py-2.5 text-sm focus:outline-none focus:border-[#8DA852] focus:ring-2 focus:ring-[#8DA852]/20 transition-all disabled:opacity-50 shadow-inner"
+                className="flex-1 min-w-0 bg-[#F1F5F9] dark:bg-[#060A06] text-[#111827] dark:text-[#F4F6F1] placeholder-[#64748B] dark:placeholder-[#6F796D] rounded-full border border-[#DCE3EC] dark:border-[rgba(155,185,115,0.22)] px-4 py-2 sm:py-2.5 text-sm focus:outline-none focus:border-brand-500 dark:focus:border-[#8DA852] focus:ring-2 focus:ring-brand-500/20 dark:focus:ring-[#8DA852]/20 transition-all disabled:opacity-50 shadow-inner"
                 autoComplete="off"
               />
 
@@ -1185,7 +1185,7 @@ export const ChatPage: React.FC = () => {
                 type="submit"
                 id="chat-send-btn"
                 disabled={!inputMessage.trim() || isSending || roomStatus !== 'active'}
-                className="liquid-cta-btn shrink-0 rounded-full h-9 w-9 sm:h-10 sm:w-auto sm:px-4 flex items-center justify-center gap-1.5 text-[#10170B] font-bold disabled:opacity-40 transition-all active:scale-95 shadow-md"
+                className="liquid-cta-btn shrink-0 rounded-full h-9 w-9 sm:h-10 sm:w-auto sm:px-4 flex items-center justify-center gap-1.5 text-white dark:text-[#10170B] font-bold disabled:opacity-40 transition-all active:scale-95 shadow-md"
                 title="Send message"
               >
                 <Send className="h-4 w-4" />
@@ -1199,10 +1199,9 @@ export const ChatPage: React.FC = () => {
       </div>
 
       {/* =========================================================================
-          LEAVE CHAT CONFIRMATION MODAL (Scoped to Dark Mode via forceDark)
+          LEAVE CHAT CONFIRMATION MODAL
           ========================================================================= */}
       <Modal
-        forceDark
         isOpen={isLeaveModalOpen}
         onClose={() => setIsLeaveModalOpen(false)}
         title="Leave chat?"
@@ -1212,7 +1211,7 @@ export const ChatPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsLeaveModalOpen(false)}
-              className="px-4 py-2 rounded-full text-xs font-semibold text-[#B4C1AE] hover:text-[#F4F6F1] bg-[#101A12] border border-[rgba(155,185,115,0.25)] hover:bg-[#142314] transition-all"
+              className="px-4 py-2 rounded-full text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-300 dark:text-[#B4C1AE] dark:hover:text-[#F4F6F1] dark:bg-[#101A12] dark:border-[rgba(155,185,115,0.25)] dark:hover:bg-[#142314] transition-all"
             >
               Cancel
             </button>
@@ -1226,7 +1225,7 @@ export const ChatPage: React.FC = () => {
           </>
         }
       >
-        <p className="text-xs text-[#B4C1AE] leading-relaxed">
+        <p className="text-xs text-slate-600 dark:text-[#B4C1AE] leading-relaxed">
           Leaving will end the session for both students. You will return to your student dashboard.
         </p>
       </Modal>

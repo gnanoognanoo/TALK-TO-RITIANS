@@ -52,6 +52,7 @@ export interface AdminOnlineUser {
   state: AdminUserState;
   current_room_id: string | null;
   is_test_account: boolean;
+  available_for_chat_requests?: boolean;
 }
 
 export interface AdminUserDetails {
