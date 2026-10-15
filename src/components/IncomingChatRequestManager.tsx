@@ -191,9 +191,11 @@ export const IncomingChatRequestManager: React.FC = () => {
           if (page === 'verify') return;
 
           if (row?.status === 'developer_forced' && row?.room_id) {
-            // Direct developer force chat navigation
+            // Direct developer force chat navigation (handles idle user or active chat override)
             setActiveRequest(null);
-            checkActiveRoom();
+            sessionStorage.removeItem(`left_room_${row.room_id}`);
+            navigatingRoomIdRef.current = row.room_id;
+            navigate(`/chat/${row.room_id}`, { replace: true });
           } else if (row?.status === 'pending') {
             // Standard invite request — show incoming invite modal
             if (page === 'chat' || page === 'matching') return;

@@ -28,13 +28,13 @@ import {
   AlertTriangle,
   CheckCircle2,
   Search,
-  Filter,
   Copy,
   ExternalLink,
   Radio,
   Check,
   ChevronDown,
   Zap,
+  ArrowUpDown,
 } from 'lucide-react';
 import {
   Button,
@@ -58,6 +58,10 @@ import {
   AdminUserDetails,
   AdminActiveRoom,
   AdminRoomDetails,
+  UserSearchMode,
+  UserSortField,
+  UserSortDirection,
+  UserVerificationFilter,
   ModerationTranscriptMessage,
   RoomModerationData,
   AdminAuditLogRow,
@@ -85,6 +89,15 @@ export const DeveloperPage: React.FC = () => {
   const [usersLoading, setUsersLoading] = useState<boolean>(false);
   const [userSearchQuery, setUserSearchQuery] = useState<string>('');
   const [userStateFilter, setUserStateFilter] = useState<string>('all');
+
+  // Feature 3: Advanced Search, Filtering, and Sorting State
+  const [searchMode, setSearchMode] = useState<UserSearchMode>('anonymous_username');
+  const [sortField, setSortField] = useState<UserSortField>('last_seen');
+  const [sortDirection, setSortDirection] = useState<UserSortDirection>('desc');
+  const [verificationFilter, setVerificationFilter] = useState<UserVerificationFilter>('all');
+  const [revealedRegNumbers, setRevealedRegNumbers] = useState<Record<string, string>>({});
+  const [revealingRowUserId, setRevealingRowUserId] = useState<string | null>(null);
+  const [isServerSearching, setIsServerSearching] = useState<boolean>(false);
 
   // State: Active Rooms
   const [roomsList, setRoomsList] = useState<AdminActiveRoom[]>([]);
@@ -135,6 +148,7 @@ export const DeveloperPage: React.FC = () => {
     expiresAt: string;
   } | null>(null);
   const [forcingUserId, setForcingUserId] = useState<string | null>(null);
+  const [forceConfirmUser, setForceConfirmUser] = useState<AdminOnlineUser | null>(null);
   const [revealedRegisterNumber, setRevealedRegisterNumber] = useState<string | null>(null);
   const [isRevealingRegNo, setIsRevealingRegNo] = useState<boolean>(false);
   const [revealError, setRevealError] = useState<string | null>(null);
@@ -337,6 +351,14 @@ export const DeveloperPage: React.FC = () => {
     navigate(`/chat/${res.data.roomId}`);
   };
 
+  const onForceClick = (targetUser: AdminOnlineUser) => {
+    if (targetUser.state === 'in_chat') {
+      setForceConfirmUser(targetUser);
+    } else {
+      handleForceChat(targetUser);
+    }
+  };
+
   const handleRevealRegisterNumber = async () => {
     if (!userDetails) return;
     setIsRevealingRegNo(true);
@@ -525,22 +547,176 @@ export const DeveloperPage: React.FC = () => {
   }, [transcriptRoomId]);
 
   /**
-   * Filtered Users List
+   * Feature 3: Dynamic Placeholders & Mode Switch Handlers
+   */
+  const getSearchPlaceholder = (mode: UserSearchMode) => {
+    switch (mode) {
+      case 'student_name':
+        return 'Search verified student name...';
+      case 'department':
+        return 'Search department (CSE, ECE, MECH...)';
+      case 'graduation_year':
+        return 'Search graduation year (e.g. 2029)...';
+      case 'register_number':
+        return 'Enter full register number...';
+      case 'anonymous_username':
+      default:
+        return 'Search anonymous username or UUID...';
+    }
+  };
+
+  const handleSearchModeChange = (newMode: UserSearchMode) => {
+    setSearchMode(newMode);
+    setUserSearchQuery('');
+  };
+
+  const getDisplayGraduationYear = (u: AdminOnlineUser): string => {
+    if (u.graduation_year && u.graduation_year.trim()) {
+      return u.graduation_year.trim();
+    }
+    if (u.batch) {
+      const match = u.batch.match(/\d{4}\s*[-–]\s*(\d{4})/);
+      if (match && match[1]) {
+        return match[1];
+      }
+    }
+    return 'Not available';
+  };
+
+  const handleRevealRowRegisterNumber = async (targetUser: AdminOnlineUser) => {
+    if (revealedRegNumbers[targetUser.user_id]) return;
+    setRevealingRowUserId(targetUser.user_id);
+    const res = await staffService.revealStudentRegisterNumber(
+      targetUser.user_id,
+      `Developer search reveal for student ${targetUser.anonymous_username}`
+    );
+    setRevealingRowUserId(null);
+
+    if (res.success && res.data) {
+      setRevealedRegNumbers((prev) => ({
+        ...prev,
+        [targetUser.user_id]: res.data!,
+      }));
+      showNotification('success', 'Register number decrypted and audited.');
+      fetchAuditLogs();
+    } else {
+      showNotification('error', res.error?.message || 'Failed to decrypt register number.');
+    }
+  };
+
+  const handleRegisterSearchSubmit = async () => {
+    if (!userSearchQuery.trim()) return;
+    setIsServerSearching(true);
+    const res = await staffService.searchDeveloperUsers({
+      searchMode: 'register_number',
+      searchQuery: userSearchQuery.trim(),
+      stateFilter: userStateFilter,
+      verificationFilter,
+      sortField,
+      sortDirection,
+    });
+    setIsServerSearching(false);
+    if (res.success && res.data) {
+      setUsersList((prev) => {
+        const existingIds = new Set(prev.map((x) => x.user_id));
+        const newUsers = res.data!.users.filter((x) => !existingIds.has(x.user_id));
+        return [...newUsers, ...prev];
+      });
+      showNotification('info', `Search completed: ${res.data.users.length} matching student(s) found.`);
+      fetchAuditLogs();
+    } else {
+      showNotification('error', res.error?.message || 'Register search failed.');
+    }
+  };
+
+  /**
+   * Filtered & Sorted Users List
    */
   const filteredUsers = useMemo(() => {
-    return usersList.filter((u) => {
-      const matchesSearch =
-        u.anonymous_username.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
-        u.user_id.toLowerCase().includes(userSearchQuery.toLowerCase());
+    let result = usersList.filter((u) => {
+      // 1. State filter
+      if (userStateFilter !== 'all') {
+        if (userStateFilter === 'online' && !isUserOnline(u)) return false;
+        if (userStateFilter !== 'online' && u.state !== userStateFilter) return false;
+      }
 
-      const matchesState =
-        userStateFilter === 'all' ||
-        (userStateFilter === 'online' && u.is_online) ||
-        u.state === userStateFilter;
+      // 2. Verification filter
+      if (verificationFilter === 'verified' && !u.is_verified_student) return false;
+      if (verificationFilter === 'unverified' && u.is_verified_student) return false;
+      if (verificationFilter === 'developer' && !u.is_staff) return false;
 
-      return matchesSearch && matchesState;
+      // 3. Search query matching based on searchMode
+      const q = userSearchQuery.trim().toLowerCase();
+      if (!q) return true;
+
+      switch (searchMode) {
+        case 'student_name':
+          return !!(u.real_name && u.real_name.toLowerCase().includes(q));
+        case 'department':
+          return !!(u.department && u.department.toLowerCase().includes(q));
+        case 'graduation_year': {
+          const gradYear = getDisplayGraduationYear(u).toLowerCase();
+          return gradYear !== 'not available' && gradYear.includes(q);
+        }
+        case 'register_number': {
+          const revealed = revealedRegNumbers[u.user_id]?.toLowerCase();
+          if (revealed && revealed.includes(q)) return true;
+          if (u.fingerprint_suffix && u.fingerprint_suffix.toLowerCase().includes(q)) return true;
+          return false;
+        }
+        case 'anonymous_username':
+        default:
+          return (
+            u.anonymous_username.toLowerCase().includes(q) ||
+            u.user_id.toLowerCase().includes(q)
+          );
+      }
     });
-  }, [usersList, userSearchQuery, userStateFilter]);
+
+    // 4. Sorting
+    result.sort((a, b) => {
+      let comparison = 0;
+      switch (sortField) {
+        case 'anonymous_username':
+          comparison = a.anonymous_username.localeCompare(b.anonymous_username);
+          break;
+        case 'student_name': {
+          const nameA = a.real_name || '';
+          const nameB = b.real_name || '';
+          comparison = nameA.localeCompare(nameB);
+          break;
+        }
+        case 'department': {
+          const deptA = a.department || '';
+          const deptB = b.department || '';
+          comparison = deptA.localeCompare(deptB);
+          break;
+        }
+        case 'graduation_year': {
+          const yearA = getDisplayGraduationYear(a);
+          const yearB = getDisplayGraduationYear(b);
+          comparison = yearA.localeCompare(yearB);
+          break;
+        }
+        case 'account_created': {
+          const tA = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const tB = b.created_at ? new Date(b.created_at).getTime() : 0;
+          comparison = tA - tB;
+          break;
+        }
+        case 'last_seen':
+        default: {
+          const tA = a.last_seen_at ? new Date(a.last_seen_at).getTime() : 0;
+          const tB = b.last_seen_at ? new Date(b.last_seen_at).getTime() : 0;
+          comparison = tA - tB;
+          break;
+        }
+      }
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+
+    return result;
+  }, [usersList, userSearchQuery, searchMode, userStateFilter, verificationFilter, sortField, sortDirection, revealedRegNumbers]);
 
   const isUserOnline = (u: AdminOnlineUser) => {
     if (!u.is_online) return false;
@@ -585,6 +761,102 @@ export const DeveloperPage: React.FC = () => {
       case 'offline':
       default:
         return <Badge variant="neutral" size="sm">Offline</Badge>;
+    }
+  };
+
+  const renderPrimaryUserInfo = (u: AdminOnlineUser) => {
+    switch (searchMode) {
+      case 'student_name':
+        return (
+          <div>
+            <div className="font-bold text-slate-900 dark:text-[#F4F6F1] flex items-center gap-1.5">
+              <span>{u.real_name || (u.is_verified_student ? 'Verified Student' : 'Not verified')}</span>
+            </div>
+            <div className="text-[11px] text-slate-500 dark:text-[#9DA89A]">
+              Alias: <span className="font-semibold text-slate-700 dark:text-[#C0CCBC]">{u.anonymous_username}</span>
+            </div>
+          </div>
+        );
+      case 'department':
+        return (
+          <div>
+            <div className="font-bold text-slate-900 dark:text-[#F4F6F1] flex items-center gap-1.5">
+              <span>Department: {u.department || (u.is_verified_student ? 'Not specified' : 'Not available')}</span>
+            </div>
+            <div className="text-[11px] text-slate-500 dark:text-[#9DA89A]">
+              Alias: <span className="font-semibold text-slate-700 dark:text-[#C0CCBC]">{u.anonymous_username}</span>
+            </div>
+          </div>
+        );
+      case 'graduation_year': {
+        const gradYear = getDisplayGraduationYear(u);
+        return (
+          <div>
+            <div className="font-bold text-slate-900 dark:text-[#F4F6F1] flex items-center gap-1.5">
+              <span>Graduation Year: {gradYear !== 'Not available' ? gradYear : 'Not available'}</span>
+            </div>
+            <div className="text-[11px] text-slate-500 dark:text-[#9DA89A]">
+              Alias: <span className="font-semibold text-slate-700 dark:text-[#C0CCBC]">{u.anonymous_username}</span>
+            </div>
+          </div>
+        );
+      }
+      case 'register_number': {
+        const isRevealed = !!revealedRegNumbers[u.user_id];
+        const revealedVal = revealedRegNumbers[u.user_id];
+        const isRevealing = revealingRowUserId === u.user_id;
+
+        return (
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-xs font-bold text-slate-900 dark:text-[#F4F6F1]">
+                {isRevealed
+                  ? revealedVal
+                  : u.has_encrypted_register_number
+                  ? '••••••••••••'
+                  : u.fingerprint_suffix
+                  ? `Fingerprint ${u.fingerprint_suffix}`
+                  : 'Unavailable — re-verification required'}
+              </span>
+              {!isRevealed && u.has_encrypted_register_number && (
+                <button
+                  type="button"
+                  disabled={isRevealing}
+                  onClick={() => handleRevealRowRegisterNumber(u)}
+                  className="px-2 py-0.5 rounded text-[10px] font-bold bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-200 dark:bg-[#121E12] dark:hover:bg-[#182B18] dark:text-[#A2BD63] dark:border-[rgba(141,168,82,0.3)] transition-all active:scale-95"
+                >
+                  {isRevealing ? 'Decrypting...' : 'Reveal'}
+                </button>
+              )}
+            </div>
+            <div className="text-[11px] text-slate-500 dark:text-[#9DA89A]">
+              Alias: <span className="font-semibold text-slate-700 dark:text-[#C0CCBC]">{u.anonymous_username}</span>
+            </div>
+          </div>
+        );
+      }
+      case 'anonymous_username':
+      default:
+        return (
+          <div>
+            <div className="font-bold text-slate-900 dark:text-[#F4F6F1] flex items-center gap-1.5">
+              <span>{u.anonymous_username}</span>
+              {u.user_id === user?.id && (
+                <span className="text-[10px] px-1 py-0.2 rounded bg-slate-100 text-slate-700 dark:bg-[#121E12] dark:text-[#A2BD63] font-semibold">
+                  You
+                </span>
+              )}
+              {u.is_staff && (
+                <span className="text-[10px] px-1 py-0.2 rounded bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 font-bold">
+                  {u.staff_role?.toUpperCase() || 'STAFF'}
+                </span>
+              )}
+            </div>
+            <div className="text-[10px] font-mono text-slate-500 dark:text-[#A2B09D]">
+              {u.user_id.slice(0, 8)}...
+            </div>
+          </div>
+        );
     }
   };
 
@@ -891,33 +1163,108 @@ export const DeveloperPage: React.FC = () => {
           ===================================================================== */}
       {activeTab === 'users' && (
         <div className="space-y-4">
-          {/* Controls: Search and State filter */}
-          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-            <div className="relative flex-1 max-w-md">
-              <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-[#6F796D]" />
-              <input
-                type="text"
-                placeholder="Search by anonymous handle or UUID..."
-                value={userSearchQuery}
-                onChange={(e) => setUserSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm rounded-full border border-slate-300 dark:border-[rgba(141,168,82,0.2)] bg-white dark:bg-[#060A06] text-slate-900 dark:text-[#F4F6F1] placeholder-slate-400 dark:placeholder-[#6F796D] focus:outline-none focus:ring-2 focus:ring-brand-500 dark:focus:border-[#8DA852] shadow-inner"
-              />
-            </div>
+          {/* Controls: Search Mode, Search Input, Sort By, Sort Direction, State Filter, Verification Filter */}
+          <div className="space-y-2.5">
+            <div className="flex flex-col lg:flex-row gap-2.5 items-stretch lg:items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1">
+                {/* Search Mode Dropdown */}
+                <div className="relative min-w-[170px]">
+                  <select
+                    value={searchMode}
+                    onChange={(e) => handleSearchModeChange(e.target.value as UserSearchMode)}
+                    className="w-full text-xs font-semibold px-3 py-2 rounded-full border border-slate-300 dark:border-[rgba(141,168,82,0.2)] bg-white dark:bg-[#091009] text-slate-800 dark:text-[#9DA89A] focus:outline-none focus:ring-2 focus:ring-brand-500 dark:focus:border-[#8DA852]"
+                  >
+                    <option value="anonymous_username">Anonymous Username</option>
+                    <option value="student_name">Student Name</option>
+                    <option value="department">Department</option>
+                    <option value="graduation_year">Graduation Year</option>
+                    <option value="register_number">Register Number</option>
+                  </select>
+                </div>
 
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-slate-400 dark:text-[#6F796D] shrink-0" />
-              <select
-                value={userStateFilter}
-                onChange={(e) => setUserStateFilter(e.target.value)}
-                className="text-xs font-semibold px-3 py-2 rounded-full border border-slate-300 dark:border-[rgba(141,168,82,0.2)] bg-white dark:bg-[#091009] text-slate-800 dark:text-[#9DA89A] focus:outline-none focus:ring-2 focus:ring-brand-500 dark:focus:border-[#8DA852]"
-              >
-                <option value="all">All States</option>
-                <option value="idle">Idle / Available</option>
-                <option value="in_chat">In Chat</option>
-                <option value="searching">Searching</option>
-                <option value="pending_request">Pending Request</option>
-                <option value="offline">Offline (&gt;30s)</option>
-              </select>
+                {/* Search Input */}
+                <div className="relative flex-1">
+                  <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-[#6F796D]" />
+                  <input
+                    type="text"
+                    placeholder={getSearchPlaceholder(searchMode)}
+                    value={userSearchQuery}
+                    onChange={(e) => setUserSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && searchMode === 'register_number') {
+                        handleRegisterSearchSubmit();
+                      }
+                    }}
+                    className="w-full pl-9 pr-20 py-2 text-xs sm:text-sm rounded-full border border-slate-300 dark:border-[rgba(141,168,82,0.2)] bg-white dark:bg-[#060A06] text-slate-900 dark:text-[#F4F6F1] placeholder-slate-400 dark:placeholder-[#6F796D] focus:outline-none focus:ring-2 focus:ring-brand-500 dark:focus:border-[#8DA852] shadow-inner"
+                  />
+                  {searchMode === 'register_number' && (
+                    <button
+                      type="button"
+                      onClick={handleRegisterSearchSubmit}
+                      disabled={isServerSearching || !userSearchQuery.trim()}
+                      className="absolute right-1.5 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-full text-[11px] font-bold bg-brand-600 hover:bg-brand-700 text-white dark:bg-[#8DA852] dark:hover:bg-[#7d9748] dark:text-[#091009] transition-all disabled:opacity-40"
+                    >
+                      {isServerSearching ? '...' : 'Search'}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Filter & Sort Controls */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Sort By Dropdown */}
+                <div className="flex items-center gap-1.5">
+                  <select
+                    value={sortField}
+                    onChange={(e) => setSortField(e.target.value as UserSortField)}
+                    className="text-xs font-semibold px-3 py-2 rounded-full border border-slate-300 dark:border-[rgba(141,168,82,0.2)] bg-white dark:bg-[#091009] text-slate-800 dark:text-[#9DA89A] focus:outline-none focus:ring-2 focus:ring-brand-500 dark:focus:border-[#8DA852]"
+                    title="Sort by attribute"
+                  >
+                    <option value="last_seen">Sort: Last Seen</option>
+                    <option value="anonymous_username">Sort: Anonymous Alias</option>
+                    <option value="student_name">Sort: Student Name</option>
+                    <option value="department">Sort: Department</option>
+                    <option value="graduation_year">Sort: Graduation Year</option>
+                    <option value="account_created">Sort: Account Created</option>
+                  </select>
+
+                  {/* Direction Toggle */}
+                  <button
+                    type="button"
+                    onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
+                    title={`Sort ${sortDirection === 'asc' ? 'Ascending' : 'Descending'} (click to flip)`}
+                    className="p-2 rounded-full border border-slate-300 dark:border-[rgba(141,168,82,0.2)] bg-white dark:bg-[#091009] text-slate-700 dark:text-[#9DA89A] hover:bg-slate-50 dark:hover:bg-[#121E12] transition-colors"
+                  >
+                    <ArrowUpDown className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+
+                {/* State Filter */}
+                <select
+                  value={userStateFilter}
+                  onChange={(e) => setUserStateFilter(e.target.value)}
+                  className="text-xs font-semibold px-3 py-2 rounded-full border border-slate-300 dark:border-[rgba(141,168,82,0.2)] bg-white dark:bg-[#091009] text-slate-800 dark:text-[#9DA89A] focus:outline-none focus:ring-2 focus:ring-brand-500 dark:focus:border-[#8DA852]"
+                >
+                  <option value="all">All States</option>
+                  <option value="idle">Idle / Available</option>
+                  <option value="in_chat">In Chat</option>
+                  <option value="searching">Searching</option>
+                  <option value="pending_request">Pending Request</option>
+                  <option value="offline">Offline (&gt;30s)</option>
+                </select>
+
+                {/* Verification Filter */}
+                <select
+                  value={verificationFilter}
+                  onChange={(e) => setVerificationFilter(e.target.value as UserVerificationFilter)}
+                  className="text-xs font-semibold px-3 py-2 rounded-full border border-slate-300 dark:border-[rgba(141,168,82,0.2)] bg-white dark:bg-[#091009] text-slate-800 dark:text-[#9DA89A] focus:outline-none focus:ring-2 focus:ring-brand-500 dark:focus:border-[#8DA852]"
+                >
+                  <option value="all">All Users</option>
+                  <option value="verified">Verified RITians</option>
+                  <option value="unverified">Unverified</option>
+                  <option value="developer">Staff / Developers</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -960,19 +1307,7 @@ export const DeveloperPage: React.FC = () => {
                               shape="circle"
                             />
                             <div className="min-w-0">
-                              <div className="font-bold text-sm text-slate-900 dark:text-[#F4F6F1] flex items-center gap-1.5 truncate">
-                                <span>{u.anonymous_username}</span>
-                                {isSelf && (
-                                  <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-700 dark:bg-[#121E12] dark:text-[#A2BD63] font-semibold">
-                                    You
-                                  </span>
-                                )}
-                                {u.is_staff && (
-                                  <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 font-bold">
-                                    {u.staff_role?.toUpperCase() || 'STAFF'}
-                                  </span>
-                                )}
-                              </div>
+                              {renderPrimaryUserInfo(u)}
                               <div className="text-[11px] text-slate-600 dark:text-[#9DA89A] flex items-center gap-1.5 mt-0.5">
                                 <span>{u.is_verified_student ? 'Verified RITian' : 'Unverified'}</span>
                                 <span>•</span>
@@ -1041,13 +1376,13 @@ export const DeveloperPage: React.FC = () => {
                           {!isSelf && (
                             <button
                               type="button"
-                              disabled={u.state === 'in_chat' || !isUserOnline(u) || forcingUserId === u.user_id}
-                              onClick={() => handleForceChat(u)}
+                              disabled={!isUserOnline(u) || forcingUserId === u.user_id}
+                              onClick={() => onForceClick(u)}
                               title={
-                                u.state === 'in_chat'
-                                  ? 'User is already chatting'
-                                  : !isUserOnline(u)
+                                !isUserOnline(u)
                                   ? 'User is offline'
+                                  : u.state === 'in_chat'
+                                  ? 'Force override active conversation (privileged)'
                                   : 'Force direct chat session (privileged)'
                               }
                               className="flex-1 min-h-[44px] inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-full text-xs font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 hover:bg-amber-100 dark:hover:bg-amber-500/20 border border-amber-300 dark:border-amber-500/30 disabled:opacity-40 active:scale-95 transition-all"
@@ -1067,7 +1402,17 @@ export const DeveloperPage: React.FC = () => {
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
                       <tr className="border-b border-slate-200 dark:border-[rgba(141,168,82,0.15)] bg-slate-50 dark:bg-[#091009]/80 text-slate-700 dark:text-[#9DA89A] font-semibold uppercase tracking-wider text-[11px]">
-                        <th className="py-3 px-4">Anonymous Persona</th>
+                        <th className="py-3 px-4">
+                          {searchMode === 'student_name'
+                            ? 'Verified Student'
+                            : searchMode === 'department'
+                            ? 'Department'
+                            : searchMode === 'graduation_year'
+                            ? 'Graduation Year'
+                            : searchMode === 'register_number'
+                            ? 'Register Number'
+                            : 'Anonymous Persona'}
+                        </th>
                         <th className="py-3 px-4">Verification</th>
                         <th className="py-3 px-4">State</th>
                         <th className="py-3 px-4">Last Seen</th>
@@ -1090,7 +1435,7 @@ export const DeveloperPage: React.FC = () => {
                             key={u.user_id}
                             className="hover:bg-slate-50/80 dark:hover:bg-[#121E12]/40 transition-colors"
                           >
-                            {/* Anonymous Persona */}
+                            {/* Anonymous Persona or Dynamic Identity */}
                             <td className="py-3 px-4">
                               <div className="flex items-center gap-2.5">
                                 <Avatar
@@ -1099,24 +1444,7 @@ export const DeveloperPage: React.FC = () => {
                                   initials={initials}
                                   shape="circle"
                                 />
-                                <div>
-                                  <div className="font-bold text-slate-900 dark:text-[#F4F6F1] flex items-center gap-1.5">
-                                    <span>{u.anonymous_username}</span>
-                                    {isSelf && (
-                                      <span className="text-[10px] px-1 py-0.2 rounded bg-slate-100 text-slate-700 dark:bg-[#121E12] dark:text-[#A2BD63] font-semibold">
-                                        You
-                                      </span>
-                                    )}
-                                    {u.is_staff && (
-                                      <span className="text-[10px] px-1 py-0.2 rounded bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 font-bold">
-                                        {u.staff_role?.toUpperCase() || 'STAFF'}
-                                      </span>
-                                    )}
-                                  </div>
-                                  <div className="text-[10px] font-mono text-slate-500 dark:text-[#A2B09D]">
-                                    {u.user_id.slice(0, 8)}...
-                                  </div>
-                                </div>
+                                {renderPrimaryUserInfo(u)}
                               </div>
                             </td>
 
@@ -1215,14 +1543,14 @@ export const DeveloperPage: React.FC = () => {
                                   <Button
                                     variant="secondary"
                                     size="sm"
-                                    disabled={u.state === 'in_chat' || !isUserOnline(u) || forcingUserId === u.user_id}
+                                    disabled={!isUserOnline(u) || forcingUserId === u.user_id}
                                     isLoading={forcingUserId === u.user_id}
-                                    onClick={() => handleForceChat(u)}
+                                    onClick={() => onForceClick(u)}
                                     title={
-                                      u.state === 'in_chat'
-                                        ? 'User is already chatting'
-                                        : !isUserOnline(u)
+                                      !isUserOnline(u)
                                         ? 'User is offline'
+                                        : u.state === 'in_chat'
+                                        ? 'Force override active conversation (privileged)'
                                         : 'Force direct chat session (privileged)'
                                     }
                                     className="text-xs h-7 px-2.5 font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 hover:bg-amber-100 dark:hover:bg-amber-500/20 border border-amber-300 dark:border-amber-500/30 active:scale-95 transition-all"
@@ -2170,6 +2498,56 @@ export const DeveloperPage: React.FC = () => {
               </div>
             </div>
           )}
+        </div>
+      </Modal>
+
+      {/* =====================================================================
+          FORCE ACTIVE CHAT OVERRIDE CONFIRMATION MODAL
+          ===================================================================== */}
+      <Modal
+        isOpen={Boolean(forceConfirmUser)}
+        onClose={() => setForceConfirmUser(null)}
+        title="FORCE ACTIVE CHAT OVERRIDE"
+        description="This user is currently in an active conversation."
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={() => setForceConfirmUser(null)}
+              className="px-4 py-2 rounded-full text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-300 dark:text-[#B4C1AE] dark:hover:text-[#F4F6F1] dark:bg-[#101A12] dark:border-[rgba(155,185,115,0.25)] dark:hover:bg-[#142314] transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={Boolean(forcingUserId)}
+              onClick={() => {
+                if (forceConfirmUser) {
+                  const target = forceConfirmUser;
+                  setForceConfirmUser(null);
+                  handleForceChat(target);
+                }
+              }}
+              className="px-4 py-2 rounded-full text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:text-[#10170B] dark:hover:bg-amber-400 active:scale-95 transition-all shadow-md"
+            >
+              {forcingUserId ? 'Overriding...' : 'Override & Connect'}
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-3 text-xs text-slate-600 dark:text-[#B4C1AE] leading-relaxed">
+          <p>
+            Continuing will end that conversation for both existing participants and start a new chat between you and{' '}
+            <strong className="text-slate-900 dark:text-[#F4F6F1]">
+              {forceConfirmUser?.anonymous_username}
+            </strong>.
+          </p>
+          <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-500/30 text-amber-900 dark:text-amber-200 flex items-start gap-2">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+            <span>
+              The previous conversation will be safely closed. The prior chat partner will be notified that the conversation has ended and can start a new search immediately.
+            </span>
+          </div>
         </div>
       </Modal>
     </div>

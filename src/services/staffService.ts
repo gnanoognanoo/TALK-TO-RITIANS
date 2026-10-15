@@ -22,6 +22,8 @@ import {
   ModerationTranscriptMessage,
   RoomModerationData,
   AdminAuditLogRow,
+  SearchDeveloperUsersParams,
+  SearchDeveloperUsersResult,
 } from '../types';
 
 export class StaffService {
@@ -147,6 +149,75 @@ export class StaffService {
       return {
         success: true,
         data: (res.users || []) as AdminOnlineUser[],
+        error: null,
+      };
+    } catch (err: unknown) {
+      return {
+        success: false,
+        data: null,
+        error: { code: 'CLIENT_ERROR', message: err instanceof Error ? err.message : 'Unknown error' },
+      };
+    }
+  }
+
+  /**
+   * Performs privileged server-side student searching, filtering, and sorting.
+   * Multi-mode search: anonymous_username, student_name, department, graduation_year, register_number.
+   */
+  async searchDeveloperUsers(
+    params: SearchDeveloperUsersParams = {}
+  ): Promise<ApiResponse<SearchDeveloperUsersResult>> {
+    try {
+      const {
+        searchMode = 'anonymous_username',
+        searchQuery = '',
+        sortField = 'last_seen',
+        sortDirection = 'desc',
+        stateFilter = 'all',
+        verificationFilter = 'all',
+        limit = 100,
+        offset = 0,
+      } = params;
+
+      const { data, error } = await supabase.rpc('search_developer_users', {
+        p_search_mode: searchMode,
+        p_search_query: searchQuery,
+        p_sort_field: sortField,
+        p_sort_direction: sortDirection,
+        p_state_filter: stateFilter,
+        p_verification_filter: verificationFilter,
+        p_limit: limit,
+        p_offset: offset,
+      });
+
+      if (error) {
+        return {
+          success: false,
+          data: null,
+          error: { code: error.code || 'SEARCH_FAILED', message: error.message },
+        };
+      }
+
+      const res = data as any;
+      if (!res?.success) {
+        return {
+          success: false,
+          data: null,
+          error: { code: res?.error || 'UNAUTHORIZED', message: res?.message || 'Access denied' },
+        };
+      }
+
+      return {
+        success: true,
+        data: {
+          users: (res.users || []) as AdminOnlineUser[],
+          totalCount: res.total_count ?? (res.users?.length || 0),
+          pageSize: res.page_size ?? limit,
+          offset: res.offset ?? offset,
+          searchMode: res.search_mode ?? searchMode,
+          sortField: res.sort_field ?? sortField,
+          sortDirection: res.sort_direction ?? sortDirection,
+        },
         error: null,
       };
     } catch (err: unknown) {

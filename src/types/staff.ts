@@ -39,6 +39,25 @@ export interface AdminDashboardStats {
 
 export type AdminUserState = 'idle' | 'searching' | 'pending_request' | 'in_chat' | 'offline';
 
+export type UserSearchMode =
+  | 'anonymous_username'
+  | 'student_name'
+  | 'department'
+  | 'graduation_year'
+  | 'register_number';
+
+export type UserSortField =
+  | 'anonymous_username'
+  | 'student_name'
+  | 'department'
+  | 'graduation_year'
+  | 'account_created'
+  | 'last_seen';
+
+export type UserSortDirection = 'asc' | 'desc';
+
+export type UserVerificationFilter = 'all' | 'verified' | 'unverified' | 'developer';
+
 export interface AdminOnlineUser {
   user_id: string;
   anonymous_username: string;
@@ -53,6 +72,35 @@ export interface AdminOnlineUser {
   current_room_id: string | null;
   is_test_account: boolean;
   available_for_chat_requests?: boolean;
+  // Authorized student metadata for Developer Console views:
+  real_name?: string | null;
+  department?: string | null;
+  batch?: string | null;
+  graduation_year?: string | null;
+  fingerprint_suffix?: string | null;
+  has_encrypted_register_number?: boolean;
+  created_at?: string | null;
+}
+
+export interface SearchDeveloperUsersParams {
+  searchMode?: UserSearchMode;
+  searchQuery?: string;
+  sortField?: UserSortField;
+  sortDirection?: UserSortDirection;
+  stateFilter?: string;
+  verificationFilter?: UserVerificationFilter;
+  limit?: number;
+  offset?: number;
+}
+
+export interface SearchDeveloperUsersResult {
+  users: AdminOnlineUser[];
+  totalCount: number;
+  pageSize: number;
+  offset: number;
+  searchMode: UserSearchMode;
+  sortField: UserSortField;
+  sortDirection: UserSortDirection;
 }
 
 export interface AdminUserDetails {

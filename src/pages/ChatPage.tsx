@@ -63,6 +63,13 @@ export const ChatPage: React.FC = () => {
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState<boolean>(false);
   const [duplicateTabWarning, setDuplicateTabWarning] = useState<boolean>(false);
 
+  // Realtime Typing Indicator State
+  const [isPeerTyping, setIsPeerTyping] = useState<boolean>(false);
+  const peerTypingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const typingDebounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastTypingSentRef = useRef<number>(0);
+  const messagesChannelRef = useRef<any>(null);
+
   // Developer Chat Timer Freeze / Resume State
   const [timerPausedAt, setTimerPausedAt] = useState<string | null>(null);
   const [isTogglingFreeze, setIsTogglingFreeze] = useState<boolean>(false);
@@ -314,7 +321,32 @@ export const ChatPage: React.FC = () => {
       console.info('[Realtime:Messages] SUBSCRIBING:', `chat-messages-${roomId}`);
 
       messagesChannel = supabase
-        .channel(`chat-messages-${roomId}`)
+        .channel(`chat-messages-${roomId}`, {
+          config: { private: true },
+        })
+        .on('broadcast', { event: 'typing' }, (payload: any) => {
+          if (!isMounted) return;
+          const data = payload?.payload;
+          if (!data || data.roomId !== roomId) return;
+          if (data.senderId === user?.id) return; // Do not show typing for current user
+
+          if (data.isTyping) {
+            setIsPeerTyping(true);
+            // Fallback timeout in case STOP event is missed or network drops
+            if (peerTypingTimeoutRef.current) {
+              clearTimeout(peerTypingTimeoutRef.current);
+            }
+            peerTypingTimeoutRef.current = setTimeout(() => {
+              if (isMounted) setIsPeerTyping(false);
+            }, 3500);
+          } else {
+            if (peerTypingTimeoutRef.current) {
+              clearTimeout(peerTypingTimeoutRef.current);
+              peerTypingTimeoutRef.current = null;
+            }
+            setIsPeerTyping(false);
+          }
+        })
         .on(
           'postgres_changes',
           {
@@ -326,6 +358,15 @@ export const ChatPage: React.FC = () => {
           (payload) => {
             if (!isMounted) return;
             const newRow = payload.new as any;
+
+            // Peer sent a message: immediately clear typing indicator
+            if (newRow?.sender_id !== user?.id) {
+              setIsPeerTyping(false);
+              if (peerTypingTimeoutRef.current) {
+                clearTimeout(peerTypingTimeoutRef.current);
+                peerTypingTimeoutRef.current = null;
+              }
+            }
 
             console.info('[Realtime:Messages] PAYLOAD_RECEIVED:', {
               received: true,
@@ -358,9 +399,12 @@ export const ChatPage: React.FC = () => {
               setRoomStatus('ended');
             }
           }
-        )
-        .subscribe(async (status: string) => {
-          if (!isMounted) return;
+        );
+
+      messagesChannelRef.current = messagesChannel;
+
+      messagesChannel.subscribe(async (status: string) => {
+        if (!isMounted) return;
           console.info(`[Realtime:Messages] ${status}:`, `chat-messages-${roomId}`);
 
           if (status === 'SUBSCRIBED') {
@@ -450,6 +494,11 @@ export const ChatPage: React.FC = () => {
             }
             if (updatedRoom.status === 'ended' || updatedRoom.status === 'skipped') {
               setRoomStatus(updatedRoom.status);
+              setIsPeerTyping(false);
+              if (peerTypingTimeoutRef.current) {
+                clearTimeout(peerTypingTimeoutRef.current);
+                peerTypingTimeoutRef.current = null;
+              }
               if (updatedRoom.end_reason) {
                 setEndReason(updatedRoom.end_reason);
               }
@@ -465,6 +514,31 @@ export const ChatPage: React.FC = () => {
 
     return () => {
       isMounted = false;
+      if (peerTypingTimeoutRef.current) {
+        clearTimeout(peerTypingTimeoutRef.current);
+        peerTypingTimeoutRef.current = null;
+      }
+      if (typingDebounceTimerRef.current) {
+        clearTimeout(typingDebounceTimerRef.current);
+        typingDebounceTimerRef.current = null;
+      }
+      if (messagesChannelRef.current && user?.id && roomId) {
+        try {
+          messagesChannelRef.current.send({
+            type: 'broadcast',
+            event: 'typing',
+            payload: {
+              roomId,
+              senderId: user.id,
+              isTyping: false,
+              timestamp: Date.now(),
+            },
+          }).catch(() => {});
+        } catch {
+          // ignore
+        }
+      }
+      messagesChannelRef.current = null;
       if (messagesChannel) supabase.removeChannel(messagesChannel);
       if (roomStatusChannel) supabase.removeChannel(roomStatusChannel);
     };
@@ -687,6 +761,82 @@ export const ChatPage: React.FC = () => {
   }, [isDeveloper, roomStatus, isTimerFrozen, handleResumeTimer, handleFreezeTimer]);
 
   /**
+   * Realtime Ephemeral Typing Signal
+   * Broadcasts isTyping state over WebSocket without persisting to database.
+   */
+  const sendTypingSignal = useCallback(
+    (isTyping: boolean) => {
+      if (!roomId || !user?.id || roomStatus !== 'active') return;
+      const ch = messagesChannelRef.current;
+      if (!ch) return;
+      try {
+        ch.send({
+          type: 'broadcast',
+          event: 'typing',
+          payload: {
+            roomId,
+            senderId: user.id,
+            isTyping,
+            timestamp: Date.now(),
+          },
+        }).catch(() => {});
+      } catch {
+        // Non-fatal broadcast failure
+      }
+    },
+    [roomId, user?.id, roomStatus]
+  );
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setInputMessage(val);
+
+    if (roomStatus !== 'active') return;
+
+    const trimmed = val.trim();
+    if (trimmed.length > 0) {
+      const now = Date.now();
+      // Throttle outgoing typing start signals (at most once every 1500ms)
+      if (now - lastTypingSentRef.current > 1500) {
+        sendTypingSignal(true);
+        lastTypingSentRef.current = now;
+      }
+      // Debounce typing stop: after 2.5s of no typing, emit stop signal
+      if (typingDebounceTimerRef.current) {
+        clearTimeout(typingDebounceTimerRef.current);
+      }
+      typingDebounceTimerRef.current = setTimeout(() => {
+        sendTypingSignal(false);
+        lastTypingSentRef.current = 0;
+      }, 2500);
+    } else {
+      // Input cleared
+      if (typingDebounceTimerRef.current) {
+        clearTimeout(typingDebounceTimerRef.current);
+        typingDebounceTimerRef.current = null;
+      }
+      sendTypingSignal(false);
+      lastTypingSentRef.current = 0;
+    }
+  };
+
+  const handleInputBlur = () => {
+    if (typingDebounceTimerRef.current) {
+      clearTimeout(typingDebounceTimerRef.current);
+      typingDebounceTimerRef.current = null;
+    }
+    sendTypingSignal(false);
+    lastTypingSentRef.current = 0;
+  };
+
+  // Auto-scroll when peer begins typing if user is already near bottom
+  useEffect(() => {
+    if (isPeerTyping && isNearBottomRef.current) {
+      scrollToBottom(true);
+    }
+  }, [isPeerTyping, scrollToBottom]);
+
+  /**
    * Handle Sending Messages
    */
   const handleSendMessage = async (e?: React.FormEvent) => {
@@ -695,6 +845,14 @@ export const ChatPage: React.FC = () => {
 
     const contentToSend = inputMessage.trim();
     if (contentToSend.length > MAX_MESSAGE_LENGTH) return;
+
+    // Immediately stop typing indicator on send
+    if (typingDebounceTimerRef.current) {
+      clearTimeout(typingDebounceTimerRef.current);
+      typingDebounceTimerRef.current = null;
+    }
+    sendTypingSignal(false);
+    lastTypingSentRef.current = 0;
 
     setInputMessage('');
     setIsSending(true);
@@ -726,6 +884,7 @@ export const ChatPage: React.FC = () => {
   const handleSkip = async () => {
     if (isSkipping || !roomId) return;
     setIsSkipping(true);
+    sendTypingSignal(false);
     try {
       if (roomId) {
         sessionStorage.setItem(`left_room_${roomId}`, 'true');
@@ -753,6 +912,7 @@ export const ChatPage: React.FC = () => {
   const confirmLeave = async () => {
     if (isLeavingRoom) return;
     setIsLeavingRoom(true);
+    sendTypingSignal(false);
     try {
       if (roomId) {
         sessionStorage.setItem(`left_room_${roomId}`, 'true');
@@ -1122,6 +1282,31 @@ export const ChatPage: React.FC = () => {
               })
             )}
 
+            {/* Realtime Peer Typing Indicator */}
+            {isPeerTyping && roomStatus === 'active' && (
+              <div
+                id="chat-peer-typing-indicator"
+                className="flex items-end gap-2 justify-start py-1 animate-in fade-in duration-200"
+                aria-live="polite"
+                aria-label={`${peer.anonymousUsername} is typing`}
+              >
+                <Avatar
+                  size="xs"
+                  avatarConfig={peer.avatarConfig as any}
+                  initials={peerInitials}
+                  shape="circle"
+                  className="shrink-0 mb-0.5"
+                />
+                <div
+                  className="px-3.5 py-2.5 rounded-2xl rounded-bl-sm border shadow-sm bg-[#E9EEF5] text-[#172033] border-[#DCE3EC] dark:bg-[#142016] dark:text-[#F4F6F1] dark:border-[rgba(155,185,115,0.18)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.3)] flex items-center gap-1.5"
+                >
+                  <span className="typing-dot" />
+                  <span className="typing-dot" />
+                  <span className="typing-dot" />
+                </div>
+              </div>
+            )}
+
             {/* Floating "↓ New messages" pill */}
             {showNewMessages && (
               <div className="sticky bottom-2 flex justify-center pointer-events-none z-10">
@@ -1171,7 +1356,8 @@ export const ChatPage: React.FC = () => {
                 value={inputMessage}
                 maxLength={MAX_MESSAGE_LENGTH}
                 disabled={roomStatus !== 'active'}
-                onChange={(e) => setInputMessage(e.target.value)}
+                onChange={handleInputChange}
+                onBlur={handleInputBlur}
                 onFocus={() => {
                   window.scrollTo(0, 0);
                 }}

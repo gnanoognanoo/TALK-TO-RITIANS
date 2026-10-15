@@ -557,6 +557,19 @@ export interface Database {
         };
         Returns: Json;
       };
+      search_developer_users: {
+        Args: {
+          p_search_mode?: string;
+          p_search_query?: string;
+          p_sort_field?: string;
+          p_sort_direction?: string;
+          p_state_filter?: string;
+          p_verification_filter?: string;
+          p_limit?: number;
+          p_offset?: number;
+        };
+        Returns: Json;
+      };
       reveal_student_register_number: {
         Args: {
           p_target_user_id: string;
