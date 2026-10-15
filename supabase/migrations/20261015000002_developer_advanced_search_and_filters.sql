@@ -50,7 +50,7 @@ BEGIN
       p.department,
       p.batch,
       COALESCE(
-        p.graduation_year,
+        p.graduation_year::text,
         (regexp_match(p.batch, '\d{4}\s*[-–]\s*(\d{4})'))[1]
       ) AS graduation_year,
       (
@@ -210,7 +210,7 @@ BEGIN
       p.department,
       p.batch,
       COALESCE(
-        p.graduation_year,
+        p.graduation_year::text,
         (regexp_match(p.batch, '\d{4}\s*[-–]\s*(\d{4})'))[1]
       ) AS graduation_year,
       (
@@ -312,7 +312,7 @@ BEGIN
       p.department,
       p.batch,
       COALESCE(
-        p.graduation_year,
+        p.graduation_year::text,
         (regexp_match(p.batch, '\d{4}\s*[-–]\s*(\d{4})'))[1]
       ) AS graduation_year,
       (
